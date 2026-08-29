@@ -47,7 +47,7 @@ export function AuthView() {
       const data = await res.json();
       if (data.error) { showToast(data.error, 'error'); return; }
       setUser(data.user, data.sellerProfile);
-      showToast(`Welcome to NOIR, ${data.user.name}`);
+      showToast(`Welcome to Lax Pixel, ${data.user.name}`);
       if (data.user.role === 'SELLER') setView('seller-dashboard');
       else goBack();
     } catch { showToast('Registration failed', 'error'); }
@@ -62,7 +62,7 @@ export function AuthView() {
         </button>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-light tracking-tight">Welcome to NOIR</h1>
+          <h1 className="text-3xl font-light tracking-tight">Welcome to Lax Pixel</h1>
           <p className="text-sm text-muted-foreground mt-2">AI-powered luxury shopping</p>
         </div>
 

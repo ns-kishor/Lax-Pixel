@@ -38,7 +38,7 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      setView('shop');
+      setView('shop', { q: searchQuery.trim() });
     }
   };
 
@@ -64,7 +64,7 @@ export function Header() {
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <div className="flex flex-col h-full">
                   <div className="p-6 border-b border-white/5">
-                    <h2 className="text-lg font-light tracking-widest">NOIR</h2>
+                    <h2 className="text-lg font-light tracking-widest">Lax Pixel</h2>
                   </div>
                   <nav className="flex-1 p-4 space-y-1">
                     {navLinks.map(l => (
@@ -100,9 +100,9 @@ export function Header() {
           {/* Logo */}
           <button onClick={() => setView('home')} className="flex items-center gap-3 group">
             <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">
-              <span className="text-xs font-bold">N</span>
+              <span className="text-xs font-bold">LP</span>
             </div>
-            <span className="text-lg sm:text-xl font-extralight tracking-[0.3em] hidden sm:block">NOIR</span>
+            <span className="text-lg sm:text-xl font-extralight tracking-[0.3em] hidden sm:block">Lax Pixel</span>
           </button>
 
           {/* Desktop Nav */}

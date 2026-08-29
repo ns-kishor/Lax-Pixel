@@ -73,7 +73,7 @@ export function AccountView() {
                 <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
                 <div className="grid grid-cols-3 gap-4">
                   <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City</Label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
-                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label><Input value={form.country} onChange={e => setForm({ ...form, city: e.target.value, country: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label><Input value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
                   <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP</Label><Input value={form.zipCode} onChange={e => setForm({ ...form, zipCode: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
                 </div>
                 <Button size="sm" className="bg-foreground text-background text-xs tracking-wider" onClick={saveProfile}><Save className="w-3.5 h-3.5 mr-2" />Save Changes</Button>

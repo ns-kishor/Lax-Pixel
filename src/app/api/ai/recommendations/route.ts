@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const completion = await zai.chat.completions.create({
       messages: [{
         role: 'assistant',
-        content: `You are a luxury product recommendation engine for NOIR. Based on the customer query and their browsing history, recommend the most suitable products. Respond with a JSON array of product names only, no explanation. Pick 1-4 products.
+        content: `You are a luxury product recommendation engine for Lax Pixel. Based on the customer query and their browsing history, recommend the most suitable products. Respond with a JSON array of product names only, no explanation. Pick 1-4 products.
 
 Available products:
 ${productContext}

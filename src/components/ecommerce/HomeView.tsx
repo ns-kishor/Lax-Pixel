@@ -10,7 +10,7 @@ import type { Product, Category } from '@/lib/store';
 import Image from 'next/image';
 
 function ProductCard({ product, index }: { product: Product; index: number }) {
-  const { selectProduct, wishlistIds, toggleWishlist, showToast, user, setJustAddedToCart } = useStore();
+  const { selectProduct, wishlistIds, toggleWishlist, showToast, user, setJustAddedToCart, setView } = useStore();
   const isWished = wishlistIds.has(product.id);
   const [imgError, setImgError] = useState(false);
 
@@ -137,7 +137,7 @@ export function HomeView() {
       {/* Hero */}
       <section className="relative h-[80vh] min-h-[600px] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <Image src="/products/hero.png" alt="NOIR" fill className="object-cover opacity-60" priority />
+          <Image src="/products/hero.png" alt="Lax Pixel" fill className="object-cover opacity-60" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent" />
         </div>
@@ -194,7 +194,7 @@ export function HomeView() {
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
           <button onClick={() => setView('shop')} className="shrink-0 px-5 py-2.5 rounded-full border border-white/10 text-xs tracking-[0.15em] uppercase hover:bg-white/5 transition-colors">All</button>
           {categories.map(c => (
-            <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); setView('shop'); }} className="shrink-0 px-5 py-2.5 rounded-full border border-white/10 text-xs tracking-[0.15em] uppercase hover:bg-white/5 transition-colors">{c.name}</button>
+            <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); useStore.getState().setShopCategory(c.slug); setView('shop', { category: c.slug }); }} className="shrink-0 px-5 py-2.5 rounded-full border border-white/10 text-xs tracking-[0.15em] uppercase hover:bg-white/5 transition-colors">{c.name}</button>
           ))}
         </div>
       </section>
@@ -242,7 +242,7 @@ export function HomeView() {
           <div className="relative max-w-lg">
             <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Become a <span className="font-medium">Seller</span></h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              List your luxury products on NOIR and reach discerning customers worldwide. AI-powered tools help you optimize listings and grow sales.
+              List your luxury products on Lax Pixel and reach discerning customers worldwide. AI-powered tools help you optimize listings and grow sales.
             </p>
             <Button className="mt-6 bg-foreground text-background text-xs tracking-[0.2em] uppercase h-11 px-8 rounded-lg" onClick={() => setView('auth')}>
               Start Selling <ArrowRight className="w-4 h-4 ml-2" />

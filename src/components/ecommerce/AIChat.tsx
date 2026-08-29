@@ -73,7 +73,7 @@ export function AIChat() {
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">NOIR AI</p>
+                  <p className="text-sm font-medium">Lax Pixel AI</p>
                   <p className="text-[10px] text-green-400">Online</p>
                 </div>
               </div>
@@ -113,7 +113,7 @@ export function AIChat() {
             {/* Input */}
             <div className="p-3 border-t border-white/5">
               <form onSubmit={e => { e.preventDefault(); send(); }} className="flex items-center gap-2">
-                <Input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Ask NOIR AI..." className="flex-1 h-10 bg-white/5 border-white/10 text-sm rounded-lg" disabled={chatLoading} />
+                <Input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Ask Lax Pixel AI..." className="flex-1 h-10 bg-white/5 border-white/10 text-sm rounded-lg" disabled={chatLoading} />
                 <Button type="submit" size="icon" className="h-10 w-10 bg-foreground text-background rounded-lg shrink-0" disabled={chatLoading || !input.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>

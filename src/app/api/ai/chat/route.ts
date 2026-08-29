@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!conversations.has(sid)) {
       conversations.set(sid, [{
         role: 'assistant',
-        content: `You are NOIR AI, the intelligent shopping assistant for NOIR - a premium luxury ecommerce platform. You help customers with:
+        content: `You are Lax Pixel AI, the intelligent shopping assistant for Lax Pixel - a premium luxury ecommerce platform. You help customers with:
 - Product recommendations based on their preferences
 - Finding specific products in our catalog
 - Answering questions about products, materials, and craftsmanship

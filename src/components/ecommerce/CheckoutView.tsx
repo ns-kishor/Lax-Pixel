@@ -10,7 +10,7 @@ import { Check, Lock, CreditCard, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function CheckoutView() {
-  const { cart, user, setView, showToast, setOrders } = useStore();
+  const { cart, user, setView, showToast, setOrders, setCart } = useStore();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     shippingAddress: user?.address || '',

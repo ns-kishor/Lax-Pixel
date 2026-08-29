@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     let systemPrompt = '';
     if (type === 'description') {
-      systemPrompt = 'You are a luxury copywriter for NOIR ecommerce. Write a compelling, elegant product description in 2-3 sentences. Focus on craftsmanship, materials, and exclusivity. Do not use emojis.';
+      systemPrompt = 'You are a luxury copywriter for Lax Pixel ecommerce. Write a compelling, elegant product description in 2-3 sentences. Focus on craftsmanship, materials, and exclusivity. Do not use emojis.';
     } else if (type === 'tags') {
       systemPrompt = 'Generate 5-8 relevant SEO tags for this luxury product. Return as comma-separated lowercase words only, no explanation.';
     }

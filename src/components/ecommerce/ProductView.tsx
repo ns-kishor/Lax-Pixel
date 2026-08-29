@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export function ProductView() {
-  const { selectedProduct: product, goBack, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setCart } = useStore();
+  const { selectedProduct: product, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setCart, goBack } = useStore();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
   const [aiDesc, setAiDesc] = useState('');

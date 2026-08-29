@@ -24,7 +24,7 @@ async function seed() {
       password: sellerPassword,
       name: 'Noir Luxury Group',
       role: 'SELLER',
-      phone: '+1-888-NOIR-LUX',
+      phone: '+1-888-LAX-LUX',
       address: '123 Luxury Ave',
       city: 'New York',
       country: 'United States',

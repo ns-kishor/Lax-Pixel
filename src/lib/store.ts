@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
@@ -124,9 +125,9 @@ export interface ChatMessage {
 interface AppState {
   // Navigation
   view: View;
-  previousView: View | null;
-  setView: (view: View) => void;
+  setView: (view: View, params?: Record<string, string>) => void;
   goBack: () => void;
+  _setViewDirect: (view: View) => void;
 
   // Auth
   user: User | null;
@@ -157,6 +158,10 @@ interface AppState {
   // Search
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+
+  // Shop category filter (shared state for URL sync)
+  shopCategory: string;
+  setShopCategory: (cat: string) => void;
 
   // AI Chat
   chatMessages: ChatMessage[];
@@ -201,21 +206,30 @@ interface AppState {
 }
 
 export const useStore = create<AppState>((set, get) => ({
-  // Navigation
+  // Navigation — history-aware
   view: 'home',
-  previousView: null,
-  setView: (view) => set({ previousView: get().view, view }),
-  goBack: () => {
-    const prev = get().previousView;
-    if (prev) set({ view: prev, previousView: 'home' });
-    else set({ view: 'home', previousView: null });
+  setView: (view, params) => {
+    pushNavigation(view, params);
+    // Sync search query and category from params
+    if (params?.q) get().setSearchQuery(params.q);
+    if (params?.category) get().setShopCategory(params.category);
+    else if (view === 'shop' && !params?.category) get().setShopCategory('');
+    set({ view });
   },
+  goBack: () => {
+    window.history.back();
+  },
+  /** Internal: set view without pushing history (used by popstate handler) */
+  _setViewDirect: (view) => set({ view }),
 
   // Auth
   user: null,
   sellerProfile: null,
   setUser: (user, profile) => set({ user, sellerProfile: profile || null }),
-  logout: () => set({ user: null, sellerProfile: null, cart: [], orders: [], view: 'home' }),
+  logout: () => {
+    pushNavigation('home');
+    set({ user: null, sellerProfile: null, cart: [], orders: [], view: 'home' });
+  },
 
   // Products
   products: [],
@@ -223,7 +237,10 @@ export const useStore = create<AppState>((set, get) => ({
   selectedProduct: null,
   setProducts: (products) => set({ products }),
   setCategories: (categories) => set({ categories }),
-  selectProduct: (product) => set({ selectedProduct: product, view: 'product', previousView: get().view }),
+  selectProduct: (product) => {
+    pushNavigation('product', { id: product.id });
+    set({ selectedProduct: product, view: 'product' });
+  },
 
   // Cart
   cart: [],
@@ -235,14 +252,21 @@ export const useStore = create<AppState>((set, get) => ({
   orders: [],
   selectedOrder: null,
   setOrders: (orders) => set({ orders }),
-  selectOrder: (order) => set({ selectedOrder: order, view: 'order-detail', previousView: 'orders' }),
+  selectOrder: (order) => {
+    pushNavigation('order-detail', { id: order.id });
+    set({ selectedOrder: order, view: 'order-detail' });
+  },
 
   // Search
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
 
+  // Shop category filter
+  shopCategory: '',
+  setShopCategory: (cat) => set({ shopCategory: cat }),
+
   // AI Chat
-  chatMessages: [{ id: '0', role: 'assistant', content: 'Welcome to NOIR. I am your AI shopping assistant. How may I help you today?', timestamp: new Date() }],
+  chatMessages: [{ id: '0', role: 'assistant', content: 'Welcome to Lax Pixel. I am your AI shopping assistant. How may I help you today?', timestamp: new Date() }],
   chatOpen: false,
   chatLoading: false,
   setChatMessages: (msgs) => set({ chatMessages: msgs }),

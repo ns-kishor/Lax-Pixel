@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useStore, authHeaders } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,18 +12,29 @@ import type { Product } from '@/lib/store';
 import Image from 'next/image';
 
 export function ShopView() {
-  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setGlobalLoading } = useStore();
-  const [activeCategory, setActiveCategory] = useState('');
+  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setGlobalLoading, setView } = useStore();
   const [sortBy, setSortBy] = useState('createdAt');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const initializedRef = useRef(false);
+
+  // Sync shopCategory from URL on mount
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('category') && !shopCategory) {
+        setShopCategory(params.get('category')!);
+      }
+    }
+  }, [shopCategory, setShopCategory]);
 
   useEffect(() => {
     const load = async () => {
       setGlobalLoading(true);
       const params = new URLSearchParams();
-      if (activeCategory) params.set('category', activeCategory);
+      if (shopCategory) params.set('category', shopCategory);
       if (searchQuery) params.set('search', searchQuery);
       params.set('sort', sortBy);
       const res = await fetch(`/api/products?${params}`);
@@ -32,7 +43,17 @@ export function ShopView() {
       setGlobalLoading(false);
     };
     load();
-  }, [activeCategory, sortBy, searchQuery]);
+  }, [shopCategory, sortBy, searchQuery]);
+
+  // Push history entry when category changes (within shop view)
+  const handleCategoryChange = (slug: string) => {
+    setShopCategory(slug);
+    if (slug) {
+      useStore.getState().setView('shop', { category: slug });
+    } else {
+      useStore.getState().setView('shop');
+    }
+  };
 
   const filtered = useMemo(() => {
     let f = [...products];
@@ -64,7 +85,7 @@ export function ShopView() {
         {/* Header */}
         <div className="mb-8">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-light tracking-tight">
-            {searchQuery ? `Results for "${searchQuery}"` : activeCategory ? categories.find(c => c.slug === activeCategory)?.name || 'Shop' : 'All Products'}
+            {searchQuery ? `Results for "${searchQuery}"` : shopCategory ? categories.find(c => c.slug === shopCategory)?.name || 'Shop' : 'All Products'}
           </motion.h1>
           <p className="text-xs text-muted-foreground mt-1">{filtered.length} {filtered.length === 1 ? 'item' : 'items'}</p>
         </div>
@@ -106,15 +127,15 @@ export function ShopView() {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6 p-4 bg-secondary rounded-lg border border-white/5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs tracking-wider uppercase font-medium">Filters</span>
-              <button onClick={() => { setActiveCategory(''); setPriceRange([0, 10000]); }} className="text-[10px] text-muted-foreground hover:text-foreground tracking-wide">Clear All</button>
+              <button onClick={() => { handleCategoryChange(''); setPriceRange([0, 10000]); }} className="text-[10px] text-muted-foreground hover:text-foreground tracking-wide">Clear All</button>
             </div>
             <div className="space-y-4">
               <div>
                 <p className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2">Category</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => setActiveCategory('')} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${!activeCategory ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>All</button>
+                  <button onClick={() => handleCategoryChange('')} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${!shopCategory ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>All</button>
                   {categories.map(c => (
-                    <button key={c.id} onClick={() => setActiveCategory(c.slug)} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${activeCategory === c.slug ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>{c.name}</button>
+                    <button key={c.id} onClick={() => handleCategoryChange(c.slug)} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${shopCategory === c.slug ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>{c.name}</button>
                   ))}
                 </div>
               </div>
@@ -134,7 +155,7 @@ export function ShopView() {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground text-sm">No products found</p>
-            <Button variant="outline" className="mt-4 border-white/10 text-xs" onClick={() => { setSearchQuery(''); setActiveCategory(''); }}>Clear Filters</Button>
+            <Button variant="outline" className="mt-4 border-white/10 text-xs" onClick={() => { setSearchQuery(''); handleCategoryChange(''); }}>Clear Filters</Button>
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">

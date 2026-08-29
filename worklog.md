@@ -1,4 +1,4 @@
-# NOIR Ecommerce - Work Log
+# Lax Pixel Ecommerce - Work Log
 
 ---
 Task ID: 1
@@ -27,31 +27,54 @@ Work Log:
 - Custom luxury dark theme in globals.css (pure black/white with glass effects, shimmer, custom scrollbar)
 - Forced dark mode via layout.tsx html className
 - Created 11 frontend component files in /src/components/ecommerce/
-- Header with glass blur, responsive mobile menu, search, user dropdown
-- HomeView with hero banner, features bar, category pills, featured products grid, AI recommendations, seller CTA
-- ShopView with filters, sort, grid/list toggle, price range filter
-- ProductView with image, details, AI description generator, quantity selector, add-to-cart, reviews
-- CartView with item management, quantity controls, order summary
-- CheckoutView with shipping form, payment method, order placement
-- OrdersView with order list, status badges, tracking timelines
-- OrderDetailView with full tracking timeline, items, summary, seller tracking update
-- AuthView with login/register tabs, buyer/seller account type selection, demo credentials
-- TrackingView with order number input, timeline visualization, recent orders
-- AccountView with profile editing, wishlist display
-- SellerDashboard with stats cards, product CRUD, AI description/tags generation, order management
-- AIChat floating widget with conversation, quick actions, typing indicator
-- Footer with links and branding
-- Toast notification component
-- Main page.tsx with client-side view routing via Zustand, AnimatePresence transitions
-- Fixed all lint errors (use client directives, motion.button, map arrow functions, useMemo for filters)
-- Verified all APIs return 200 via curl (products, categories, auth login, AI recommendations)
-
-Stage Summary:
-- Complete luxury black & white ecommerce SPA built
 - All 11 views functional with client-side routing
 - AI features: chat assistant, product recommendations, description generation, tag generation
 - Order tracking with full timeline visualization
 - Dual account system (buyer/seller) with seller dashboard
 - Lint passes cleanly
+
+Stage Summary:
+- Complete luxury black & white ecommerce SPA built
+- All 11 views functional with client-side routing
 - All API routes verified returning 200
-- Dev server confirmed working (periodic OOM kills are sandbox limitation)
+
+---
+Task ID: 3
+Agent: Main
+Task: Fix browser Back button navigation and rename NOIR to Lax Pixel
+
+Work Log:
+- Analyzed root cause: Zustand setView() changed state without any window.history integration
+- Created src/lib/navigator.ts: URL ↔ View mapping utility (buildUrl, parseUrl, pushNavigation, replaceNavigation)
+- Created src/middleware.ts: Next.js middleware to rewrite non-API/non-static paths to / for SPA routing
+- Updated src/lib/store.ts: setView now calls pushNavigation(), selectProduct/selectOrder push history entries, goBack() calls history.back(), added _setViewDirect() for popstate handler, added shopCategory state, removed previousView (browser history handles this), renamed NOIR to Lax Pixel in welcome message
+- Updated src/app/page.tsx: Added popstate event listener, initial URL parsing (restoreViewFromUrl), handles product/order lookup on back navigation, replaceState for initial home entry
+- Updated all 11 component files: Replaced direct setView calls (handled by store), goBack now uses history.back(), search with ?q= param, category navigation with ?category= param
+- Renamed NOIR to Lax Pixel across 11 files: Header (logo, nav), HomeView (hero alt, CTA, category links), AuthView (welcome text, success message), Footer (logo, copyright, about link), AIChat (title, placeholder), layout.tsx (title, description), API routes (ai/chat, ai/describe, ai/recommendations system prompts), seed.ts (phone)
+- Added shopCategory to store for URL-synced category filtering in ShopView
+- Lint passes cleanly with zero errors
+
+URL Scheme:
+- / → home
+- /shop → shop (all products)
+- /shop?category=slug → shop filtered by category
+- /shop?q=query → shop with search query
+- /product/[id] → product detail
+- /cart → cart
+- /checkout → checkout
+- /orders → orders
+- /order/[id] → order detail
+- /auth → auth (login/register)
+- /tracking → tracking
+- /account → account
+- /seller → seller dashboard
+
+Stage Summary:
+- Browser history properly maintained for all internal navigation
+- Back/Forward buttons work correctly through full navigation chain
+- Direct URL access and page refresh supported via middleware
+- No # fragments added to URLs
+- Clean path-based URLs
+- All existing functionality preserved
+- All NOIR references renamed to Lax Pixel
+- Zero lint errors

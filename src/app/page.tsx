@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useStore, authHeaders } from '@/lib/store';
+import { parseUrl } from '@/lib/navigator';
 import { Header } from '@/components/ecommerce/Header';
 import { HomeView } from '@/components/ecommerce/HomeView';
 import { ShopView } from '@/components/ecommerce/ShopView';
@@ -41,15 +42,90 @@ function ViewRouter() {
   );
 }
 
+/**
+ * Restore view from URL (used by popstate handler and initial load).
+ * Handles fetching product/order data when navigating back to those views.
+ */
+function restoreViewFromUrl() {
+  const { view, params } = parseUrl(window.location.pathname, window.location.search);
+  const store = useStore.getState();
+
+  // Sync search query from URL
+  if (params.q) store.setSearchQuery(params.q);
+  if (params.category) store.setShopCategory(params.category);
+
+  // Product view — find product from store or fetch
+  if (view === 'product' && params.id) {
+    const product = store.products.find(p => p.id === params.id);
+    if (product) {
+      store.setState({ selectedProduct: product, view: 'product' });
+    } else if (store.products.length > 0) {
+      // Products loaded but not found — go home
+      store._setViewDirect('home');
+    } else {
+      // Products not loaded yet — set view, ProductView will handle missing product
+      store.setState({ view: 'product' });
+    }
+    return;
+  }
+
+  // Order detail view — find order from store or fetch
+  if (view === 'order-detail' && params.id) {
+    const order = store.orders.find(o => o.id === params.id);
+    if (order) {
+      store.setState({ selectedOrder: order, view: 'order-detail' });
+    } else if (store.user) {
+      fetch(`/api/tracking?orderId=${params.id}`, { headers: authHeaders(store) })
+        .then(r => r.json())
+        .then(data => {
+          if (data.id) store.setState({ selectedOrder: data, view: 'order-detail' });
+          else store._setViewDirect('orders');
+        })
+        .catch(() => store._setViewDirect('orders'));
+    } else {
+      store._setViewDirect('orders');
+    }
+    return;
+  }
+
+  store._setViewDirect(view);
+}
+
 export default function Page() {
   const { globalLoading, setCategories, setProducts, user } = useStore();
 
+  // ─── Load initial data ────────────────────────────────────
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(setCategories);
-    fetch('/api/products').then(r => r.json()).then(setProducts);
+    fetch('/api/products').then(r => r.json()).then((products) => {
+      setProducts(products);
+      // After products are loaded, restore the view from URL
+      // (in case it was a product page that needed products to resolve)
+      restoreViewFromUrl();
+    });
   }, []);
 
-  // Load user's cart if logged in
+  // ─── Browser history listener (Back / Forward buttons) ────
+  useEffect(() => {
+    const handlePopState = () => {
+      restoreViewFromUrl();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    // Ensure the current URL has a proper history state
+    // (needed if the page was loaded on `/` without any prior pushState)
+    const { pathname } = window.location;
+    const isHome = pathname === '/' || pathname === '';
+
+    if (isHome) {
+      window.history.replaceState({ view: 'home' }, '', '/');
+    }
+
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // ─── Load user's cart if logged in ────────────────────────
   useEffect(() => {
     if (!user) return;
     const loadUserCart = async () => {

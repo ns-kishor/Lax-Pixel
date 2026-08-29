@@ -22,7 +22,7 @@ const statusColors: Record<string, string> = {
 const steps = ['ORDERED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
 
 export function TrackingView() {
-  const { goBack, user, showToast, selectOrder, orders } = useStore();
+  const { goBack, user, showToast, orders } = useStore();
   const [orderNumber, setOrderNumber] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);

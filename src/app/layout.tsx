@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NOIR — Luxury Redefined",
+  title: "Lax Pixel — Luxury Redefined",
   description: "Premium AI-powered luxury ecommerce. Curated collections, intelligent shopping, and timeless elegance.",
   icons: { icon: "/logo.svg" },
 };

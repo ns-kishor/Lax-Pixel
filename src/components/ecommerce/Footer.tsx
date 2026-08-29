@@ -13,9 +13,9 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center">
-                <span className="text-[10px] font-bold">N</span>
+                <span className="text-[10px] font-bold">LP</span>
               </div>
-              <span className="text-sm font-extralight tracking-[0.3em]">NOIR</span>
+              <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">AI-powered luxury ecommerce. Curated collections and intelligent shopping.</p>
           </div>
@@ -38,14 +38,14 @@ export function Footer() {
           <div>
             <h4 className="text-[10px] tracking-[0.2em] uppercase font-medium mb-4">Company</h4>
             <div className="space-y-2.5">
-              {[{ l: 'About NOIR', v: 'home' as const }, { l: 'Become a Seller', v: 'auth' as const }, { l: 'Privacy Policy', v: 'home' as const }, { l: 'Terms of Service', v: 'home' as const }].map(({ l, v }) => (
+              {[{ l: 'About Lax Pixel', v: 'home' as const }, { l: 'Become a Seller', v: 'auth' as const }, { l: 'Privacy Policy', v: 'home' as const }, { l: 'Terms of Service', v: 'home' as const }].map(({ l, v }) => (
                 <button key={l} onClick={() => setView(v)} className="block text-xs text-muted-foreground hover:text-foreground transition-colors">{l}</button>
               ))}
             </div>
           </div>
         </div>
         <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-muted-foreground">© 2025 NOIR. All rights reserved.</p>
+          <p className="text-[10px] text-muted-foreground">© 2025 Lax Pixel. All rights reserved.</p>
           <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
             Powered by <Sparkles className="w-3 h-3" /> AI Intelligence
           </p>

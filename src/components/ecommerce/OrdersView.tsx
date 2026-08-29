@@ -63,9 +63,9 @@ export function OrdersView() {
                       {order.items.slice(0, 3).map(function(item, idx) {
                         return (
                           <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden border-2 border-secondary relative">
-                          <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
-                        </div>
-                      );
+                            <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                          </div>
+                        );
                       })}
                     </div>
                     <div>
@@ -96,7 +96,7 @@ export function OrdersView() {
 }
 
 export function OrderDetailView() {
-  const { selectedOrder: order, goBack, user, showToast } = useStore();
+  const { selectedOrder: order, goBack, user, showToast, setOrders } = useStore();
   const [updateStatus, setUpdateStatus] = useState('');
   const [updateDesc, setUpdateDesc] = useState('');
 
