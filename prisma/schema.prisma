@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          String   @default("BUYER") // BUYER or SELLER
+  avatar        String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String   @default("")
+  zipCode       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cart          CartItem[]
+  orders        Order[]
+  reviews       Review[]
+  wishlist      Wishlist[]
+  sellerProfile SellerProfile?
+  products      Product[]
+}
+
+model SellerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String
+  description String?
+  logo        String?
+  website     String?
+  approved    Boolean  @default(false)
+  rating      Float    @default(0)
+  totalSales  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+
+  products    Product[]
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String
+  price       Float
+  comparePrice Float?
+  image       String
+  images      String    @default("")
+  categoryId  String
+  sellerId    String
+  stock       Int       @default(0)
+  featured    Boolean   @default(false)
+  rating      Float     @default(0)
+  reviewCount Int       @default(0)
+  salesCount  Int       @default(0)
+ tags        String    @default("")
+ aiGenerated Boolean   @default(false)
+  aiTags      String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category    Category  @relation(fields: [categoryId], references: [id])
+  seller      User      @relation(fields: [sellerId], references: [id])
+  reviews     Review[]
+  orderItems  OrderItem[]
+  wishlist    Wishlist[]
+  cartItems   CartItem[]
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int     @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User    @relation(fields: [userId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  orderNumber   String   @unique
+  userId        String
+  status        String   @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  totalAmount   Float
+  subtotal      Float
+  shippingCost  Float    @default(0)
+  tax           Float    @default(0)
+  shippingAddress String
+  shippingCity    String
+  shippingCountry String
+  shippingZip     String?
+  paymentMethod String   @default("CREDIT_CARD")
+  paymentStatus String   @default("PENDING")
+  trackingNumber String?
+  estimatedDelivery DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+  tracking      OrderTracking[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  productImage String
+  price       Float
+  quantity    Int
+  createdAt   DateTime @default(now())
+
+  order       Order   @relation(fields: [orderId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model OrderTracking {
+  id          String   @id @default(cuid())
+  orderId     String
+  status      String   // ORDERED, CONFIRMED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED
+  description String
+  location    String?
+  timestamp   DateTime @default(now())
+
+  order       Order    @relation(fields: [orderId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  title     String?
+  comment   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
