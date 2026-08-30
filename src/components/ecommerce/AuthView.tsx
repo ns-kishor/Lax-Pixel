@@ -21,7 +21,10 @@ export function AuthView() {
     try {
       const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(loginForm) });
       const data = await res.json();
-      if (data.error) { showToast(data.error, 'error'); return; }
+      if (data.error) {
+        showToast(data.error, 'error');
+        return;
+      }
       setUser(data.user, data.sellerProfile);
       // Load user data
       const [cartRes, ordersRes, wishRes] = await Promise.all([
@@ -35,8 +38,11 @@ export function AuthView() {
       setWishlist(wishItems.map((w: any) => w.productId));
       showToast(`Welcome back, ${data.user.name}`);
       goBack();
-    } catch { showToast('Login failed', 'error'); }
-    setLoading(false);
+    } catch (err) {
+      showToast('Login failed: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const register = async () => {
@@ -45,13 +51,19 @@ export function AuthView() {
     try {
       const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(registerForm) });
       const data = await res.json();
-      if (data.error) { showToast(data.error, 'error'); return; }
+      if (data.error) {
+        showToast(data.error, 'error');
+        return;
+      }
       setUser(data.user, data.sellerProfile);
       showToast(`Welcome to Lax Pixel, ${data.user.name}`);
       if (data.user.role === 'SELLER') setView('seller-dashboard');
       else goBack();
-    } catch { showToast('Registration failed', 'error'); }
-    setLoading(false);
+    } catch (err) {
+      showToast('Registration failed: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
