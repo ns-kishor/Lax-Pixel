@@ -64,12 +64,12 @@ export function AIChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 w-[360px] max-w-[calc(100vw-3rem)] h-[500px] max-h-[calc(100vh-6rem)] rounded-2xl border border-white/10 bg-background shadow-2xl z-50 flex flex-col overflow-hidden"
+            className="fixed bottom-6 right-6 w-[360px] max-w-[calc(100vw-3rem)] h-[500px] max-h-[calc(100vh-6rem)] rounded-2xl border border-border bg-background shadow-2xl z-50 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
@@ -105,15 +105,15 @@ export function AIChat() {
             {chatMessages.length <= 2 && (
               <div className="px-4 pb-2 flex flex-wrap gap-1.5">
                 {quickActions.map(a => (
-                  <button key={a} onClick={() => { setInput(a); }} className="px-3 py-1.5 rounded-full border border-white/10 text-[10px] text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors">{a}</button>
+                  <button key={a} onClick={() => { setInput(a); }} className="px-3 py-1.5 rounded-full border border-border text-[10px] text-muted-foreground hover:text-foreground hover:border transition-colors">{a}</button>
                 ))}
               </div>
             )}
 
             {/* Input */}
-            <div className="p-3 border-t border-white/5">
+            <div className="p-3 border-t border-border">
               <form onSubmit={e => { e.preventDefault(); send(); }} className="flex items-center gap-2">
-                <Input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Ask Lax Pixel AI..." className="flex-1 h-10 bg-white/5 border-white/10 text-sm rounded-lg" disabled={chatLoading} />
+                <Input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} placeholder="Ask Lax Pixel AI..." className="flex-1 h-10 bg-secondary border-border text-sm rounded-lg" disabled={chatLoading} />
                 <Button type="submit" size="icon" className="h-10 w-10 bg-foreground text-background rounded-lg shrink-0" disabled={chatLoading || !input.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>

@@ -76,7 +76,7 @@ export function CartView() {
           <div className="lg:col-span-2 space-y-4">
             <AnimatePresence>
               {cart.map((item) => (
-                <motion.div key={item.id} layout exit={{ opacity: 0, x: -20 }} className="flex gap-4 p-4 rounded-xl bg-secondary border border-white/5">
+                <motion.div key={item.id} layout exit={{ opacity: 0, x: -20 }} className="flex gap-4 p-4 rounded-xl bg-secondary border border-border">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-background shrink-0 relative">
                     <Image src={item.product.image} alt={item.product.name} fill className="object-cover" />
                   </div>
@@ -92,10 +92,10 @@ export function CartView() {
                     </div>
                     <p className="text-sm font-light mt-2">${(item.product.price * item.quantity).toLocaleString()}</p>
                     <div className="flex items-center gap-2 mt-3">
-                      <div className="flex items-center border border-white/10 rounded-lg">
-                        <button className="h-8 w-8 flex items-center justify-center hover:bg-white/5 rounded-l-lg" onClick={() => updateQty(item.productId, item.quantity - 1)}><Minus className="w-3 h-3" /></button>
+                      <div className="flex items-center border border-border rounded-lg">
+                        <button className="h-8 w-8 flex items-center justify-center hover:bg-secondary rounded-l-lg" onClick={() => updateQty(item.productId, item.quantity - 1)}><Minus className="w-3 h-3" /></button>
                         <span className="w-8 text-center text-xs font-medium">{item.quantity}</span>
-                        <button className="h-8 w-8 flex items-center justify-center hover:bg-white/5 rounded-r-lg" onClick={() => updateQty(item.productId, item.quantity + 1)}><Plus className="w-3 h-3" /></button>
+                        <button className="h-8 w-8 flex items-center justify-center hover:bg-secondary rounded-r-lg" onClick={() => updateQty(item.productId, item.quantity + 1)}><Plus className="w-3 h-3" /></button>
                       </div>
                     </div>
                   </div>
@@ -105,17 +105,17 @@ export function CartView() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="sticky top-24 p-6 rounded-xl bg-secondary border border-white/5 space-y-4">
+            <div className="sticky top-24 p-6 rounded-xl bg-secondary border border-border space-y-4">
               <h3 className="text-sm font-medium tracking-wide">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? <span className="text-green-400">Free</span> : `$${shipping}`}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
               </div>
-              <Separator className="bg-white/5" />
+              <Separator className="bg-secondary" />
               <div className="flex justify-between text-lg font-light"><span>Total</span><span>${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
               {shipping > 0 && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary text-[10px] text-muted-foreground">
                   <Sparkles className="w-3 h-3 shrink-0" />
                   <span>Add ${(2000 - subtotal).toLocaleString()} more for free express shipping</span>
                 </div>

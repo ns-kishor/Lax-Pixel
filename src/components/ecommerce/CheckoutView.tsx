@@ -68,23 +68,23 @@ export function CheckoutView() {
         <div className="grid lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 space-y-6">
             {/* Shipping */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-xl bg-secondary border border-white/5">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-xl bg-secondary border border-border">
               <div className="flex items-center gap-2 mb-5">
                 <Truck className="w-4 h-4" />
                 <h2 className="text-sm font-medium tracking-wide">Shipping Address</h2>
               </div>
               <div className="space-y-4">
-                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address *</Label><Input value={form.shippingAddress} onChange={e => setForm({ ...form, shippingAddress: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" placeholder="Street address" /></div>
+                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address *</Label><Input value={form.shippingAddress} onChange={e => setForm({ ...form, shippingAddress: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" placeholder="Street address" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City *</Label><Input value={form.shippingCity} onChange={e => setForm({ ...form, shippingCity: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
-                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP Code</Label><Input value={form.shippingZip} onChange={e => setForm({ ...form, shippingZip: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City *</Label><Input value={form.shippingCity} onChange={e => setForm({ ...form, shippingCity: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP Code</Label><Input value={form.shippingZip} onChange={e => setForm({ ...form, shippingZip: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
                 </div>
-                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label><Input value={form.shippingCountry} onChange={e => setForm({ ...form, shippingCountry: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
+                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label><Input value={form.shippingCountry} onChange={e => setForm({ ...form, shippingCountry: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
               </div>
             </motion.div>
 
             {/* Payment */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-secondary border border-white/5">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-secondary border border-border">
               <div className="flex items-center gap-2 mb-5">
                 <CreditCard className="w-4 h-4" />
                 <h2 className="text-sm font-medium tracking-wide">Payment</h2>
@@ -92,7 +92,7 @@ export function CheckoutView() {
               <div className="grid grid-cols-3 gap-2">
                 {['CREDIT_CARD', 'DEBIT_CARD', 'BANK_TRANSFER'].map(m => (
                   <button key={m} onClick={() => setForm({ ...form, paymentMethod: m })}
-                    className={`p-3 rounded-lg border text-center text-[10px] tracking-wider transition-colors ${form.paymentMethod === m ? 'border-foreground bg-white/5' : 'border-white/10 hover:border-white/20'}`}>
+                    className={`p-3 rounded-lg border text-center text-[10px] tracking-wider transition-colors ${form.paymentMethod === m ? 'border-foreground bg-secondary' : 'border-border hover:border'}`}>
                     {m.replace(/_/g, ' ')}
                   </button>
                 ))}
@@ -102,7 +102,7 @@ export function CheckoutView() {
 
           {/* Summary */}
           <div className="lg:col-span-2">
-            <div className="sticky top-24 p-6 rounded-xl bg-secondary border border-white/5 space-y-4">
+            <div className="sticky top-24 p-6 rounded-xl bg-secondary border border-border space-y-4">
               <h3 className="text-sm font-medium tracking-wide">Order Summary</h3>
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {cart.map(item => (
@@ -112,13 +112,13 @@ export function CheckoutView() {
                   </div>
                 ))}
               </div>
-              <Separator className="bg-white/5" />
+              <Separator className="bg-secondary" />
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? 'Free' : `$${shipping}`}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${tax.toFixed(2)}</span></div>
               </div>
-              <Separator className="bg-white/5" />
+              <Separator className="bg-secondary" />
               <div className="flex justify-between text-lg font-light"><span>Total</span><span>${total.toFixed(2)}</span></div>
               <Button className="w-full h-12 bg-foreground text-background text-xs tracking-[0.2em] uppercase rounded-lg hover:bg-foreground/90" onClick={placeOrder} disabled={loading}>
                 {loading ? 'Processing...' : <><Lock className="w-3.5 h-3.5 mr-2" /> Place Order</>}

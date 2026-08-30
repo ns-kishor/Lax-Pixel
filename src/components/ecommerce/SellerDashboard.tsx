@@ -106,7 +106,7 @@ export function SellerDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              className="p-4 rounded-xl bg-secondary border border-white/5">
+              className="p-4 rounded-xl bg-secondary border border-border">
               <div className="flex items-center justify-between">
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
@@ -118,33 +118,33 @@ export function SellerDashboard() {
 
         {/* Add Product Form */}
         {addProductOpen && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-8 p-6 rounded-xl bg-secondary border border-white/5">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-8 p-6 rounded-xl bg-secondary border border-border">
             <h3 className="text-sm font-medium tracking-wide mb-5 flex items-center gap-2"><Plus className="w-4 h-4" /> New Product</h3>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product Name *</Label><Input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
+              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product Name *</Label><Input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
               <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category *</Label>
-                <select value={newProduct.categoryId} onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })} className="mt-1.5 h-10 w-full px-3 bg-white/5 border border-white/10 rounded-md text-sm">
+                <select value={newProduct.categoryId} onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })} className="mt-1.5 h-10 w-full px-3 bg-secondary border border-border rounded-md text-sm">
                   <option value="">Select...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price ($) *</Label><Input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
-              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Compare Price ($)</Label><Input type="number" value={newProduct.comparePrice} onChange={e => setNewProduct({ ...newProduct, comparePrice: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
-              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Stock</Label><Input type="number" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
-              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Image URL</Label><Input value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" /></div>
+              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price ($) *</Label><Input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Compare Price ($)</Label><Input type="number" value={newProduct.comparePrice} onChange={e => setNewProduct({ ...newProduct, comparePrice: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Stock</Label><Input type="number" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+              <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Image URL</Label><Input value={newProduct.image} onChange={e => setNewProduct({ ...newProduct, image: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
               <div className="sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Description</Label>
                   <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7" onClick={aiGenerateDesc}><Sparkles className="w-3 h-3" /> AI Generate</Button>
                 </div>
-                <textarea value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} rows={3} className="mt-1.5 w-full p-3 bg-white/5 border border-white/10 rounded-md text-sm resize-none" />
+                <textarea value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} rows={3} className="mt-1.5 w-full p-3 bg-secondary border border-border rounded-md text-sm resize-none" />
               </div>
               <div className="sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Tags</Label>
                   <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7" onClick={aiGenerateTags}><Sparkles className="w-3 h-3" /> AI Generate</Button>
                 </div>
-                <Input value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} className="mt-1.5 h-10 bg-white/5 border-white/10 text-sm" placeholder="luxury, premium, handmade" />
+                <Input value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" placeholder="luxury, premium, handmade" />
               </div>
             </div>
             <Button className="mt-4 bg-foreground text-background text-xs tracking-wider" onClick={createProduct}>Create Product</Button>
@@ -165,7 +165,7 @@ export function SellerDashboard() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sellerProducts.map((p, i) => (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                    className="p-4 rounded-xl bg-secondary border border-white/5 hover:border-white/10 cursor-pointer transition-colors" onClick={() => selectProduct(p)}>
+                    className="p-4 rounded-xl bg-secondary border border-border hover:border-border cursor-pointer transition-colors" onClick={() => selectProduct(p)}>
                     <div className="w-full aspect-video rounded-lg overflow-hidden bg-background relative mb-3"><Image src={p.image} alt={p.name} fill className="object-cover" /></div>
                     <div className="flex items-start justify-between">
                       <div><h4 className="text-sm font-medium">{p.name}</h4><p className="text-xs text-muted-foreground mt-0.5">{p.category?.name} • {p.stock} in stock</p></div>
@@ -173,7 +173,7 @@ export function SellerDashboard() {
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="secondary" className="text-[9px]">{p.salesCount} sold</Badge>
-                      {p.aiGenerated && <Badge variant="outline" className="text-[9px] gap-1 border-white/10"><Sparkles className="w-2.5 h-2.5" /> AI</Badge>}
+                      {p.aiGenerated && <Badge variant="outline" className="text-[9px] gap-1 border-border"><Sparkles className="w-2.5 h-2.5" /> AI</Badge>}
                     </div>
                   </motion.div>
                 ))}
@@ -187,7 +187,7 @@ export function SellerDashboard() {
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {sellerOrders.map(o => (
-                  <div key={o.id} className="p-4 rounded-xl bg-secondary border border-white/5 hover:border-white/10 cursor-pointer transition-colors" onClick={() => useStore.getState().selectOrder(o)}>
+                  <div key={o.id} className="p-4 rounded-xl bg-secondary border border-border hover:border-border cursor-pointer transition-colors" onClick={() => useStore.getState().selectOrder(o)}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-3"><p className="text-sm font-medium">{o.orderNumber}</p><Badge variant="outline" className={`text-[9px] ${statusColors[o.status] || ''}`}>{o.status}</Badge></div>

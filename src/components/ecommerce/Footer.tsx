@@ -7,12 +7,12 @@ export function Footer() {
   const { setView } = useStore();
 
   return (
-    <footer className="border-t border-white/5 mt-auto">
+    <footer className="border-t border-border mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full border flex items-center justify-center">
                 <span className="text-[10px] font-bold">LP</span>
               </div>
               <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
@@ -44,7 +44,7 @@ export function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[10px] text-muted-foreground">© 2025 Lax Pixel. All rights reserved.</p>
           <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
             Powered by <Sparkles className="w-3 h-3" /> AI Intelligence

@@ -55,7 +55,7 @@ export function OrdersView() {
           <div className="space-y-4">
             {orders.map((order, i) => (
               <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="p-5 rounded-xl bg-secondary border border-white/5 hover:border-white/10 transition-colors cursor-pointer"
+                className="p-5 rounded-xl bg-secondary border border-border hover:border-border transition-colors cursor-pointer"
                 onClick={() => selectOrder(order)}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
@@ -80,7 +80,7 @@ export function OrdersView() {
                   </div>
                 </div>
                 {order.trackingNumber && (
-                  <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
                     <Truck className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">Tracking: {order.trackingNumber}</span>
                     {order.estimatedDelivery && <span className="text-xs text-muted-foreground ml-auto">Est. delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>}
@@ -134,7 +134,7 @@ export function OrderDetailView() {
         </div>
 
         {/* Tracking Timeline */}
-        <div className="p-6 rounded-xl bg-secondary border border-white/5 mb-6">
+        <div className="p-6 rounded-xl bg-secondary border border-border mb-6">
           <h3 className="text-sm font-medium tracking-wide mb-6 flex items-center gap-2"><MapPin className="w-4 h-4" /> Order Tracking</h3>
           <div className="relative">
             {steps.map((step, idx) => {
@@ -143,9 +143,9 @@ export function OrderDetailView() {
               return (
                 <div key={step} className="flex gap-4 pb-8 last:pb-0 relative">
                   {idx < steps.length - 1 && (
-                    <div className={`absolute left-[15px] top-8 w-px h-full ${completed ? 'bg-foreground/30' : 'bg-white/10'}`} />
+                    <div className={`absolute left-[15px] top-8 w-px h-full ${completed ? 'bg-foreground/30' : 'bg-muted'}`} />
                   )}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completed ? 'bg-foreground text-background' : 'bg-white/5 border border-white/10'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completed ? 'bg-foreground text-background' : 'bg-secondary border border-border'}`}>
                     {completed ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-3.5 h-3.5 text-muted-foreground" />}
                   </div>
                   <div className="pt-1">
@@ -160,7 +160,7 @@ export function OrderDetailView() {
         </div>
 
         {/* Items */}
-        <div className="p-6 rounded-xl bg-secondary border border-white/5 mb-6">
+        <div className="p-6 rounded-xl bg-secondary border border-border mb-6">
           <h3 className="text-sm font-medium tracking-wide mb-4">Items</h3>
           <div className="space-y-3">
             {order.items.map(item => (
@@ -179,7 +179,7 @@ export function OrderDetailView() {
         </div>
 
         {/* Summary */}
-        <div className="p-6 rounded-xl bg-secondary border border-white/5">
+        <div className="p-6 rounded-xl bg-secondary border border-border">
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
               <h3 className="text-sm font-medium tracking-wide mb-3">Shipping</h3>
@@ -192,7 +192,7 @@ export function OrderDetailView() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${order.subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${order.shippingCost}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${order.tax.toFixed(2)}</span></div>
-                <div className="flex justify-between font-medium pt-2 border-t border-white/5"><span>Total</span><span>${order.totalAmount.toLocaleString()}</span></div>
+                <div className="flex justify-between font-medium pt-2 border-t border-border"><span>Total</span><span>${order.totalAmount.toLocaleString()}</span></div>
               </div>
             </div>
           </div>
@@ -200,14 +200,14 @@ export function OrderDetailView() {
 
         {/* Seller tracking update */}
         {user?.role === 'SELLER' && (
-          <div className="mt-6 p-6 rounded-xl bg-secondary border border-white/5">
+          <div className="mt-6 p-6 rounded-xl bg-secondary border border-border">
             <h3 className="text-sm font-medium tracking-wide mb-4">Update Tracking</h3>
             <div className="flex flex-col sm:flex-row gap-3">
-              <select value={updateStatus} onChange={e => setUpdateStatus(e.target.value)} className="h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-xs">
+              <select value={updateStatus} onChange={e => setUpdateStatus(e.target.value)} className="h-10 px-3 bg-secondary border border-border rounded-lg text-xs">
                 <option value="">Select status...</option>
                 {steps.slice(1).map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
               </select>
-              <input value={updateDesc} onChange={e => setUpdateDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-xs" />
+              <input value={updateDesc} onChange={e => setUpdateDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 h-10 px-3 bg-secondary border border-border rounded-lg text-xs" />
               <Button size="sm" className="bg-foreground text-background text-xs" onClick={addTrackingUpdate} disabled={!updateStatus}>Update</Button>
             </div>
           </div>

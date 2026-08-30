@@ -96,18 +96,18 @@ export function ShopView() {
             <div className="relative md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input placeholder="Search products..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-white/5 border-white/10 rounded-lg text-xs" />
+                className="pl-9 h-9 bg-secondary border-border rounded-lg text-xs" />
             </div>
-            <Button variant="outline" size="sm" className="h-9 border-white/10 text-xs gap-2" onClick={() => setShowFilters(!showFilters)}>
+            <Button variant="outline" size="sm" className="h-9 border-border text-xs gap-2" onClick={() => setShowFilters(!showFilters)}>
               <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
             </Button>
           </div>
           <div className="flex items-center gap-2">
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-36 h-9 bg-white/5 border-white/10 text-xs">
+              <SelectTrigger className="w-36 h-9 bg-secondary border-border text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-popover border-white/10">
+              <SelectContent className="bg-popover border-border">
                 <SelectItem value="createdAt">Newest</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -115,7 +115,7 @@ export function ShopView() {
                 <SelectItem value="popular">Most Popular</SelectItem>
               </SelectContent>
             </Select>
-            <div className="hidden sm:flex border border-white/10 rounded-lg overflow-hidden">
+            <div className="hidden sm:flex border border-border rounded-lg overflow-hidden">
               <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9 rounded-none" onClick={() => setViewMode('grid')}><Grid3X3 className="w-3.5 h-3.5" /></Button>
               <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-9 w-9 rounded-none" onClick={() => setViewMode('list')}><List className="w-3.5 h-3.5" /></Button>
             </div>
@@ -124,7 +124,7 @@ export function ShopView() {
 
         {/* Filters */}
         {showFilters && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6 p-4 bg-secondary rounded-lg border border-white/5">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6 p-4 bg-secondary rounded-lg border border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs tracking-wider uppercase font-medium">Filters</span>
               <button onClick={() => { handleCategoryChange(''); setPriceRange([0, 10000]); }} className="text-[10px] text-muted-foreground hover:text-foreground tracking-wide">Clear All</button>
@@ -133,18 +133,18 @@ export function ShopView() {
               <div>
                 <p className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2">Category</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCategoryChange('')} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${!shopCategory ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>All</button>
+                  <button onClick={() => handleCategoryChange('')} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${!shopCategory ? 'bg-foreground text-background border-foreground' : 'border-border hover:border'}`}>All</button>
                   {categories.map(c => (
-                    <button key={c.id} onClick={() => handleCategoryChange(c.slug)} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${shopCategory === c.slug ? 'bg-foreground text-background border-foreground' : 'border-white/10 hover:border-white/20'}`}>{c.name}</button>
+                    <button key={c.id} onClick={() => handleCategoryChange(c.slug)} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${shopCategory === c.slug ? 'bg-foreground text-background border-foreground' : 'border-border hover:border'}`}>{c.name}</button>
                   ))}
                 </div>
               </div>
               <div>
                 <p className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2">Price Range</p>
                 <div className="flex items-center gap-3">
-                  <Input type="number" placeholder="Min" value={priceRange[0] || ''} onChange={e => setPriceRange([Number(e.target.value) || 0, priceRange[1]])} className="h-8 w-24 bg-white/5 border-white/10 text-xs" />
+                  <Input type="number" placeholder="Min" value={priceRange[0] || ''} onChange={e => setPriceRange([Number(e.target.value) || 0, priceRange[1]])} className="h-8 w-24 bg-secondary border-border text-xs" />
                   <span className="text-muted-foreground text-xs">—</span>
-                  <Input type="number" placeholder="Max" value={priceRange[1] < 10000 ? priceRange[1] : ''} onChange={e => setPriceRange([priceRange[0], Number(e.target.value) || 10000])} className="h-8 w-24 bg-white/5 border-white/10 text-xs" />
+                  <Input type="number" placeholder="Max" value={priceRange[1] < 10000 ? priceRange[1] : ''} onChange={e => setPriceRange([priceRange[0], Number(e.target.value) || 10000])} className="h-8 w-24 bg-secondary border-border text-xs" />
                 </div>
               </div>
             </div>
@@ -155,7 +155,7 @@ export function ShopView() {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground text-sm">No products found</p>
-            <Button variant="outline" className="mt-4 border-white/10 text-xs" onClick={() => { setSearchQuery(''); handleCategoryChange(''); }}>Clear Filters</Button>
+            <Button variant="outline" className="mt-4 border-border text-xs" onClick={() => { setSearchQuery(''); handleCategoryChange(''); }}>Clear Filters</Button>
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -186,7 +186,7 @@ export function ShopView() {
           <div className="space-y-3">
             {filtered.map((product, i) => (
               <motion.div key={product.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                className="flex gap-4 p-3 rounded-lg border border-white/5 hover:border-white/10 cursor-pointer group transition-colors"
+                className="flex gap-4 p-3 rounded-lg border border-border hover:border-border cursor-pointer group transition-colors"
                 onClick={() => selectProduct(product)}>
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-secondary shrink-0">
                   <Image src={product.image} alt={product.name} width={128} height={128} className="w-full h-full object-cover" />

@@ -55,7 +55,7 @@ export function TrackingView() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} onKeyDown={e => e.key === 'Enter' && track()}
-              placeholder="e.g. NOR-MTEJTX9N" className="pl-10 h-11 bg-white/5 border-white/10 text-sm rounded-lg" />
+              placeholder="e.g. NOR-MTEJTX9N" className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg" />
           </div>
           <Button className="h-11 bg-foreground text-background text-xs tracking-wider px-6 rounded-lg" onClick={track} disabled={loading}>
             {loading ? '...' : 'Track'}
@@ -68,7 +68,7 @@ export function TrackingView() {
             <div className="space-y-2">
               {orders.slice(0, 3).map(o => (
                 <button key={o.id} onClick={() => { setOrderNumber(o.orderNumber); setOrder(o); }}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary border border-white/5 hover:border-white/10 transition-colors">
+                  className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary border border-border hover:border-border transition-colors">
                   <span className="text-sm font-medium">{o.orderNumber}</span>
                   <Badge variant="outline" className={`text-[10px] ${statusColors[o.status] || ''}`}>{o.status}</Badge>
                 </button>
@@ -90,14 +90,14 @@ export function TrackingView() {
             {/* Items preview */}
             <div className="flex gap-3 mb-8">
               {order.items.map((item, idx) => (
-                <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden bg-secondary border border-white/5 relative">
+                <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden bg-secondary border border-border relative">
                   <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
                 </div>
               ))}
             </div>
 
             {/* Timeline */}
-            <div className="p-6 rounded-xl bg-secondary border border-white/5">
+            <div className="p-6 rounded-xl bg-secondary border border-border">
               <h3 className="text-sm font-medium tracking-wide mb-6 flex items-center gap-2"><MapPin className="w-4 h-4" /> Shipment Progress</h3>
               <div className="relative">
                 {steps.map((step, idx) => {
@@ -105,8 +105,8 @@ export function TrackingView() {
                   const entry = order.tracking.find(t => t.status === step);
                   return (
                     <div key={step} className="flex gap-4 pb-8 last:pb-0 relative">
-                      {idx < steps.length - 1 && <div className={`absolute left-[15px] top-8 w-px h-full ${completed ? 'bg-foreground/30' : 'bg-white/10'}`} />}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completed ? 'bg-foreground text-background' : 'bg-white/5 border border-white/10'}`}>
+                      {idx < steps.length - 1 && <div className={`absolute left-[15px] top-8 w-px h-full ${completed ? 'bg-foreground/30' : 'bg-muted'}`} />}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completed ? 'bg-foreground text-background' : 'bg-secondary border border-border'}`}>
                         {completed ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-3.5 h-3.5 text-muted-foreground" />}
                       </div>
                       <div className="pt-1">

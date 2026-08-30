@@ -7,8 +7,9 @@ import {
   Sheet, SheetContent, SheetTrigger, SheetTitle,
 } from '@/components/ui/sheet';
 import {
-  Search, ShoppingBag, User, Menu, Heart, Sparkles, X, ChevronDown, Store, LogOut, Package, Settings
+  Search, ShoppingBag, User, Menu, Heart, Sparkles, X, ChevronDown, Store, LogOut, Package, Settings, Sun, Moon
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useState, useRef, useEffect } from 'react';
 
 export function Header() {
@@ -16,6 +17,7 @@ export function Header() {
     view, setView, user, logout, cartCount, mobileMenuOpen, setMobileMenuOpen,
     searchQuery, setSearchQuery, wishlistIds, sellerProfile,
   } = useStore();
+  const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -51,44 +53,44 @@ export function Header() {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'glass border-b border-white/5' : 'bg-transparent'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'glass border-b border-border' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Mobile menu */}
           <div className="lg:hidden">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-foreground hover:bg-white/5"><Menu className="w-5 h-5" /></Button>
+                <Button variant="ghost" size="icon" className="text-foreground hover:bg-secondary"><Menu className="w-5 h-5" /></Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 bg-background border-r border-white/5 p-0">
+              <SheetContent side="left" className="w-72 bg-background border-r border-border p-0">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <div className="flex flex-col h-full">
-                  <div className="p-6 border-b border-white/5">
+                  <div className="p-6 border-b border-border">
                     <h2 className="text-lg font-light tracking-widest">Lax Pixel</h2>
                   </div>
                   <nav className="flex-1 p-4 space-y-1">
                     {navLinks.map(l => (
                       <button key={l.view} onClick={() => { setView(l.view); setMobileMenuOpen(false); }}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide transition-colors ${view === l.view ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide transition-colors ${view === l.view ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'}`}>
                         {l.label}
                       </button>
                     ))}
                     {user?.role === 'SELLER' && (
                       <button onClick={() => { setView('seller-dashboard'); setMobileMenuOpen(false); }}
-                        className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                        className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                         <Store className="w-4 h-4" /> Seller Dashboard
                       </button>
                     )}
                     {user && (
                       <button onClick={() => { setView('orders'); setMobileMenuOpen(false); }}
-                        className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                        className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                         <Package className="w-4 h-4" /> My Orders
                       </button>
                     )}
                   </nav>
-                  <div className="p-4 border-t border-white/5">
+                  <div className="p-4 border-t border-border">
                     <button onClick={() => { setView('tracking'); setMobileMenuOpen(false); }}
-                      className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                      className="w-full text-left px-4 py-3 rounded-lg text-sm tracking-wide text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                       <Search className="w-4 h-4" /> Track Order
                     </button>
                   </div>
@@ -99,7 +101,7 @@ export function Header() {
 
           {/* Logo */}
           <button onClick={() => setView('home')} className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">
+            <div className="w-8 h-8 rounded-full border flex items-center justify-center group-hover:bg-foreground group-hover:text-background transition-all duration-300">
               <span className="text-xs font-bold">LP</span>
             </div>
             <span className="text-lg sm:text-xl font-extralight tracking-[0.3em] hidden sm:block">Lax Pixel</span>
@@ -131,56 +133,62 @@ export function Header() {
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 placeholder="Search..."
-                className="pl-9 pr-4 h-9 bg-white/5 border-white/10 rounded-full text-xs tracking-wide focus:bg-white/10 focus:border-white/20"
+                className="pl-9 pr-4 h-9 bg-secondary border-border rounded-full text-xs tracking-wide focus:bg-muted focus:border"
               />
             </form>
           </div>
 
+          {/* Theme Toggle */}
+          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="text-foreground hover:bg-secondary" title="Toggle theme">
+            <Sun className="w-4 h-4 dark:hidden" />
+            <Moon className="w-4 h-4 hidden dark:block" />
+          </Button>
+
           {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setView('tracking')} className="text-foreground hover:bg-white/5 relative" title="Track Order">
+            <Button variant="ghost" size="icon" onClick={() => setView('tracking')} className="text-foreground hover:bg-secondary relative" title="Track Order">
               <Package className="w-4.5 h-4.5" />
             </Button>
 
             {user && (
-              <Button variant="ghost" size="icon" onClick={() => setView('account')} className="text-foreground hover:bg-white/5 relative">
+              <Button variant="ghost" size="icon" onClick={() => setView('account')} className="text-foreground hover:bg-secondary relative">
                 <Heart className="w-4.5 h-4.5" />
                 {wc > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-foreground text-background text-[9px] flex items-center justify-center font-medium">{wc}</span>}
               </Button>
             )}
 
-            <Button variant="ghost" size="icon" onClick={() => setView('cart')} className="text-foreground hover:bg-white/5 relative">
+            <Button variant="ghost" size="icon" onClick={() => setView('cart')} className="text-foreground hover:bg-secondary relative">
               <ShoppingBag className="w-4.5 h-4.5" />
               {cc > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-foreground text-background text-[9px] flex items-center justify-center font-medium">{cc}</span>}
             </Button>
 
             {user ? (
               <div className="relative" ref={userMenuRef}>
-                <Button variant="ghost" size="icon" onClick={() => setUserMenuOpen(!userMenuOpen)} className="text-foreground hover:bg-white/5">
-                  <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium">
+                <Button variant="ghost" size="icon" onClick={() => setUserMenuOpen(!userMenuOpen)} className="text-foreground hover:bg-secondary">
+                  <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 </Button>
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-white/10 rounded-lg shadow-2xl py-2 animate-fade-in">
-                    <div className="px-4 py-2 border-b border-white/5">
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-lg shadow-2xl py-2 animate-fade-in">
+                    <div className="px-4 py-2 border-b border-border">
                       <p className="text-sm font-medium">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
-                      <span className="inline-block mt-1 px-2 py-0.5 text-[10px] tracking-wider uppercase rounded bg-white/10 text-muted-foreground">{user.role}</span>
+                      <span className="inline-block mt-1 px-2 py-0.5 text-[10px] tracking-wider uppercase rounded bg-muted text-muted-foreground">{user.role}</span>
                     </div>
-                    <button onClick={() => { setView('account'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                    <button onClick={() => { setView('account'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                       <User className="w-4 h-4" /> Account
                     </button>
-                    <button onClick={() => { setView('orders'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                    <button onClick={() => { setView('orders'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                       <Package className="w-4 h-4" /> My Orders
                     </button>
                     {user.role === 'SELLER' && (
-                      <button onClick={() => { setView('seller-dashboard'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 flex items-center gap-3">
+                      <button onClick={() => { setView('seller-dashboard'); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-3">
                         <Store className="w-4 h-4" /> Seller Dashboard
                       </button>
                     )}
-                    <div className="border-t border-white/5 mt-1 pt-1">
-                      <button onClick={() => { logout(); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-white/5 flex items-center gap-3">
+                    <div className="border-t border-border mt-1 pt-1">
+                      <button onClick={() => { logout(); setUserMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-secondary flex items-center gap-3">
                         <LogOut className="w-4 h-4" /> Sign Out
                       </button>
                     </div>

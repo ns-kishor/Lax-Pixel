@@ -14,7 +14,7 @@ export function Toast() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed top-24 right-6 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl bg-popover border-white/10"
+          className="fixed top-24 right-6 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl bg-popover"
         >
           {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />}
           {toast.type === 'error' && <XCircle className="w-4 h-4 text-red-400 shrink-0" />}

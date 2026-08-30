@@ -83,12 +83,12 @@ export function ProductView() {
               )}
             </div>
 
-            <Separator className="bg-white/5" />
+            <Separator className="bg-secondary" />
 
             <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
 
             {/* AI Enhancement */}
-            <div className="p-4 rounded-lg bg-secondary border border-white/5">
+            <div className="p-4 rounded-lg bg-secondary border border-border">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4" />
                 <span className="text-xs tracking-wider uppercase font-medium">AI Enhanced Description</span>
@@ -96,7 +96,7 @@ export function ProductView() {
               {showAiDesc ? (
                 <p className="text-xs text-muted-foreground leading-relaxed">{aiDesc || 'Generating...'}</p>
               ) : (
-                <Button variant="outline" size="sm" className="border-white/10 text-xs h-8" onClick={generateAiDesc}>
+                <Button variant="outline" size="sm" className="border-border text-xs h-8" onClick={generateAiDesc}>
                   <Sparkles className="w-3 h-3 mr-2" /> Generate AI Description
                 </Button>
               )}
@@ -104,7 +104,7 @@ export function ProductView() {
 
             {/* Quantity & Add to Cart */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center border border-white/10 rounded-lg">
+              <div className="flex items-center border border-border rounded-lg">
                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-none" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="w-4 h-4" /></Button>
                 <span className="w-12 text-center text-sm font-medium">{qty}</span>
                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-none" onClick={() => setQty(Math.min(product.stock, qty + 1))}><Plus className="w-4 h-4" /></Button>
@@ -112,7 +112,7 @@ export function ProductView() {
               <Button className="flex-1 h-12 bg-foreground text-background text-xs tracking-[0.2em] uppercase rounded-lg hover:bg-foreground/90" onClick={addToCart}>
                 <ShoppingBag className="w-4 h-4 mr-2" /> Add to Bag — ${((product.price * qty) || 0).toLocaleString()}
               </Button>
-              <Button variant="outline" size="icon" className={`h-12 w-12 rounded-lg border-white/10 ${isWished ? 'bg-foreground text-background' : ''}`} onClick={() => {
+              <Button variant="outline" size="icon" className={`h-12 w-12 rounded-lg border-border ${isWished ? 'bg-foreground text-background' : ''}`} onClick={() => {
                 if (!user) { useStore.getState().setView('auth'); return; }
                 toggleWishlist(product.id);
                 showToast(isWished ? 'Removed from wishlist' : 'Added to wishlist', 'info');
@@ -148,16 +148,16 @@ export function ProductView() {
         <div className="mt-16">
           <h2 className="text-xl font-light tracking-tight mb-6">Reviews ({reviews.length})</h2>
           {reviews.length === 0 ? (
-            <div className="text-center py-12 bg-secondary rounded-xl border border-white/5">
+            <div className="text-center py-12 bg-secondary rounded-xl border border-border">
               <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review this product.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {reviews.map((r: any) => (
-                <div key={r.id} className="p-4 rounded-lg bg-secondary border border-white/5">
+                <div key={r.id} className="p-4 rounded-lg bg-secondary border border-border">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium">{r.user?.name?.charAt(0) || 'U'}</div>
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">{r.user?.name?.charAt(0) || 'U'}</div>
                       <div>
                         <p className="text-sm font-medium">{r.user?.name || 'User'}</p>
                         <div className="flex items-center gap-1 mt-0.5">{[1,2,3,4,5].map(s => <Star key={s} className={`w-3 h-3 ${s <= r.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />)}</div>

@@ -60,7 +60,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           </Badge>
         )}
         {useStore.getState().justAddedToCart === product.id && (
-          <div className="absolute inset-0 bg-white/10 flex items-center justify-center animate-fade-in">
+          <div className="absolute inset-0 bg-muted flex items-center justify-center animate-fade-in">
             <span className="text-xs tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full">Added</span>
           </div>
         )}
@@ -158,7 +158,7 @@ export function HomeView() {
               <Button size="lg" className="bg-foreground text-background h-12 px-8 text-xs tracking-[0.2em] uppercase hover:bg-foreground/90 rounded-lg" onClick={() => setView('shop')}>
                 Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border-white/20 hover:bg-white/5 rounded-lg" onClick={() => setView('tracking')}>
+              <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('tracking')}>
                 Track Order
               </Button>
             </div>
@@ -167,11 +167,11 @@ export function HomeView() {
       </section>
 
       {/* Features */}
-      <section className="border-y border-white/5">
+      <section className="border-y border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
           {features.map((f, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                 <f.icon className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
@@ -192,9 +192,9 @@ export function HomeView() {
           </div>
         </div>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-          <button onClick={() => setView('shop')} className="shrink-0 px-5 py-2.5 rounded-full border border-white/10 text-xs tracking-[0.15em] uppercase hover:bg-white/5 transition-colors">All</button>
+          <button onClick={() => setView('shop')} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">All</button>
           {categories.map(c => (
-            <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); useStore.getState().setShopCategory(c.slug); setView('shop', { category: c.slug }); }} className="shrink-0 px-5 py-2.5 rounded-full border border-white/10 text-xs tracking-[0.15em] uppercase hover:bg-white/5 transition-colors">{c.name}</button>
+            <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); useStore.getState().setShopCategory(c.slug); setView('shop', { category: c.slug }); }} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">{c.name}</button>
           ))}
         </div>
       </section>
@@ -220,7 +220,7 @@ export function HomeView() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
           <div className="flex items-end justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
@@ -237,8 +237,8 @@ export function HomeView() {
 
       {/* CTA Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="relative rounded-2xl border border-white/5 bg-secondary p-8 sm:p-12 overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="relative rounded-2xl border border-border bg-secondary p-8 sm:p-12 overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative max-w-lg">
             <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Become a <span className="font-medium">Seller</span></h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
