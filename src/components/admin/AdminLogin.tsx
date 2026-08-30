@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
 
 export function AdminLogin() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('admin@laxpixel.com');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { setAdminUser, setAdminAuthed, setView, showToast } = useStore();
+
+  // Check for existing token on mount
+  useEffect(() => {
+    // Clear any stale admin token so we start fresh
+    localStorage.removeItem('admin-token');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,20 +33,50 @@ export function AdminLogin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || 'Login failed.');
+      let data: Record<string, unknown>;
+      try {
+        data = await res.json();
+      } catch {
+        setError(`Server returned status ${res.status} with no JSON body.`);
         return;
       }
 
-      localStorage.setItem('admin-token', data.token);
-      setAdminUser(data.admin);
+      if (!res.ok) {
+        const msg = (data.error as string) || 'Login failed.';
+        setError(`${msg} (HTTP ${res.status})`);
+        return;
+      }
+
+      localStorage.setItem('admin-token', data.token as string);
+      const admin = data.admin as { id: string; email: string; name: string; role: string };
+      setAdminUser(admin);
       setAdminAuthed(true);
       setView('admin');
-      showToast('Welcome back, ' + data.admin.name);
-    } catch {
-      setError('Network error. Please try again.');
+      showToast('Welcome back, ' + admin.name);
+    } catch (err) {
+      setError('Network error: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Password reset successfully');
+      } else {
+        setError(data.error || 'Reset failed.');
+      }
+    } catch (err) {
+      setError('Network error during reset.');
     } finally {
       setLoading(false);
     }
@@ -85,7 +121,7 @@ export function AdminLogin() {
             />
           </div>
 
-          <div className="space-y-2 relative">
+          <div className="space-y-2">
             <Label htmlFor="admin-password" className="text-[10px] tracking-wider uppercase text-muted-foreground">
               Password
             </Label>
@@ -110,14 +146,19 @@ export function AdminLogin() {
             </div>
           </div>
 
+          {/* Default credentials hint */}
+          <p className="text-[10px] text-muted-foreground text-center">
+            Default: admin@laxpixel.com / admin123
+          </p>
+
           {error && (
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-destructive"
+              className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-3"
             >
               {error}
-            </motion.p>
+            </motion.div>
           )}
 
           <Button
@@ -136,8 +177,21 @@ export function AdminLogin() {
           </Button>
         </form>
 
+        {/* Reset password link */}
+        <div className="mt-5 text-center">
+          <button
+            type="button"
+            onClick={handleResetPassword}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Reset password to default
+          </button>
+        </div>
+
         {/* Back link */}
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <button
             onClick={goBack}
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
