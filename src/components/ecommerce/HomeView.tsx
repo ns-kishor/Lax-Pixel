@@ -139,11 +139,11 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto"
+      className="relative w-full max-w-[300px] sm:max-w-[320px] mx-auto lg:mx-0 lg:ml-auto"
     >
-      <div className="relative glass rounded-2xl border border-border overflow-hidden">
+      <div className="relative glass rounded-xl border border-border overflow-hidden">
         {/* Product Image */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+        <div className="relative aspect-[16/11] overflow-hidden bg-secondary">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={slide.id}
@@ -167,7 +167,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 
           {/* Discount badge */}
           {discount > 0 && (
-            <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px] tracking-wider z-10">
+            <Badge className="absolute top-2 left-2 bg-foreground text-background text-[9px] tracking-wider z-10">
               -{discount}%
             </Badge>
           )}
@@ -177,73 +177,73 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); prev(); }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3 h-3" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); next(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3" />
               </button>
             </>
           )}
         </div>
 
         {/* Card Content */}
-        <div className="p-5 sm:p-6">
+        <div className="p-3.5 sm:p-4">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={slide.id + '-info'}
               custom={direction}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">
+              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5">
                 {slide.category?.name}
               </p>
-              <h3 className="text-lg sm:text-xl font-light tracking-wide leading-tight">
+              <h3 className="text-sm sm:text-[15px] font-light tracking-wide leading-tight">
                 {slide.name}
               </h3>
-              <div className="flex items-center gap-2 mt-2">
-                <Star className="w-3.5 h-3.5 fill-foreground text-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {slide.rating} · {slide.reviewCount} reviews
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Star className="w-3 h-3 fill-foreground text-foreground" />
+                <span className="text-[11px] text-muted-foreground">
+                  {slide.rating} · {slide.reviewCount}
                 </span>
               </div>
-              <div className="flex items-center gap-3 mt-3">
-                <span className="text-xl font-light">
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-base font-light">
                   ${slide.price.toLocaleString()}
                 </span>
                 {slide.comparePrice && (
-                  <span className="text-sm text-muted-foreground line-through">
+                  <span className="text-xs text-muted-foreground line-through">
                     ${slide.comparePrice.toLocaleString()}
                   </span>
                 )}
               </div>
               <Button
-                className="w-full mt-4 h-11 bg-foreground text-background text-xs tracking-[0.15em] uppercase rounded-lg hover:bg-foreground/90"
+                className="w-full mt-3 h-9 bg-foreground text-background text-[11px] tracking-[0.12em] uppercase rounded-lg hover:bg-foreground/90"
                 onClick={() => selectProduct(slide)}
               >
-                Shop Now <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                Shop Now <ArrowRight className="w-3 h-3 ml-1.5" />
               </Button>
             </motion.div>
           </AnimatePresence>
 
           {/* Dots */}
           {slideCount > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-5">
+            <div className="flex items-center justify-center gap-1.5 mt-3">
               {slides.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => goTo(i, i > current ? 1 : -1)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                  className={`h-1 rounded-full transition-all duration-300 ${
                     i === current
-                      ? 'w-6 bg-foreground'
-                      : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/60'
+                      ? 'w-5 bg-foreground'
+                      : 'w-1 bg-muted-foreground/40 hover:bg-muted-foreground/60'
                   }`}
                 />
               ))}
