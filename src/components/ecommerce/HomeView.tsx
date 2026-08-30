@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useStore, authHeaders } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Product, Category } from '@/lib/store';
 import Image from 'next/image';
 
@@ -93,6 +93,168 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   );
 }
 
+function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { selectProduct } = useStore();
+
+  const slideCount = Math.min(featuredProducts.length, 6);
+  const slides = featuredProducts.slice(0, slideCount);
+
+  const goTo = useCallback((idx: number, dir: number) => {
+    setDirection(dir);
+    setCurrent(idx);
+  }, []);
+
+  const next = useCallback(() => {
+    setDirection(1);
+    setCurrent(prev => (prev + 1) % slideCount);
+  }, [slideCount]);
+
+  const prev = useCallback(() => {
+    setDirection(-1);
+    setCurrent(prev => (prev - 1 + slideCount) % slideCount);
+  }, [slideCount]);
+
+  useEffect(() => {
+    if (slideCount <= 1) return;
+    intervalRef.current = setInterval(next, 5000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [next, slideCount]);
+
+  const variants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0, scale: 0.95 }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0, scale: 0.95 }),
+  };
+
+  if (slideCount === 0) return null;
+
+  const slide = slides[current];
+  const discount = slide.comparePrice ? Math.round((1 - slide.price / slide.comparePrice) * 100) : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.8, delay: 0.3 }}
+      className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto"
+    >
+      <div className="relative glass rounded-2xl border border-border overflow-hidden">
+        {/* Product Image */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={slide.id}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={slide.image}
+                alt={slide.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Discount badge */}
+          {discount > 0 && (
+            <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px] tracking-wider z-10">
+              -{discount}%
+            </Badge>
+          )}
+
+          {/* Nav arrows */}
+          {slideCount > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prev(); }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); next(); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Card Content */}
+        <div className="p-5 sm:p-6">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={slide.id + '-info'}
+              custom={direction}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+            >
+              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">
+                {slide.category?.name}
+              </p>
+              <h3 className="text-lg sm:text-xl font-light tracking-wide leading-tight">
+                {slide.name}
+              </h3>
+              <div className="flex items-center gap-2 mt-2">
+                <Star className="w-3.5 h-3.5 fill-foreground text-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {slide.rating} · {slide.reviewCount} reviews
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mt-3">
+                <span className="text-xl font-light">
+                  ${slide.price.toLocaleString()}
+                </span>
+                {slide.comparePrice && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    ${slide.comparePrice.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              <Button
+                className="w-full mt-4 h-11 bg-foreground text-background text-xs tracking-[0.15em] uppercase rounded-lg hover:bg-foreground/90"
+                onClick={() => selectProduct(slide)}
+              >
+                Shop Now <ArrowRight className="w-3.5 h-3.5 ml-2" />
+              </Button>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Dots */}
+          {slideCount > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-5">
+              {slides.map((s, i) => (
+                <button
+                  key={s.id}
+                  onClick={() => goTo(i, i > current ? 1 : -1)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === current
+                      ? 'w-6 bg-foreground'
+                      : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/60'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function HomeView() {
   const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView, setGlobalLoading } = useStore();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -139,30 +301,36 @@ export function HomeView() {
         <div className="absolute inset-0">
           <Image src="/products/hero.png" alt="Lax Pixel" fill className="object-cover opacity-60" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/30" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <Badge variant="secondary" className="mb-6 text-[10px] tracking-[0.3em] uppercase gap-2">
-              <Sparkles className="w-3 h-3" /> AI-Powered Luxury
-            </Badge>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extralight tracking-tight leading-tight max-w-2xl">
-              Redefine
-              <br />
-              <span className="font-medium">Luxury.</span>
-            </h1>
-            <p className="mt-6 text-sm sm:text-base text-muted-foreground font-light max-w-md leading-relaxed">
-              Curated collections, intelligent recommendations, and timeless elegance. Experience shopping elevated by AI.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="bg-foreground text-background h-12 px-8 text-xs tracking-[0.2em] uppercase hover:bg-foreground/90 rounded-lg" onClick={() => setView('shop')}>
-                Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('tracking')}>
-                Track Order
-              </Button>
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left - Text Content */}
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+              <Badge variant="secondary" className="mb-6 text-[10px] tracking-[0.3em] uppercase gap-2">
+                <Sparkles className="w-3 h-3" /> AI-Powered Luxury
+              </Badge>
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-extralight tracking-tight leading-tight max-w-2xl">
+                Redefine
+                <br />
+                <span className="font-medium">Luxury.</span>
+              </h1>
+              <p className="mt-6 text-sm sm:text-base text-muted-foreground font-light max-w-md leading-relaxed">
+                Curated collections, intelligent recommendations, and timeless elegance. Experience shopping elevated by AI.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button size="lg" className="bg-foreground text-background h-12 px-8 text-xs tracking-[0.2em] uppercase hover:bg-foreground/90 rounded-lg" onClick={() => setView('shop')}>
+                  Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('tracking')}>
+                  Track Order
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Right - Product Card Slider */}
+            <HeroSlider featuredProducts={featuredProducts} />
+          </div>
         </div>
       </section>
 
