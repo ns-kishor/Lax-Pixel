@@ -38,7 +38,7 @@ export function ShopView() {
       const params = new URLSearchParams();
       if (shopCategory) params.set('category', shopCategory);
       if (searchQuery) params.set('search', searchQuery);
-      params.set('sort', sortBy);
+      params.set('sort', shopSort);
       const res = await fetch(`/api/products?${params}`);
       const data = await res.json();
       setProducts(data);
