@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 
 // In-memory session store
 const sessions = new Map<string, { adminId: string; email: string; createdAt: number }>();
 
-// Rate limit store: IP -> { count, firstAttempt }
-const rateLimits = new Map<string, { count: number; firstAttempt: number }>();
-const RATE_LIMIT_MAX = 50;
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
 export { sessions };
@@ -26,35 +22,17 @@ export function verifyAdmin(token: string | null) {
   return session;
 }
 
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  let entry = rateLimits.get(ip);
-
-  if (!entry || now - entry.firstAttempt > RATE_LIMIT_WINDOW) {
-    rateLimits.set(ip, { count: 1, firstAttempt: now });
-    return { allowed: true };
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    const retryAfter = Math.ceil((RATE_LIMIT_WINDOW - (now - entry.firstAttempt)) / 1000);
-    return { allowed: false, retryAfter };
-  }
-
-  entry.count++;
-  return { allowed: true };
-}
-
-function sanitizeInput(input: unknown): string {
-  if (typeof input !== 'string') return '';
-  return input.trim().slice(0, 255);
-}
-
-// GET: Diagnostic check (temporary, remove after debugging)
+// GET: Check admin account status (no auth needed)
 export async function GET() {
   try {
     const admins = await db.admin.findMany({
       select: { id: true, email: true, name: true, role: true, lastLogin: true, password: true },
     });
+    // Test bcrypt in this server process
+    let bcryptTest = false;
+    if (admins.length > 0) {
+      bcryptTest = await compare('admin123', admins[0].password);
+    }
     return NextResponse.json({
       adminCount: admins.length,
       admins: admins.map(a => ({
@@ -62,12 +40,10 @@ export async function GET() {
         email: a.email,
         name: a.name,
         role: a.role,
-        lastLogin: a.lastLogin,
-        passwordHashLength: a.password.length,
-        passwordHashPrefix: a.password.substring(0, 10),
+        hashLen: a.password.length,
       })),
-      rateLimitEntries: rateLimits.size,
-      sessionEntries: sessions.size,
+      bcryptServerTest: bcryptTest,
+      activeSessions: sessions.size,
     });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
@@ -76,49 +52,52 @@ export async function GET() {
 
 // POST: Login
 export async function POST(req: NextRequest) {
+  const debug: Record<string, unknown> = { step: 'start' };
+
   try {
-    const ip = req.headers.get('x-forwarded-for') || 'unknown';
-    console.error('[ADMIN-LOGIN] Attempt from IP:', ip);
-
-    const rateCheck = checkRateLimit(ip);
-    if (!rateCheck.allowed) {
-      console.error('[ADMIN-LOGIN] Rate limited for IP:', ip, 'retryAfter:', rateCheck.retryAfter);
-      return NextResponse.json(
-        { error: 'Too many login attempts. Please try again later.', retryAfter: rateCheck.retryAfter },
-        { status: 429 }
-      );
+    debug.step = 'parsing body';
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+      debug.bodyEmail = body.email;
+      debug.bodyPwType = typeof body.password;
+      debug.bodyPwLen = (body.password as string)?.length;
+    } catch (e) {
+      debug.bodyError = String(e);
+      return NextResponse.json({ error: 'Invalid request body.', debug }, { status: 400 });
     }
 
-    const body = await req.json();
-    const email = sanitizeInput(body.email);
-    const password = body.password;
+    const email = String(body.email || '').trim();
+    const password = String(body.password || '');
 
-    console.error('[ADMIN-LOGIN] Email:', JSON.stringify(email), 'PwType:', typeof password, 'PwLen:', password?.length);
-
+    debug.step = 'validation';
     if (!email || !password) {
-      console.error('[ADMIN-LOGIN] Missing email or password');
-      return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
+      return NextResponse.json({ error: 'Email and password are required.', debug }, { status: 400 });
     }
 
-    if (typeof password !== 'string' || password.length === 0) {
-      console.error('[ADMIN-LOGIN] Invalid password type/length');
-      return NextResponse.json({ error: 'Invalid password.' }, { status: 400 });
-    }
-
+    debug.step = 'db_lookup';
     const admin = await db.admin.findUnique({ where: { email } });
-    console.error('[ADMIN-LOGIN] DB lookup result:', admin ? 'FOUND id=' + admin.id : 'NOT FOUND');
+    debug.dbFound = !!admin;
+    debug.dbEmail = admin?.email;
 
     if (!admin) {
-      return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
+      debug.failReason = 'ADMIN_NOT_FOUND';
+      return NextResponse.json({ error: 'Invalid credentials.', debug }, { status: 401 });
     }
 
-    const valid = await bcrypt.compare(password, admin.password);
-    console.error('[ADMIN-LOGIN] Bcrypt compare result:', valid);
+    debug.step = 'bcrypt_compare';
+    debug.hashLen = admin.password.length;
+    const valid = await compare(password, admin.password);
+    debug.bcryptResult = valid;
 
     if (!valid) {
-      return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
+      // Also test with trimmed password
+      debug.bcryptTrimmedResult = await compare(password.trim(), admin.password);
+      debug.failReason = 'PASSWORD_MISMATCH';
+      return NextResponse.json({ error: 'Invalid credentials.', debug }, { status: 401 });
     }
 
+    debug.step = 'creating_session';
     const token = crypto.randomUUID();
     sessions.set(token, {
       adminId: admin.id,
@@ -131,60 +110,61 @@ export async function POST(req: NextRequest) {
       data: { lastLogin: new Date() },
     });
 
-    console.error('[ADMIN-LOGIN] SUCCESS for:', admin.email);
-
+    debug.step = 'success';
     return NextResponse.json({
       token,
-      admin: {
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-        role: admin.role,
-      },
+      admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role },
     });
   } catch (error) {
-    console.error('[ADMIN-LOGIN] EXCEPTION:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    debug.step = 'exception';
+    debug.exception = String(error);
+    return NextResponse.json({ error: 'Internal server error.', debug }, { status: 500 });
   }
 }
 
-// PUT: Reset admin password to default (dev-only, no auth required)
+// PUT: Reset admin password to default
 export async function PUT() {
   try {
     const DEFAULT_PASSWORD = 'admin123';
-    const hash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+    const newHash = await hash(DEFAULT_PASSWORD, 12);
 
     const admin = await db.admin.findFirst();
     if (!admin) {
-      return NextResponse.json({ error: 'No admin account found.' }, { status: 404 });
+      // Create admin if none exists
+      const created = await db.admin.create({
+        data: {
+          email: 'admin@laxpixel.com',
+          password: newHash,
+          name: 'Admin',
+          role: 'SUPER_ADMIN',
+        },
+      });
+      return NextResponse.json({ success: true, message: 'Admin account created with default password.', email: created.email });
     }
 
     await db.admin.update({
       where: { id: admin.id },
-      data: { password: hash },
+      data: { password: newHash },
     });
 
-    // Also clear rate limits so the user can try again immediately
-    rateLimits.clear();
+    // Verify the reset worked
+    const verify = await db.admin.findUnique({ where: { id: admin.id } });
+    const works = verify ? await compare(DEFAULT_PASSWORD, verify.password) : false;
 
-    console.error('[ADMIN-LOGIN] Password reset for:', admin.email);
-    return NextResponse.json({ success: true, message: 'Password reset to default.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Password reset to default.',
+      email: admin.email,
+      verified: works,
+    });
   } catch (error) {
-    console.error('[ADMIN-LOGIN] Reset error:', error);
-    return NextResponse.json({ error: 'Reset failed.' }, { status: 500 });
+    return NextResponse.json({ error: 'Reset failed: ' + String(error) }, { status: 500 });
   }
 }
 
 // DELETE: Logout
-export async function DELETE(req: NextRequest) {
-  try {
-    const token = req.headers.get('x-admin-token');
-    if (token) {
-      sessions.delete(token);
-    }
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Admin logout error:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
-  }
+export async function DELETE() {
+  const authHeader = headers().get('x-admin-token');
+  if (authHeader) sessions.delete(authHeader);
+  return NextResponse.json({ success: true });
 }

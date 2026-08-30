@@ -13,18 +13,18 @@ export function AdminLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const { setAdminUser, setAdminAuthed, setView, showToast } = useStore();
 
-  // Check for existing token on mount
   useEffect(() => {
-    // Clear any stale admin token so we start fresh
     localStorage.removeItem('admin-token');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setDebugInfo(null);
     setLoading(true);
 
     try {
@@ -44,7 +44,9 @@ export function AdminLogin() {
 
       if (!res.ok) {
         const msg = (data.error as string) || 'Login failed.';
-        setError(`${msg} (HTTP ${res.status})`);
+        setError(`${msg}`);
+        // Show debug info if present
+        if (data.debug) setDebugInfo(data.debug as Record<string, unknown>);
         return;
       }
 
@@ -64,27 +66,24 @@ export function AdminLogin() {
   const handleResetPassword = async () => {
     setLoading(true);
     setError('');
+    setDebugInfo(null);
     try {
-      const res = await fetch('/api/admin/auth', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await fetch('/api/admin/auth', { method: 'PUT' });
       const data = await res.json();
       if (res.ok) {
-        showToast('Password reset successfully');
+        showToast(data.message || 'Password reset successfully');
+        setDebugInfo({ resetResult: data });
       } else {
         setError(data.error || 'Reset failed.');
       }
-    } catch (err) {
+    } catch {
       setError('Network error during reset.');
     } finally {
       setLoading(false);
     }
   };
 
-  const goBack = () => {
-    setView('home');
-  };
+  const goBack = () => setView('home');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -94,7 +93,6 @@ export function AdminLogin() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-sm"
       >
-        {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-12 h-12 rounded-full border border-border mx-auto flex items-center justify-center mb-4">
             <span className="text-sm font-bold">LP</span>
@@ -103,7 +101,6 @@ export function AdminLogin() {
           <p className="text-xs text-muted-foreground mt-2 tracking-wider">Administration</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="admin-email" className="text-[10px] tracking-wider uppercase text-muted-foreground">
@@ -131,7 +128,7 @@ export function AdminLogin() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Enter password"
+                placeholder="admin123"
                 required
                 className="h-11 bg-secondary border-border text-sm pr-10"
                 autoComplete="current-password"
@@ -146,7 +143,6 @@ export function AdminLogin() {
             </div>
           </div>
 
-          {/* Default credentials hint */}
           <p className="text-[10px] text-muted-foreground text-center">
             Default: admin@laxpixel.com / admin123
           </p>
@@ -159,6 +155,15 @@ export function AdminLogin() {
             >
               {error}
             </motion.div>
+          )}
+
+          {debugInfo && (
+            <div className="text-[10px] bg-muted rounded-lg p-3 space-y-1 font-mono overflow-auto max-h-48">
+              <p className="font-semibold text-foreground mb-1">Diagnostic Info:</p>
+              {Object.entries(debugInfo).map(([k, v]) => (
+                <p key={k}><span className="text-muted-foreground">{k}:</span> {JSON.stringify(v)}</p>
+              ))}
+            </div>
           )}
 
           <Button
@@ -177,7 +182,6 @@ export function AdminLogin() {
           </Button>
         </form>
 
-        {/* Reset password link */}
         <div className="mt-5 text-center">
           <button
             type="button"
@@ -190,7 +194,6 @@ export function AdminLogin() {
           </button>
         </div>
 
-        {/* Back link */}
         <div className="mt-6 text-center">
           <button
             onClick={goBack}
