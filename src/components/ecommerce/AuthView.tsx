@@ -10,7 +10,7 @@ import { ArrowLeft, Store, User, Sparkles, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function AuthView() {
-  const { goBack, setUser, showToast, setCart, setOrders, setWishlist, setView } = useStore();
+  const { goBack, setUser, showToast, setCart, setOrders, setWishlist, setView, setAdminUser, setAdminAuthed } = useStore();
   const [loading, setLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', role: 'BUYER', phone: '', address: '', city: '', country: '', zipCode: '', companyName: '', companyDescription: '' });
@@ -25,6 +25,18 @@ export function AuthView() {
         showToast(data.error, 'error');
         return;
       }
+
+      // Admin login — redirect to admin panel
+      if (data.isAdmin) {
+        localStorage.setItem('admin-token', data.token);
+        setAdminUser(data.admin);
+        setAdminAuthed(true);
+        setView('admin');
+        showToast(`Welcome back, ${data.admin.name}`);
+        return;
+      }
+
+      // Regular user login
       setUser(data.user, data.sellerProfile);
       // Load user data
       const [cartRes, ordersRes, wishRes] = await Promise.all([

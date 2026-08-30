@@ -228,3 +228,21 @@ Stage Summary:
 - Login with admin@laxpixel.com / admin123 is guaranteed to work via master password fallback
 - Credentials: admin@laxpixel.com / admin123
 - Admin panel accessed at /admin/login or via footer link
+---
+Task ID: 2
+Agent: main
+Task: Unified login - admin can log in through the regular user login page
+
+Work Log:
+- Created shared utility /src/lib/admin-auth.ts with password verification, session management, and tryAdminLogin()
+- Refactored /api/admin/auth/route.ts to use shared utility (slim re-export module)
+- Modified /api/auth/login/route.ts: after checking User table, falls back to tryAdminLogin() for Admin accounts
+- Modified AuthView.tsx: when login response has isAdmin:true, stores admin-token, sets admin state, navigates to admin panel
+- Admin API routes (dashboard, orders, products, etc.) still work since auth/route.ts re-exports sessions and verifyAdmin
+- Lint passes clean
+
+Stage Summary:
+- Admin can now log in via /auth (regular Sign In page) with admin@laxpixel.com / admin123
+- On admin login, user is automatically redirected to the admin panel
+- Regular user login flow unchanged
+- Separate /admin/login page still works as alternative

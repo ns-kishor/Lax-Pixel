@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { compare } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
+import { tryAdminLogin } from '@/lib/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,36 +15,37 @@ export async function POST(req: NextRequest) {
     const email = (body.email as string)?.trim();
     const password = body.password as string;
 
-    console.error('[USER-LOGIN] email:', JSON.stringify(email), 'pwLen:', password?.length || 0);
-
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    // 1. Try regular user login first
     const user = await db.user.findUnique({ where: { email } });
-    console.error('[USER-LOGIN] DB result:', user ? 'FOUND ' + user.id : 'NOT FOUND');
-
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    if (user) {
+      const valid = await compare(password, user.password);
+      if (valid) {
+        const { password: _, ...safeUser } = user;
+        let sellerProfile = null;
+        if (user.role === 'SELLER') {
+          sellerProfile = await db.sellerProfile.findUnique({ where: { userId: user.id } });
+        }
+        return NextResponse.json({ user: safeUser, sellerProfile });
+      }
     }
 
-    const valid = await compare(password, user.password);
-    console.error('[USER-LOGIN] bcrypt compare:', valid);
-
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    // 2. If no user found or password didn't match, try admin login
+    const adminResult = await tryAdminLogin(email, password);
+    if (adminResult) {
+      return NextResponse.json({
+        isAdmin: true,
+        token: adminResult.token,
+        admin: adminResult.admin,
+      });
     }
 
-    const { password: _, ...safeUser } = user;
-    let sellerProfile = null;
-    if (user.role === 'SELLER') {
-      sellerProfile = await db.sellerProfile.findUnique({ where: { userId: user.id } });
-    }
-
-    console.error('[USER-LOGIN] SUCCESS:', user.email);
-    return NextResponse.json({ user: safeUser, sellerProfile });
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   } catch (error) {
-    console.error('[USER-LOGIN] EXCEPTION:', error);
+    console.error('[LOGIN] Exception:', error);
     return NextResponse.json({ error: 'Login failed: ' + String(error) }, { status: 500 });
   }
 }
