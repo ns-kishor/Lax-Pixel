@@ -13,7 +13,6 @@ export function AdminLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const { setAdminUser, setAdminAuthed, setView, showToast } = useStore();
 
@@ -24,7 +23,6 @@ export function AdminLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setDebugInfo(null);
     setLoading(true);
 
     try {
@@ -34,24 +32,15 @@ export function AdminLogin() {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: Record<string, unknown>;
-      try {
-        data = await res.json();
-      } catch {
-        setError(`Server returned status ${res.status} with no JSON body.`);
-        return;
-      }
+      const data = await res.json();
 
       if (!res.ok) {
-        const msg = (data.error as string) || 'Login failed.';
-        setError(`${msg}`);
-        // Show debug info if present
-        if (data.debug) setDebugInfo(data.debug as Record<string, unknown>);
+        setError(data.error || 'Login failed.');
         return;
       }
 
-      localStorage.setItem('admin-token', data.token as string);
-      const admin = data.admin as { id: string; email: string; name: string; role: string };
+      localStorage.setItem('admin-token', data.token);
+      const admin = data.admin;
       setAdminUser(admin);
       setAdminAuthed(true);
       setView('admin');
@@ -66,13 +55,11 @@ export function AdminLogin() {
   const handleResetPassword = async () => {
     setLoading(true);
     setError('');
-    setDebugInfo(null);
     try {
       const res = await fetch('/api/admin/auth', { method: 'PUT' });
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || 'Password reset successfully');
-        setDebugInfo({ resetResult: data });
       } else {
         setError(data.error || 'Reset failed.');
       }
@@ -155,15 +142,6 @@ export function AdminLogin() {
             >
               {error}
             </motion.div>
-          )}
-
-          {debugInfo && (
-            <div className="text-[10px] bg-muted rounded-lg p-3 space-y-1 font-mono overflow-auto max-h-48">
-              <p className="font-semibold text-foreground mb-1">Diagnostic Info:</p>
-              {Object.entries(debugInfo).map(([k, v]) => (
-                <p key={k}><span className="text-muted-foreground">{k}:</span> {JSON.stringify(v)}</p>
-              ))}
-            </div>
           )}
 
           <Button

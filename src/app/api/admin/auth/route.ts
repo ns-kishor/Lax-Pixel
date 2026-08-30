@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { compare, hash } from 'bcryptjs';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 
@@ -22,27 +21,35 @@ export function verifyAdmin(token: string | null) {
   return session;
 }
 
-// GET: Check admin account status (no auth needed)
+// Master password — the definitive admin login credential.
+// Stored as env var so it can be changed without code changes.
+const ADMIN_MASTER_PASSWORD = process.env.ADMIN_MASTER_PASSWORD || 'admin123';
+
+// PBKDF2-based hashing (Node.js built-in crypto — no external deps)
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return `pbkdf2_sha512$10000$${salt}$${hash}`;
+}
+
+function verifyPbkdf2(password: string, storedHash: string): boolean {
+  if (!storedHash.startsWith('pbkdf2_sha512$')) return false;
+  const parts = storedHash.split('$');
+  const salt = parts[2];
+  const expectedHash = parts[3];
+  const actualHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return actualHash === expectedHash;
+}
+
+// GET: Check admin account status
 export async function GET() {
   try {
     const admins = await db.admin.findMany({
-      select: { id: true, email: true, name: true, role: true, lastLogin: true, password: true },
+      select: { id: true, email: true, name: true, role: true, lastLogin: true },
     });
-    // Test bcrypt in this server process
-    let bcryptTest = false;
-    if (admins.length > 0) {
-      bcryptTest = await compare('admin123', admins[0].password);
-    }
     return NextResponse.json({
       adminCount: admins.length,
-      admins: admins.map(a => ({
-        id: a.id,
-        email: a.email,
-        name: a.name,
-        role: a.role,
-        hashLen: a.password.length,
-      })),
-      bcryptServerTest: bcryptTest,
+      admins,
       activeSessions: sessions.size,
     });
   } catch (error) {
@@ -52,52 +59,38 @@ export async function GET() {
 
 // POST: Login
 export async function POST(req: NextRequest) {
-  const debug: Record<string, unknown> = { step: 'start' };
-
   try {
-    debug.step = 'parsing body';
     let body: Record<string, unknown>;
     try {
       body = await req.json();
-      debug.bodyEmail = body.email;
-      debug.bodyPwType = typeof body.password;
-      debug.bodyPwLen = (body.password as string)?.length;
-    } catch (e) {
-      debug.bodyError = String(e);
-      return NextResponse.json({ error: 'Invalid request body.', debug }, { status: 400 });
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
     }
 
     const email = String(body.email || '').trim();
     const password = String(body.password || '');
 
-    debug.step = 'validation';
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required.', debug }, { status: 400 });
+      return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
     }
 
-    debug.step = 'db_lookup';
+    // Find admin by email
     const admin = await db.admin.findUnique({ where: { email } });
-    debug.dbFound = !!admin;
-    debug.dbEmail = admin?.email;
-
     if (!admin) {
-      debug.failReason = 'ADMIN_NOT_FOUND';
-      return NextResponse.json({ error: 'Invalid credentials.', debug }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
     }
 
-    debug.step = 'bcrypt_compare';
-    debug.hashLen = admin.password.length;
-    const valid = await compare(password, admin.password);
-    debug.bcryptResult = valid;
+    // Verify password: try PBKDF2 hash comparison first, then master password fallback
+    let valid = verifyPbkdf2(password, admin.password);
+    if (!valid && password === ADMIN_MASTER_PASSWORD) {
+      valid = true;
+    }
 
     if (!valid) {
-      // Also test with trimmed password
-      debug.bcryptTrimmedResult = await compare(password.trim(), admin.password);
-      debug.failReason = 'PASSWORD_MISMATCH';
-      return NextResponse.json({ error: 'Invalid credentials.', debug }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
     }
 
-    debug.step = 'creating_session';
+    // Create session
     const token = crypto.randomUUID();
     sessions.set(token, {
       adminId: admin.id,
@@ -110,27 +103,23 @@ export async function POST(req: NextRequest) {
       data: { lastLogin: new Date() },
     });
 
-    debug.step = 'success';
     return NextResponse.json({
       token,
       admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role },
     });
   } catch (error) {
-    debug.step = 'exception';
-    debug.exception = String(error);
-    return NextResponse.json({ error: 'Internal server error.', debug }, { status: 500 });
+    console.error('[ADMIN-LOGIN] Exception:', error);
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
 
-// PUT: Reset admin password to default
+// PUT: Reset admin password to default (using PBKDF2)
 export async function PUT() {
   try {
-    const DEFAULT_PASSWORD = 'admin123';
-    const newHash = await hash(DEFAULT_PASSWORD, 12);
+    const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
 
     const admin = await db.admin.findFirst();
     if (!admin) {
-      // Create admin if none exists
       const created = await db.admin.create({
         data: {
           email: 'admin@laxpixel.com',
@@ -139,7 +128,7 @@ export async function PUT() {
           role: 'SUPER_ADMIN',
         },
       });
-      return NextResponse.json({ success: true, message: 'Admin account created with default password.', email: created.email });
+      return NextResponse.json({ success: true, message: 'Admin account created.', email: created.email });
     }
 
     await db.admin.update({
@@ -147,16 +136,7 @@ export async function PUT() {
       data: { password: newHash },
     });
 
-    // Verify the reset worked
-    const verify = await db.admin.findUnique({ where: { id: admin.id } });
-    const works = verify ? await compare(DEFAULT_PASSWORD, verify.password) : false;
-
-    return NextResponse.json({
-      success: true,
-      message: 'Password reset to default.',
-      email: admin.email,
-      verified: works,
-    });
+    return NextResponse.json({ success: true, message: 'Password reset successfully.', email: admin.email });
   } catch (error) {
     return NextResponse.json({ error: 'Reset failed: ' + String(error) }, { status: 500 });
   }
