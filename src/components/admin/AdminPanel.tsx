@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FolderTree,
@@ -15,11 +15,6 @@ import { AdminCategories } from './AdminCategories';
 import { useStore } from '@/lib/store';
 
 export type AdminTab = 'dashboard' | 'users' | 'products' | 'orders' | 'categories';
-
-interface AdminPanelProps {
-  admin: { id: string; email: string; name: string; role: string };
-  onLogout: () => void;
-}
 
 const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -99,10 +94,21 @@ function SidebarContent({ admin, activeTab, onSwitchTab, onLogout }: SidebarCont
   );
 }
 
-export function AdminPanel({ admin, onLogout }: AdminPanelProps) {
+export function AdminPanel() {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { showToast } = useStore();
+  const { adminUser, setAdminUser, setAdminAuthed, setView, showToast } = useStore();
+
+  // Redirect to login if no admin user (useEffect to avoid render-time setState)
+  useEffect(() => {
+    if (!adminUser) {
+      setView('admin-login');
+    }
+  }, [adminUser, setView]);
+
+  if (!adminUser) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
@@ -114,8 +120,10 @@ export function AdminPanel({ admin, onLogout }: AdminPanelProps) {
       // ignore
     }
     localStorage.removeItem('admin-token');
+    setAdminUser(null);
+    setAdminAuthed(false);
     showToast('Logged out', 'info');
-    onLogout();
+    setView('home');
   };
 
   const switchTab = (tab: AdminTab) => {
@@ -137,7 +145,7 @@ export function AdminPanel({ admin, onLogout }: AdminPanelProps) {
     <div className="min-h-screen bg-background flex">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 bg-card border-r border-border flex-col shrink-0">
-        <SidebarContent admin={admin} activeTab={activeTab} onSwitchTab={switchTab} onLogout={handleLogout} />
+        <SidebarContent admin={adminUser} activeTab={activeTab} onSwitchTab={switchTab} onLogout={handleLogout} />
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -158,7 +166,7 @@ export function AdminPanel({ admin, onLogout }: AdminPanelProps) {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed left-0 top-0 bottom-0 z-50 w-60 bg-card border-r border-border flex-col shrink-0 md:hidden"
             >
-              <SidebarContent admin={admin} activeTab={activeTab} onSwitchTab={switchTab} onLogout={handleLogout} />
+              <SidebarContent admin={adminUser} activeTab={activeTab} onSwitchTab={switchTab} onLogout={handleLogout} />
             </motion.aside>
           </>
         )}
@@ -182,9 +190,9 @@ export function AdminPanel({ admin, onLogout }: AdminPanelProps) {
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground hidden sm:block">{admin.name}</span>
+            <span className="text-xs text-muted-foreground hidden sm:block">{adminUser.name}</span>
             <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium">
-              {admin.name.charAt(0).toUpperCase()}
+              {adminUser.name.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>

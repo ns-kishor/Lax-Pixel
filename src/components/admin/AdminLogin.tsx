@@ -4,20 +4,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
 
-interface AdminLoginProps {
-  onLogin: (admin: { id: string; email: string; name: string; role: string }) => void;
-  goBack: () => void;
-}
-
-export function AdminLogin({ onLogin, goBack }: AdminLoginProps) {
+export function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const { setAdminUser, setAdminAuthed, setView, showToast } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,13 +35,19 @@ export function AdminLogin({ onLogin, goBack }: AdminLoginProps) {
       }
 
       localStorage.setItem('admin-token', data.token);
-      onLogin(data.admin);
-      useStore.getState().showToast('Welcome back, Admin');
+      setAdminUser(data.admin);
+      setAdminAuthed(true);
+      setView('admin');
+      showToast('Welcome back, ' + data.admin.name);
     } catch {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const goBack = () => {
+    setView('home');
   };
 
   return (
@@ -82,20 +85,29 @@ export function AdminLogin({ onLogin, goBack }: AdminLoginProps) {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="admin-password" className="text-[10px] tracking-wider uppercase text-muted-foreground">
               Password
             </Label>
-            <Input
-              id="admin-password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="h-11 bg-secondary border-border text-sm"
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <Input
+                id="admin-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter password"
+                required
+                className="h-11 bg-secondary border-border text-sm pr-10"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -111,7 +123,7 @@ export function AdminLogin({ onLogin, goBack }: AdminLoginProps) {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-11 bg-foreground text-background text-xs tracking-[0.2em] uppercase font-normal"
+            className="w-full h-11 bg-foreground text-background text-xs tracking-[0.2em] uppercase font-normal hover:opacity-90"
           >
             {loading ? (
               <span className="flex items-center gap-2">

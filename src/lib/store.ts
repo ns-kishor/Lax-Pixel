@@ -208,7 +208,9 @@ interface AppState {
   setJustAddedToCart: (productId: string | null) => void;
 
   // Admin
+  adminUser: { id: string; email: string; name: string; role: string } | null;
   adminAuthed: boolean;
+  setAdminUser: (admin: { id: string; email: string; name: string; role: string } | null) => void;
   setAdminAuthed: (v: boolean) => void;
 }
 
@@ -329,7 +331,9 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Admin
+  adminUser: null,
   adminAuthed: false,
+  setAdminUser: (admin) => set({ adminUser: admin }),
   setAdminAuthed: (v) => set({ adminAuthed: v }),
 }));
 

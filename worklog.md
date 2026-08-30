@@ -184,3 +184,26 @@ Stage Summary:
 - All API calls use x-admin-token header via adminHeaders() helper
 - Complete CRUD operations: users (delete), products (edit, toggle featured, delete), orders (status update with tracking), categories (add, edit, delete)
 - Zero lint errors, successful compilation
+
+---
+Task ID: 7
+Agent: Main
+Task: Fix admin panel login - missing props and credential issues
+
+Work Log:
+- Diagnosed two issues: (1) AdminLogin/AdminPanel rendered without required props in page.tsx, (2) user didn't know the admin password
+- Verified admin account exists in DB (admin@laxpixel.com / admin123) via bcrypt comparison
+- Added `adminUser` state and `setAdminUser` action to Zustand store
+- Rewrote AdminLogin.tsx to be fully self-contained: uses store's setAdminUser/setAdminAuthed/setView directly instead of props. Added password visibility toggle (eye icon).
+- Rewrote AdminPanel.tsx to be self-contained: reads adminUser from store instead of props, handles logout via store actions, uses useEffect for redirect when adminUser is null
+- Created prisma/seed.mjs: ensures admin@laxpixel.com account always exists with password 'admin123', resets password if account exists
+- Added `db:seed` script to package.json
+- Ran seed script to reset admin password
+- Cleaned up temp files
+- ESLint passes with zero errors
+
+Stage Summary:
+- AdminLogin and AdminPanel no longer require props - fully self-contained via Zustand store
+- Admin credentials: admin@laxpixel.com / admin123
+- Seed script ensures admin account persists across DB resets
+- Zero lint errors
