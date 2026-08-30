@@ -155,10 +155,24 @@ async function seed() {
     },
   });
 
+  // Create admin account
+  const adminPassword = await hash('admin123', 12);
+  await db.admin.upsert({
+    where: { email: 'admin@laxpixel.com' },
+    update: {},
+    create: {
+      email: 'admin@laxpixel.com',
+      password: adminPassword,
+      name: 'Admin',
+      role: 'SUPER_ADMIN',
+    },
+  });
+
   console.log('✅ Database seeded successfully!');
   console.log(`   Categories: ${categories.length}`);
   console.log(`   Products: ${products.length}`);
   console.log(`   Users: 2 (buyer@noir.com / seller@noir.com)`);
+  console.log(`   Admin: admin@laxpixel.com / admin123`);
   console.log(`   Sample Order: ${sampleOrder.orderNumber}`);
 }
 

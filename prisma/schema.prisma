@@ -166,6 +166,17 @@ model Review {
   @@unique([userId, productId])
 }
 
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("SUPER_ADMIN")
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Wishlist {
   id        String   @id @default(cuid())
   userId    String

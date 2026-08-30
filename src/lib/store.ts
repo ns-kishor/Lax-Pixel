@@ -4,7 +4,8 @@ import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
   | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders'
-  | 'auth' | 'tracking' | 'search' | 'content';
+  | 'auth' | 'tracking' | 'search' | 'content'
+  | 'admin-login' | 'admin';
 
 export interface User {
   id: string;
@@ -205,6 +206,10 @@ interface AppState {
   // Add to cart animation
   justAddedToCart: string | null;
   setJustAddedToCart: (productId: string | null) => void;
+
+  // Admin
+  adminAuthed: boolean;
+  setAdminAuthed: (v: boolean) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -322,6 +327,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ justAddedToCart: productId });
     setTimeout(() => set({ justAddedToCart: null }), 1500);
   },
+
+  // Admin
+  adminAuthed: false,
+  setAdminAuthed: (v) => set({ adminAuthed: v }),
 }));
 
 // Helper: fetch with user headers

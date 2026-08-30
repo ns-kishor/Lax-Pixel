@@ -128,3 +128,59 @@ Stage Summary:
 - Zero hardcoded `white/` opacity classes remaining
 - All existing functionality and layout preserved
 - Zero lint errors, successful compilation
+
+---
+Task ID: 5
+Agent: Main
+Task: Create 6 admin API routes with session-based auth, rate limiting, and full CRUD
+
+Work Log:
+- Created /api/admin/auth/route.ts: POST login (bcrypt compare, rate limit 5/15min by IP, session token via crypto.randomUUID, 2h expiry), DELETE logout (remove token from sessions Map). Exported verifyAdmin() helper and sessions Map for cross-route use.
+- Created /api/admin/dashboard/route.ts: GET returns totalUsers, totalOrders, totalRevenue (aggregate sum), totalProducts, recentOrders (last 10 with userName + itemCount), ordersByStatus (grouped counts), topProducts (top 5 by salesCount with categoryName).
+- Created /api/admin/users/route.ts: GET list with ?search=, ?role=, ?page=, ?limit= pagination (includes sellerProfile); DELETE user with self-delete protection; PATCH update user role (validated to BUYER/SELLER).
+- Created /api/admin/products/route.ts: GET list with ?search=, ?category=, ?featured=, ?page=, ?limit= (includes category + seller name); PATCH update with field whitelist (name, description, price, comparePrice, stock, featured, categoryId) and type validation; DELETE with transactional cascade (cartItems, wishlist, orderItems, reviews, product).
+- Created /api/admin/orders/route.ts: GET list with ?status=, ?search= (order number), ?page=, ?limit= (includes user name + item count); PATCH update with status validation, auto paymentStatus sync, OrderTracking creation on status change, optional trackingNumber + estimatedDelivery.
+- Created /api/admin/categories/route.ts: GET all with _count.products; POST create with slug format validation + uniqueness check; PATCH update with name/slug uniqueness checks; DELETE with product-existence guard.
+- All routes: verifyAdmin() via x-admin-token header (except login), input sanitization, proper status codes, try/catch with 500 fallback.
+- Lint passes cleanly, dev server compiles successfully.
+
+Stage Summary:
+- 6 admin API routes created with comprehensive security and validation
+- In-memory session store with 2h expiry
+- Rate limiting on login (5 attempts/15 min per IP)
+- Full CRUD operations for users, products, orders, categories
+- Dashboard with aggregated stats, recent orders, and top products
+
+---
+Task ID: 6
+Agent: Main
+Task: Create complete admin panel frontend (7 components) with luxury B&W design
+
+Work Log:
+- Created /src/components/admin/AdminLogin.tsx: Centered login form with email/password, fetch('/api/admin/auth' POST), token stored in localStorage('admin-token'), loading/error states, luxury minimal design with LP branding, 'Back to site' link calling goBack callback.
+- Created /src/components/admin/AdminPanel.tsx: Main layout with collapsible sidebar (desktop fixed + mobile drawer with AnimatePresence) and content area. Sidebar items: Dashboard, Users, Products, Orders, Categories with lucide icons. Top bar shows admin name + avatar. Tab switching with AnimatePresence transitions. Exports adminHeaders() helper for x-admin-token header. SidebarContent extracted as standalone component (props-based) to satisfy react-hooks/static-components lint rule. Logout calls DELETE /api/admin/auth, clears localStorage, calls onLogout.
+- Created /src/components/admin/AdminDashboard.tsx: 4 stat cards (Total Users, Total Revenue, Total Orders, Total Products) with icons and staggered framer-motion animations. Recent Orders table (last 5) with colored status badges. Orders by Status horizontal bar visualization with animated width bars. Top Products list with sales count and star icons. Full skeleton loading state.
+- Created /src/components/admin/AdminUsers.tsx: User list with search (debounced 300ms), role filter dropdown (All/Buyer/Seller). Table: Name, Email, Role (badge), Joined Date, Delete action (AlertDialog confirmation). Pagination with Previous/Next buttons and page info. Empty state with Users icon.
+- Created /src/components/admin/AdminProducts.tsx: Product list with search, category filter, featured filter. Table with next/image thumbnails, price (with compare price strikethrough), stock (red if ≤5), category, featured badge. Actions: toggle featured, edit (Dialog modal with all fields + category dropdown + Switch for featured), delete (AlertDialog confirmation). Fetches categories from /api/admin/categories for the filter and edit dropdown. Pagination.
+- Created /src/components/admin/AdminOrders.tsx: Order list with search by order number, status filter. Table: Order #, Customer, Items count, Total, Status badge, Date, inline status update Select. Clicking a row expands to show order items (with images). Status update shows a floating bar above the table with optional tracking number + estimated delivery date inputs (shown for SHIPPED/DELIVERED). Pagination.
+- Created /src/components/admin/AdminCategories.tsx: Category list with Add button. Table: Name, Slug (monospace), Products Count (badge), Edit/Delete actions. Add/Edit Dialog with name, slug (auto-generated from name via slugify), description. Delete only enabled when product count is 0, with AlertDialog confirmation.
+- All components: use shadcn/ui (Table, Dialog, AlertDialog, Select, Input, Label, Badge, Button, Skeleton, Switch, Textarea), lucide-react icons, framer-motion animations, theme-aware Tailwind classes (bg-card, bg-secondary, border-border, text-muted-foreground, etc.), toast via useStore.getState().showToast().
+- Fixed lint issues: malformed JSX comments (missing closing `}`), missing Badge import, SidebarContent moved outside render to satisfy react-hooks/static-components rule.
+- ESLint passes with zero errors, dev server compiles successfully.
+
+Design:
+- Admin sidebar: bg-card, border-r border-border
+- Content area: bg-background
+- Stat cards: bg-card, border, large numbers, subtle icon
+- Tables: clean borders, hover:bg-secondary rows
+- Status badges: DELIVERED=green, SHIPPED=secondary, PROCESSING=outline, PENDING=destructive, CANCELLED=muted
+- Status bars: colored divs with framer-motion width animation
+- All data loading shows Skeleton states
+- Professional, clean luxury B&W aesthetic matching the site
+
+Stage Summary:
+- 7 admin panel frontend components created in /src/components/admin/
+- Full admin SPA: login → panel with 5 tab views
+- All API calls use x-admin-token header via adminHeaders() helper
+- Complete CRUD operations: users (delete), products (edit, toggle featured, delete), orders (status update with tracking), categories (add, edit, delete)
+- Zero lint errors, successful compilation

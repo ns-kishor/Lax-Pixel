@@ -15,6 +15,8 @@ import { TrackingView } from '@/components/ecommerce/TrackingView';
 import { AccountView } from '@/components/ecommerce/AccountView';
 import { SellerDashboard } from '@/components/ecommerce/SellerDashboard';
 import { ContentView } from '@/components/ecommerce/ContentView';
+import { AdminLogin } from '@/components/admin/AdminLogin';
+import { AdminPanel } from '@/components/admin/AdminPanel';
 import { AIChat } from '@/components/ecommerce/AIChat';
 import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
@@ -41,6 +43,8 @@ function ViewRouter() {
         {view === 'content' && <ContentView />}
         {view === 'seller-products' && <SellerDashboard />}
         {view === 'seller-orders' && <SellerDashboard />}
+        {view === 'admin-login' && <AdminLogin />}
+        {view === 'admin' && <AdminPanel />}
       </motion.div>
     </AnimatePresence>
   );
@@ -97,7 +101,8 @@ function restoreViewFromUrl() {
 }
 
 export default function Page() {
-  const { globalLoading, setCategories, setProducts, user } = useStore();
+  const { globalLoading, setCategories, setProducts, user, view } = useStore();
+  const isAdmin = view === 'admin' || view === 'admin-login';
 
   // ─── Load initial data ────────────────────────────────────
   useEffect(() => {
@@ -147,17 +152,17 @@ export default function Page() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {!isAdmin && <Header />}
       <main className="flex-1">
-        {globalLoading && (
+        {globalLoading && !isAdmin && (
           <div className="fixed inset-0 z-40 bg-background/80 flex items-center justify-center">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
         )}
         <ViewRouter />
       </main>
-      <Footer />
-      <AIChat />
+      {!isAdmin && <Footer />}
+      {!isAdmin && <AIChat />}
       <Toast />
     </div>
   );
