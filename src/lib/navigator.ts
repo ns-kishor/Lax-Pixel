@@ -17,9 +17,12 @@ export function buildUrl(view: View, params?: Record<string, string>): string {
     case 'shop': {
       if (params?.category) sp.set('category', params.category);
       if (params?.q) sp.set('q', params.q);
+      if (params?.sort) sp.set('sort', params.sort);
       const qs = sp.toString();
       return `/shop${qs ? '?' + qs : ''}`;
     }
+    case 'content':
+      return `/page/${params?.slug || 'about'}`;
     case 'product':
       return `/product/${params?.id || ''}`;
     case 'cart':
@@ -69,6 +72,14 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
     return result;
   }
 
+  // /page/[slug]
+  const pageMatch = pathname.match(/^\/page\/([^/]+)$/);
+  if (pageMatch) {
+    result.view = 'content';
+    result.params.slug = pageMatch[1];
+    return result;
+  }
+
   // Simple path-based views
   const viewMap: Record<string, View> = {
     '/shop': 'shop',
@@ -85,6 +96,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
     result.view = viewMap[pathname];
     if (params.has('category')) result.params.category = params.get('category')!;
     if (params.has('q')) result.params.q = params.get('q')!;
+    if (params.has('sort')) result.params.sort = params.get('sort')!;
     return result;
   }
 

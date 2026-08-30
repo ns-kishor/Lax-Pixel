@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     else if (sort === 'price-desc') orderBy.price = 'desc';
     else if (sort === 'rating') orderBy.rating = 'desc';
     else if (sort === 'popular') orderBy.salesCount = 'desc';
+    else if (sort === 'discount') orderBy.price = 'asc';
     else orderBy.createdAt = 'desc';
 
     const products = await db.product.findMany({

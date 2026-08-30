@@ -14,6 +14,7 @@ import { AuthView } from '@/components/ecommerce/AuthView';
 import { TrackingView } from '@/components/ecommerce/TrackingView';
 import { AccountView } from '@/components/ecommerce/AccountView';
 import { SellerDashboard } from '@/components/ecommerce/SellerDashboard';
+import { ContentView } from '@/components/ecommerce/ContentView';
 import { AIChat } from '@/components/ecommerce/AIChat';
 import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
@@ -37,6 +38,9 @@ function ViewRouter() {
         {view === 'tracking' && <TrackingView />}
         {view === 'account' && <AccountView />}
         {view === 'seller-dashboard' && <SellerDashboard />}
+        {view === 'content' && <ContentView />}
+        {view === 'seller-products' && <SellerDashboard />}
+        {view === 'seller-orders' && <SellerDashboard />}
       </motion.div>
     </AnimatePresence>
   );
@@ -53,6 +57,7 @@ function restoreViewFromUrl() {
   // Sync search query from URL
   if (params.q) store.setSearchQuery(params.q);
   if (params.category) store.setShopCategory(params.category);
+  if (params.sort) store.setShopSort(params.sort);
 
   // Product view — find product from store or fetch
   if (view === 'product' && params.id) {

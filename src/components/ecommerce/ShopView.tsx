@@ -12,8 +12,7 @@ import type { Product } from '@/lib/store';
 import Image from 'next/image';
 
 export function ShopView() {
-  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setGlobalLoading, setView } = useStore();
-  const [sortBy, setSortBy] = useState('createdAt');
+  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setGlobalLoading, setView } = useStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
@@ -27,8 +26,11 @@ export function ShopView() {
       if (params.has('category') && !shopCategory) {
         setShopCategory(params.get('category')!);
       }
+      if (params.has('sort')) {
+        setShopSort(params.get('sort')!);
+      }
     }
-  }, [shopCategory, setShopCategory]);
+  }, [shopCategory, setShopCategory, setShopSort]);
 
   useEffect(() => {
     const load = async () => {
@@ -43,7 +45,7 @@ export function ShopView() {
       setGlobalLoading(false);
     };
     load();
-  }, [shopCategory, sortBy, searchQuery]);
+  }, [shopCategory, shopSort, searchQuery]);
 
   // Push history entry when category changes (within shop view)
   const handleCategoryChange = (slug: string) => {
@@ -103,7 +105,7 @@ export function ShopView() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={shopSort} onValueChange={setShopSort}>
               <SelectTrigger className="w-36 h-9 bg-secondary border-border text-xs">
                 <SelectValue />
               </SelectTrigger>

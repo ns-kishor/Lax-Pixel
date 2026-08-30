@@ -4,7 +4,7 @@ import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
   | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders'
-  | 'auth' | 'tracking' | 'search';
+  | 'auth' | 'tracking' | 'search' | 'content';
 
 export interface User {
   id: string;
@@ -162,6 +162,8 @@ interface AppState {
   // Shop category filter (shared state for URL sync)
   shopCategory: string;
   setShopCategory: (cat: string) => void;
+  shopSort: string;
+  setShopSort: (sort: string) => void;
 
   // AI Chat
   chatMessages: ChatMessage[];
@@ -214,6 +216,8 @@ export const useStore = create<AppState>((set, get) => ({
     if (params?.q) get().setSearchQuery(params.q);
     if (params?.category) get().setShopCategory(params.category);
     else if (view === 'shop' && !params?.category) get().setShopCategory('');
+    // Sync shop sort from params
+    if (view === 'shop' && params?.sort) get().setShopSort(params.sort);
     set({ view });
   },
   goBack: () => {
@@ -264,6 +268,8 @@ export const useStore = create<AppState>((set, get) => ({
   // Shop category filter
   shopCategory: '',
   setShopCategory: (cat) => set({ shopCategory: cat }),
+  shopSort: 'createdAt',
+  setShopSort: (sort) => set({ shopSort: sort }),
 
   // AI Chat
   chatMessages: [{ id: '0', role: 'assistant', content: 'Welcome to Lax Pixel. I am your AI shopping assistant. How may I help you today?', timestamp: new Date() }],
