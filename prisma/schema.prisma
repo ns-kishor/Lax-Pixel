@@ -12,13 +12,14 @@ model User {
   email         String   @unique
   password      String
   name          String
-  role          String   @default("BUYER") // BUYER or SELLER
+  role          String   @default("BUYER")
   avatar        String?
   phone         String?
   address       String?
   city          String?
   country       String   @default("")
   zipCode       String?
+  banned        Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -28,6 +29,7 @@ model User {
   wishlist      Wishlist[]
   sellerProfile SellerProfile?
   products      Product[]
+  paymentProofs PaymentProof[]
 }
 
 model SellerProfile {
@@ -58,33 +60,49 @@ model Category {
 }
 
 model Product {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  description String
-  price       Float
-  comparePrice Float?
-  image       String
-  images      String    @default("")
-  categoryId  String
-  sellerId    String
-  stock       Int       @default(0)
-  featured    Boolean   @default(false)
-  rating      Float     @default(0)
-  reviewCount Int       @default(0)
-  salesCount  Int       @default(0)
- tags        String    @default("")
- aiGenerated Boolean   @default(false)
-  aiTags      String    @default("")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  description   String
+  price         Float
+  comparePrice  Float?
+  image         String
+  images        String    @default("")
+  categoryId    String
+  sellerId      String
+  stock         Int       @default(0)
+  featured      Boolean   @default(false)
+  rating        Float     @default(0)
+  reviewCount   Int       @default(0)
+  salesCount    Int       @default(0)
+  tags          String    @default("")
+  aiGenerated   Boolean   @default(false)
+  aiTags        String    @default("")
+  productCode   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  category    Category  @relation(fields: [categoryId], references: [id])
-  seller      User      @relation(fields: [sellerId], references: [id])
-  reviews     Review[]
-  orderItems  OrderItem[]
-  wishlist    Wishlist[]
-  cartItems   CartItem[]
+  category      Category      @relation(fields: [categoryId], references: [id])
+  seller        User          @relation(fields: [sellerId], references: [id])
+  reviews       Review[]
+  orderItems    OrderItem[]
+  wishlist      Wishlist[]
+  cartItems     CartItem[]
+  specs         ProductSpec[]
+  heroSlides    HeroSlide[]
+}
+
+model ProductSpec {
+  id        String  @id @default(cuid())
+  productId String
+  label     String
+  value     String
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
 }
 
 model CartItem {
@@ -102,28 +120,29 @@ model CartItem {
 }
 
 model Order {
-  id            String   @id @default(cuid())
-  orderNumber   String   @unique
-  userId        String
-  status        String   @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
-  totalAmount   Float
-  subtotal      Float
-  shippingCost  Float    @default(0)
-  tax           Float    @default(0)
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  userId          String
+  status          String   @default("PENDING")
+  totalAmount     Float
+  subtotal        Float
+  shippingCost    Float    @default(0)
+  tax             Float    @default(0)
   shippingAddress String
   shippingCity    String
   shippingCountry String
   shippingZip     String?
-  paymentMethod String   @default("CREDIT_CARD")
-  paymentStatus String   @default("PENDING")
-  trackingNumber String?
+  paymentMethod   String   @default("CREDIT_CARD")
+  paymentStatus   String   @default("PENDING")
+  trackingNumber  String?
   estimatedDelivery DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user          User         @relation(fields: [userId], references: [id])
-  items         OrderItem[]
-  tracking      OrderTracking[]
+  user            User            @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  tracking        OrderTracking[]
+  paymentProofs   PaymentProof[]
 }
 
 model OrderItem {
@@ -143,7 +162,7 @@ model OrderItem {
 model OrderTracking {
   id          String   @id @default(cuid())
   orderId     String
-  status      String   // ORDERED, CONFIRMED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED
+  status      String
   description String
   location    String?
   timestamp   DateTime @default(now())
@@ -161,7 +180,7 @@ model Review {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId])
 }
@@ -184,7 +203,75 @@ model Wishlist {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId])
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  discountType  String   @default("PERCENTAGE")
+  discountValue Float
+  minOrderAmount Float   @default(0)
+  maxUses       Int?
+  usedCount     Int      @default(0)
+  startDate     DateTime?
+  endDate       DateTime?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  productId String
+  startDate DateTime?
+  endDate   DateTime?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model PaymentMethod {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  icon          String?
+  proofRequired String?
+  instructions  String?
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  paymentProofs PaymentProof[]
+}
+
+model PaymentProof {
+  id              String   @id @default(cuid())
+  orderId         String
+  userId          String
+  paymentMethodId String
+  amount          Float
+  proofImage      String?
+  status          String   @default("PENDING")
+  notes           String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  order           Order         @relation(fields: [orderId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }

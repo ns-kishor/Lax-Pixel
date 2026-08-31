@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = sanitizeInput(searchParams.get('search'));
     const role = sanitizeInput(searchParams.get('role'));
+    const bannedParam = searchParams.get('banned');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
     const skip = (page - 1) * limit;
@@ -34,6 +35,9 @@ export async function GET(req: NextRequest) {
     if (role && ['BUYER', 'SELLER'].includes(role.toUpperCase())) {
       where.role = role.toUpperCase();
     }
+    if (bannedParam !== null && bannedParam !== '') {
+      where.banned = bannedParam === 'true';
+    }
 
     const [users, total] = await Promise.all([
       db.user.findMany({
@@ -41,9 +45,6 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          sellerProfile: { select: { companyName: true, approved: true, rating: true, totalSales: true } },
-        },
         select: {
           id: true,
           email: true,
@@ -51,10 +52,18 @@ export async function GET(req: NextRequest) {
           role: true,
           avatar: true,
           phone: true,
-          city: true,
           country: true,
+          city: true,
+          address: true,
+          banned: true,
           createdAt: true,
-          sellerProfile: true,
+          sellerProfile: { select: { companyName: true, approved: true, rating: true, totalSales: true } },
+          _count: {
+            select: {
+              orders: true,
+              wishlist: true,
+            },
+          },
         },
       }),
       db.user.count({ where }),
@@ -99,7 +108,7 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// PATCH: Update user role
+// PATCH: Update user role or ban status
 export async function PATCH(req: NextRequest) {
   try {
     const admin = verifyAdmin(req.headers.get('x-admin-token'));
@@ -109,19 +118,31 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json();
     const id = sanitizeInput(body.id);
-    const role = sanitizeInput(body.role);
-
-    if (!id || !role) {
-      return NextResponse.json({ error: 'User ID and role are required.' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
     }
 
-    if (!['BUYER', 'SELLER'].includes(role.toUpperCase())) {
-      return NextResponse.json({ error: 'Role must be BUYER or SELLER.' }, { status: 400 });
+    const data: Record<string, unknown> = {};
+
+    if (body.role !== undefined) {
+      const role = sanitizeInput(body.role);
+      if (!['BUYER', 'SELLER'].includes(role.toUpperCase())) {
+        return NextResponse.json({ error: 'Role must be BUYER or SELLER.' }, { status: 400 });
+      }
+      data.role = role.toUpperCase();
+    }
+
+    if (body.banned !== undefined) {
+      data.banned = Boolean(body.banned);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update.' }, { status: 400 });
     }
 
     const user = await db.user.update({
       where: { id },
-      data: { role: role.toUpperCase() },
+      data,
     });
 
     return NextResponse.json(user);

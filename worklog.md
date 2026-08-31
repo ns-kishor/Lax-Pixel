@@ -246,3 +246,116 @@ Stage Summary:
 - On admin login, user is automatically redirected to the admin panel
 - Regular user login flow unchanged
 - Separate /admin/login page still works as alternative
+
+---
+Task ID: 4
+Agent: api-routes-builder
+Task: Build all new admin API routes
+
+Work Log:
+- Created coupons API
+- Created hero slides API
+- Created payment methods API
+- Created payment proofs API
+- Created settings API
+- Created sellers API
+- Created upload API
+- Enhanced users API (ban, counts)
+- Enhanced products API (create, specs)
+- Enhanced orders API (payment status, product codes)
+
+Stage Summary:
+- All 10 API route files created/updated
+- Auth pattern: verifyAdmin + sessions import from ../auth/route
+
+---
+Task ID: 5
+Agent: frontend-builder-1
+Task: Create 4 new admin panel frontend components (Coupons, Hero Slider, Payment Methods, Settings) and integrate into admin panel
+
+Work Log:
+- Created /src/components/admin/AdminCoupons.tsx: Full coupon management with search (debounced 300ms), pagination (20/page), table columns (Code monospace, Type badge PERCENTAGE/FIXED, Value, Min Order, Usage usedCount/maxUses, Active badge, Dates start-end, Actions). Add/Edit Dialog with code, discountType select, discountValue number, minOrderAmount number, maxUses nullable number, startDate/endDate date inputs, active Switch. Delete with AlertDialog confirmation. Toggle active action.
+- Created /src/components/admin/AdminHeroSlider.tsx: Hero slide management table with columns (# sortOrder, Product name + thumbnail img, Active dates start-end, Status badge, Actions). Add/Edit Dialog with product select (fetched from /api/products), startDate/endDate date inputs, sortOrder number, active Switch. Delete and toggle active actions.
+- Created /src/components/admin/AdminPaymentMethods.tsx: Payment method management table with columns (Name with icon, Description, Proof Required badge, Instructions truncated, Active badge, Order, Actions). Add/Edit Dialog with name, description, icon text input, proofRequired textarea, instructions textarea, active Switch, sortOrder number. "Seed Bangladeshi Methods" button that POSTs to /api/admin/payment-methods?seed=true.
+- Created /src/components/admin/AdminSettings.tsx: Two sections — (a) Admin Profile showing name/email (read-only) and Change Password form with currentPassword, newPassword, confirmPassword, calling PUT /api/admin/auth with action:'change-password' body; (b) Site Settings key-value editor for footer_description (textarea), footer_copyright, social_facebook, social_instagram, social_youtube, social_tiktok, social_whatsapp. Save button calls PUT /api/admin/settings with { settings: { key: value } }.
+- Updated /src/components/admin/AdminPanel.tsx: Added 4 new tabs to AdminTab type (coupons, hero-slider, payment-methods, settings) and sidebarItems array with lucide icons. Added imports for all 4 new components. Added cases to renderContent switch.
+- Updated /api/admin/auth/route.ts: Enhanced PUT handler to support password change via body params { action: 'change-password', currentPassword, newPassword } with current password verification using verifyAdminPassword(). Original reset-to-default behavior preserved as fallback.
+- Fixed lucide-react Image icon naming conflict (renamed to ImageIcon) to avoid jsx-a11y/alt-text false positive.
+
+Files Created:
+1. /src/components/admin/AdminCoupons.tsx
+2. /src/components/admin/AdminHeroSlider.tsx
+3. /src/components/admin/AdminPaymentMethods.tsx
+4. /src/components/admin/AdminSettings.tsx
+
+Files Modified:
+1. /src/components/admin/AdminPanel.tsx (added 4 tabs, imports, sidebar items, render cases)
+2. /src/app/api/admin/auth/route.ts (enhanced PUT for password change)
+
+Stage Summary:
+- 4 new admin panel components created following existing patterns (adminHeaders, useStore showToast, motion animations, theme-aware classes)
+- All tables use HTML tables with Tailwind styling (not shadcn Table component)
+- All components use Dialog for add/edit, AlertDialog for delete confirmation
+- Status badges use color-coded backgrounds (green-500/10 for active, red-500/10 for inactive)
+- Section entrance animations with motion.div initial={{ opacity: 0, y: 8 }}
+- Loading states show "Loading..." text
+- Search inputs debounced at 300ms
+- Pagination at 20 per page
+- Zero lint errors, successful compilation
+
+---
+Task ID: 6
+Agent: frontend-builder-2
+Task: Create 3 new admin panel frontend components (Payment Proofs, Sellers, Footer)
+
+Work Log:
+- Created /src/components/admin/AdminPaymentProofs.tsx: Payment proof management with status filter dropdown (All/PENDING/VERIFIED/REJECTED), table columns (Order # monospace, Customer name, Payment Method, Amount, Status with colored badges yellow/green/red, Proof Image thumbnail click-to-open in Dialog, Date, Actions Verify/Reject/View Details). Verify: PATCH /api/admin/payment-proofs?id=X { status: 'VERIFIED' }. Reject: PATCH with { status: 'REJECTED' }. Detail Dialog shows all info (customer name/email/phone, order number, payment method, amount, proof image full size, status badge, notes, dates) plus Download Receipt button that opens receipt in new window. Pagination 20/page. motion.tr row animations.
+- Created /src/components/admin/AdminSellers.tsx: Seller account management with search (debounced 300ms) and status filter dropdown (All/Approved/Pending/Banned). Table columns: Company Name, Seller Name, Email, Phone, Products Count (badge), Orders Count (badge), Status (approved=green, pending=yellow, banned=red badges), Joined Date, Actions (Approve/Ban/Unban/Delete). Approve: PATCH /api/admin/sellers?id=X { approved: true }. Ban: PATCH with { userId: Y, banned: true }. Unban: PATCH with { userId: Y, banned: false }. Delete: DELETE /api/admin/sellers?id=X&userId=Y with AlertDialog confirmation. Pagination 20/page.
+- Created /src/components/admin/AdminFooter.tsx: Footer customization with live preview at top (read-only card showing footer as it will appear — logo, description, social icons, copyright) and form fields below (Footer Description textarea, Copyright Text input, Social Links: Facebook/Instagram/YouTube/TikTok URLs, WhatsApp Number). Preview updates in real-time as user types via local state. Save button calls PUT /api/admin/settings with all footer values. motion.div section entrance animations.
+
+Files Created:
+1. /src/components/admin/AdminPaymentProofs.tsx
+2. /src/components/admin/AdminSellers.tsx
+3. /src/components/admin/AdminFooter.tsx
+
+Stage Summary:
+- 3 new admin panel components created following existing patterns (adminHeaders, useStore showToast, motion animations, theme-aware classes)
+- All tables use HTML tables with Tailwind styling (not shadcn Table component)
+- Status badges use color-coded backgrounds (green-500/10 for verified/approved, red-500/10 for rejected/banned, yellow-500/10 for pending)
+- Loading states show "Loading..." text (p-4 text-sm text-muted-foreground)
+- Search inputs debounced at 300ms
+- Pagination at 20 per page
+- Proof image thumbnails with click-to-enlarge Dialog
+- Detail dialog with full info and Download Receipt action
+- Footer live preview with real-time local state updates
+- Zero lint errors, successful compilation
+
+---
+Task ID: 3-9
+Agent: main
+Task: Full admin panel customization - 12 sections
+
+Work Log:
+- Updated Prisma schema: added Coupon, HeroSlide, PaymentMethod, PaymentProof, SiteSetting, ProductSpec models
+- Added User.banned and Product.productCode fields
+- Pushed schema to DB successfully
+- Built AdminPanel shell with all 12 sidebar items
+- Created 7 new API routes: coupons, hero, payment-methods, payment-proofs, settings, sellers, upload
+- Enhanced 3 existing API routes: users (ban, counts), products (create, specs), orders (payment status, product codes)
+- Created 7 new admin components: AdminCoupons, AdminHeroSlider, AdminPaymentMethods, AdminPaymentProofs, AdminFooter, AdminSellers, AdminSettings
+- Rewrote 3 existing components: AdminUsers (ban, full details), AdminProducts (add, specs, images, code), AdminOrders (payment status, receipt with QR)
+- Enhanced admin auth route to support password change
+- All 13 API routes and 14 admin components lint-clean
+
+Stage Summary:
+- 12 admin sections: Dashboard, Users, Products, Orders, Categories, Coupons, Hero Slider, Payments, Payment Proof, Footer, Sellers, Settings
+- Full CRUD for products with specs, multiple images, product codes
+- Order management with payment status, tracking, printable receipt with QR code
+- Coupon system (PERCENTAGE/FIXED, usage limits, date ranges)
+- Hero slider management with date-based activation
+- Payment methods with proof requirements (9 Bangladeshi methods seedable)
+- Payment proof verification/rejection
+- Footer customization with live preview
+- Seller account verification and management
+- Admin settings with profile/password change
+- File upload endpoint for images

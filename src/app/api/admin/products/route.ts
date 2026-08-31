@@ -9,6 +9,13 @@ function sanitizeInput(input: unknown): string {
   return input.trim().slice(0, 1000);
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 // GET: List products
 export async function GET(req: NextRequest) {
   try {
@@ -48,6 +55,7 @@ export async function GET(req: NextRequest) {
         include: {
           category: { select: { id: true, name: true, slug: true } },
           seller: { select: { id: true, name: true, email: true } },
+          specs: { orderBy: { sortOrder: 'asc' } },
         },
       }),
       db.product.count({ where }),
@@ -56,6 +64,90 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ products, total });
   } catch (error) {
     console.error('Admin list products error:', error);
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+  }
+}
+
+// POST: Create product
+export async function POST(req: NextRequest) {
+  try {
+    const admin = verifyAdmin(req.headers.get('x-admin-token'));
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const name = sanitizeInput(body.name);
+    if (!name) {
+      return NextResponse.json({ error: 'Product name is required.' }, { status: 400 });
+    }
+
+    const description = sanitizeInput(body.description) || '';
+    const price = parseFloat(body.price);
+    if (isNaN(price) || price < 0) {
+      return NextResponse.json({ error: 'Invalid price.' }, { status: 400 });
+    }
+
+    const comparePrice = body.comparePrice !== undefined && body.comparePrice !== null ? parseFloat(body.comparePrice) : null;
+    const stock = parseInt(body.stock, 10) || 0;
+    const categoryId = sanitizeInput(body.categoryId);
+    if (!categoryId) {
+      return NextResponse.json({ error: 'categoryId is required.' }, { status: 400 });
+    }
+    const sellerId = sanitizeInput(body.sellerId);
+    if (!sellerId) {
+      return NextResponse.json({ error: 'sellerId is required.' }, { status: 400 });
+    }
+    const featured = body.featured !== undefined ? Boolean(body.featured) : false;
+    const productCode = body.productCode !== undefined ? sanitizeInput(body.productCode) || null : null;
+    const tags = body.tags !== undefined ? sanitizeInput(body.tags) : '';
+    const images = body.images !== undefined ? sanitizeInput(body.images) : '';
+
+    let slug = slugify(name);
+    // Ensure unique slug
+    const existing = await db.product.findUnique({ where: { slug } });
+    if (existing) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
+    // Handle specs
+    const specsData = Array.isArray(body.specs)
+      ? body.specs.map((s: { label: string; value: string }, i: number) => ({
+          label: String(s.label || '').slice(0, 255),
+          value: String(s.value || '').slice(0, 1000),
+          sortOrder: i,
+        }))
+      : [];
+
+    const product = await db.product.create({
+      data: {
+        name,
+        slug,
+        description,
+        price,
+        comparePrice,
+        image: images ? images.split(',')[0].trim() : '',
+        images,
+        categoryId,
+        sellerId,
+        stock,
+        featured,
+        productCode,
+        tags,
+        specs: {
+          create: specsData,
+        },
+      },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        seller: { select: { id: true, name: true, email: true } },
+        specs: { orderBy: { sortOrder: 'asc' } },
+      },
+    });
+
+    return NextResponse.json(product, { status: 201 });
+  } catch (error) {
+    console.error('Admin create product error:', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
@@ -75,7 +167,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const data: Record<string, unknown> = {};
-    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId'];
+    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'images'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
@@ -99,18 +191,42 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    if (Object.keys(data).length === 0) {
+    // Handle specs replacement
+    const hasSpecs = Array.isArray(body.specs);
+
+    const product = await db.$transaction(async (tx) => {
+      // If specs array provided, replace all specs
+      if (hasSpecs) {
+        await tx.productSpec.deleteMany({ where: { productId: id } });
+        const specsData = body.specs.map((s: { label: string; value: string }, i: number) => ({
+          productId: id,
+          label: String(s.label || '').slice(0, 255),
+          value: String(s.value || '').slice(0, 1000),
+          sortOrder: i,
+        }));
+        if (specsData.length > 0) {
+          await tx.productSpec.createMany({ data: specsData });
+        }
+      }
+
+      if (Object.keys(data).length === 0 && !hasSpecs) {
+        return null;
+      }
+
+      return tx.product.update({
+        where: { id },
+        data,
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+          seller: { select: { id: true, name: true, email: true } },
+          specs: { orderBy: { sortOrder: 'asc' } },
+        },
+      });
+    });
+
+    if (!product) {
       return NextResponse.json({ error: 'No valid fields to update.' }, { status: 400 });
     }
-
-    const product = await db.product.update({
-      where: { id },
-      data,
-      include: {
-        category: { select: { id: true, name: true, slug: true } },
-        seller: { select: { id: true, name: true, email: true } },
-      },
-    });
 
     return NextResponse.json(product);
   } catch (error) {
