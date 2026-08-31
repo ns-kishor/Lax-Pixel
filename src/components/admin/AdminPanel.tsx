@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FolderTree,
@@ -20,7 +20,42 @@ import { AdminPaymentProofs } from './AdminPaymentProofs';
 import { AdminFooter } from './AdminFooter';
 import { AdminSellers } from './AdminSellers';
 import { AdminSettings } from './AdminSettings';
+import { adminHeaders } from '@/lib/admin-utils';
 import { useStore } from '@/lib/store';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+
+// Error boundary to prevent one broken tab from crashing the whole admin panel
+class AdminTabErrorBoundary extends Component<
+  { children: ReactNode; tabName: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; tabName: string }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium">Something went wrong</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">Failed to load the {this.props.tabName} section. {this.state.error?.message || ''}</p>
+          </div>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => this.setState({ hasError: false, error: null })}>
+            <RotateCcw className="w-3.5 h-3.5" /> Try Again
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export type AdminTab =
   | 'dashboard' | 'users' | 'products' | 'orders' | 'categories'
@@ -41,15 +76,6 @@ const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard
   { key: 'sellers', label: 'Sellers', icon: Store },
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
-
-function adminHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    'x-admin-token': localStorage.getItem('admin-token') || '',
-  };
-}
-
-export { adminHeaders };
 
 interface SidebarContentProps {
   admin: { id: string; email: string; name: string; role: string };
@@ -188,11 +214,13 @@ export function AdminPanel() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
+          <AdminTabErrorBoundary tabName={sidebarItems.find(i => i.key === activeTab)?.label || activeTab}>
+            <AnimatePresence mode="wait">
+              <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </AdminTabErrorBoundary>
         </main>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { adminHeaders } from './AdminPanel';
+import { adminHeaders } from '@/lib/admin-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,10 +77,16 @@ export function AdminHeroSlider() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/products?limit=100');
+      const res = await fetch('/api/admin/products?limit=100', { headers: adminHeaders() });
       if (res.ok) {
         const data = await res.json();
-        setProducts(data.products || []);
+        const list = Array.isArray(data) ? data : (data.products || []);
+        setProducts(list.map((p: { id: string; name: string; image: string | null; price: number }) => ({
+          id: p.id,
+          name: p.name,
+          image: p.image,
+          price: p.price,
+        })));
       }
     } catch {
       // ignore

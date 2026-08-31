@@ -40,23 +40,35 @@ export async function GET(req: NextRequest) {
             name: true,
             email: true,
             phone: true,
+            address: true,
+            city: true,
+            country: true,
+            avatar: true,
             banned: true,
             createdAt: true,
-            _count: { select: { orders: true } },
+            _count: { select: { orders: true, wishlist: true } },
           },
         },
       },
     });
 
-    // Attach product count
+    // Attach product count and revenue
     const sellersWithCounts = await Promise.all(
       sellers.map(async (s) => {
-        const productCount = await db.product.count({ where: { sellerId: s.userId } });
+        const [productCount, productStats] = await Promise.all([
+          db.product.count({ where: { sellerId: s.userId } }),
+          db.orderItem.findMany({
+            where: { product: { sellerId: s.userId } },
+            select: { price: true, quantity: true },
+          }),
+        ]);
+        const totalRevenue = productStats.reduce((sum, item) => sum + item.price * item.quantity, 0);
         return {
           ...s,
           user: {
             ...s.user,
             productCount,
+            totalRevenue: Math.round(totalRevenue * 100) / 100,
           },
         };
       })

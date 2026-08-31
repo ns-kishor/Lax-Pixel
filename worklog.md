@@ -359,3 +359,27 @@ Stage Summary:
 - Seller account verification and management
 - Admin settings with profile/password change
 - File upload endpoint for images
+---
+Task ID: 1
+Agent: main
+Task: Fix 4 admin panel bugs (Users crash, Products 500, Hero Slider empty, Sellers incomplete)
+
+Work Log:
+- Analyzed screenshot showing client-side exception on Users tab
+- Identified circular import: all 12 admin components imported adminHeaders from AdminPanel, while AdminPanel imported all 12 components
+- Created src/lib/admin-utils.ts with adminHeaders function
+- Updated all 13 files to import from @/lib/admin-utils instead of ./AdminPanel
+- Added AdminTabErrorBoundary class component to AdminPanel for graceful error handling
+- Fixed product creation: sellerId "system" now auto-resolves by finding/creating a system user account
+- Fixed hero slider: changed from /api/products (raw array) to /api/admin/products (with auth) and added Array.isArray handling
+- Expanded sellers API: added address, city, country, avatar, totalRevenue fields
+- Rewrote AdminSellers component: added detail dialog with stats grid, owner info, actions
+- Regenerated Prisma client with bun run db:push (root cause of Users API 500: stale client missing "banned" field)
+
+Stage Summary:
+- Users tab no longer crashes (was: circular import + stale Prisma client)
+- Products can now be created successfully (was: sellerId "system" foreign key violation)
+- Hero slider product dropdown now shows all products (was: wrong API endpoint + wrong data format)
+- Seller section now shows complete details with detail dialog (was: missing address, city, country, revenue, etc.)
+- Added error boundary to prevent future tab crashes from taking down the whole admin panel
+

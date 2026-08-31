@@ -94,9 +94,30 @@ export async function POST(req: NextRequest) {
     if (!categoryId) {
       return NextResponse.json({ error: 'categoryId is required.' }, { status: 400 });
     }
-    const sellerId = sanitizeInput(body.sellerId);
-    if (!sellerId) {
-      return NextResponse.json({ error: 'sellerId is required.' }, { status: 400 });
+    // Resolve sellerId: if 'system' or missing, find/create a system seller account
+    let sellerId = sanitizeInput(body.sellerId);
+    if (!sellerId || sellerId === 'system') {
+      let systemUser = await db.user.findFirst({ where: { email: 'system@laxpixel.com' } });
+      if (!systemUser) {
+        const { hashPassword } = await import('@/lib/admin-auth');
+        systemUser = await db.user.create({
+          data: {
+            email: 'system@laxpixel.com',
+            password: hashPassword('system-pw-' + Date.now()),
+            name: 'Lax Pixel Store',
+            role: 'SELLER',
+          },
+        });
+        // Also create seller profile
+        await db.sellerProfile.create({
+          data: {
+            userId: systemUser.id,
+            companyName: 'Lax Pixel Store',
+            approved: true,
+          },
+        });
+      }
+      sellerId = systemUser.id;
     }
     const featured = body.featured !== undefined ? Boolean(body.featured) : false;
     const productCode = body.productCode !== undefined ? sanitizeInput(body.productCode) || null : null;
