@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FolderTree,
   Ticket, ImageIcon, CreditCard, Settings, FileCheck, FootprintsIcon, Store,
-  LogOut, Menu, ChevronRight,
+  LogOut, Menu, ChevronRight, AlertTriangle, RotateCcw,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminUsers } from './AdminUsers';
 import { AdminProducts } from './AdminProducts';
@@ -22,17 +22,13 @@ import { AdminSellers } from './AdminSellers';
 import { AdminSettings } from './AdminSettings';
 import { adminHeaders } from '@/lib/admin-utils';
 import { useStore } from '@/lib/store';
-import { AlertTriangle, RotateCcw } from 'lucide-react';
 
-// Error boundary to prevent one broken tab from crashing the whole admin panel
+// Error boundary — uses key={activeTab} on parent to force fresh instance per tab
 class AdminTabErrorBoundary extends Component<
   { children: ReactNode; tabName: string },
   { hasError: boolean; error: Error | null }
 > {
-  constructor(props: { children: ReactNode; tabName: string }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+  state = { hasError: false, error: null };
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
@@ -174,6 +170,8 @@ export function AdminPanel() {
     }
   };
 
+  const tabLabel = sidebarItems.find(i => i.key === activeTab)?.label || activeTab;
+
   return (
     <div className="min-h-screen bg-background flex">
       <aside className="hidden md:flex w-60 bg-card border-r border-border flex-col shrink-0">
@@ -202,7 +200,7 @@ export function AdminPanel() {
               <Menu className="w-5 h-5" />
             </Button>
             <h2 className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
-              {sidebarItems.find(i => i.key === activeTab)?.label}
+              {tabLabel}
             </h2>
           </div>
           <div className="flex items-center gap-3">
@@ -214,12 +212,9 @@ export function AdminPanel() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <AdminTabErrorBoundary tabName={sidebarItems.find(i => i.key === activeTab)?.label || activeTab}>
-            <AnimatePresence mode="wait">
-              <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-                {renderContent()}
-              </motion.div>
-            </AnimatePresence>
+          {/* key forces fresh error boundary instance per tab */}
+          <AdminTabErrorBoundary key={activeTab} tabName={tabLabel}>
+            {renderContent()}
           </AdminTabErrorBoundary>
         </main>
       </div>

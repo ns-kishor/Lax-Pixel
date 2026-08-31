@@ -182,8 +182,8 @@ export function AdminUsers() {
             <AlertDialogTitle>{banTarget?.banned ? 'Unban User' : 'Ban User'}</AlertDialogTitle>
             <AlertDialogDescription>
               {banTarget?.banned
-                ? `Are you sure you want to unban ${banTarget.name}? They will be able to log in again.`
-                : `Are you sure you want to ban ${banTarget.name}? They will not be able to log in.`}
+                ? `Are you sure you want to unban ${banTarget?.name}? They will be able to log in again.`
+                : `Are you sure you want to ban ${banTarget?.name}? They will not be able to log in.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

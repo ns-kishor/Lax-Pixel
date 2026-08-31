@@ -383,3 +383,22 @@ Stage Summary:
 - Seller section now shows complete details with detail dialog (was: missing address, city, country, revenue, etc.)
 - Added error boundary to prevent future tab crashes from taking down the whole admin panel
 
+---
+Task ID: 2
+Agent: main
+Task: Fix all admin panel sections showing error on click (Cannot read properties of null reading name)
+
+Work Log:
+- Diagnosed root cause: AdminUsers.tsx line 185-186 accessed banTarget.name without optional chaining inside a dialog that renders content even when closed (shadcn/ui AlertDialog behavior)
+- When banTarget is null, the ternary banTarget?.banned evaluates to falsy, falling through to the else branch which accesses banTarget.name (null.name → TypeError)
+- This crash was caught by the error boundary and cascaded to all sections
+- Fixed AdminUsers.tsx: changed banTarget.name to banTarget?.name on lines 185-186
+- Audited all other 10 admin components for similar patterns — none found
+- Restored AdminTabErrorBoundary in AdminPanel.tsx with key={activeTab} to force fresh instance per tab
+- Verified all 11 sections (Dashboard, Users, Products, Orders, Categories, Coupons, Hero Slider, Payments, Payment Proof, Footer, Sellers, Settings) work correctly via Agent Browser
+- Lint passes cleanly
+
+Stage Summary:
+- Root cause: Missing optional chaining on banTarget.name in AdminUsers ban dialog content
+- All 11 admin sections now render correctly without errors
+- Error boundary restored with key-based remounting for per-tab isolation
