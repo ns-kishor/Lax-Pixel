@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +34,7 @@ export function CheckoutView() {
     try {
       const res = await fetch('/api/orders', {
         method: 'POST', headers: authHeaders(useStore.getState),
-        body: JSON.stringify({ items: cart.map(i => ({ productId: i.productId, productName: i.product.name, productImage: i.product.image, price: i.product.price, quantity: i.quantity })), ...form }),
+        body: JSON.stringify({ items: cart.map(i => ({ productId: i.productId, productName: i.product.name, productImage: safeImgSrc(i.product.image), price: i.product.price, quantity: i.quantity })), ...form }),
       });
       const order = await res.json();
       if (order.id) {

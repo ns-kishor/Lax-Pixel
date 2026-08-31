@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -166,7 +166,7 @@ export function SellerDashboard() {
                 {sellerProducts.map((p, i) => (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                     className="p-4 rounded-xl bg-secondary border border-border hover:border-border cursor-pointer transition-colors" onClick={() => selectProduct(p)}>
-                    <div className="w-full aspect-video rounded-lg overflow-hidden bg-background relative mb-3"><Image src={p.image} alt={p.name} fill className="object-cover" /></div>
+                    <div className="w-full aspect-video rounded-lg overflow-hidden bg-background relative mb-3"><Image src={safeImgSrc(p.image)} alt={p.name} fill className="object-cover" /></div>
                     <div className="flex items-start justify-between">
                       <div><h4 className="text-sm font-medium">{p.name}</h4><p className="text-xs text-muted-foreground mt-0.5">{p.category?.name} • {p.stock} in stock</p></div>
                       <span className="text-sm font-light">${p.price.toLocaleString()}</span>

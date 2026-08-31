@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,7 +89,7 @@ export function AccountView() {
                 <div className="space-y-3">
                   {wishlistItems.map((w: any) => (
                     <div key={w.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary cursor-pointer transition-colors" onClick={() => useStore.getState().selectProduct(w.product)}>
-                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-background relative shrink-0"><Image src={w.product.image} alt={w.product.name} fill className="object-cover" /></div>
+                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-background relative shrink-0"><Image src={safeImgSrc(w.product.image)} alt={w.product.name} fill className="object-cover" /></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{w.product.name}</p>
                         <p className="text-xs text-muted-foreground">${w.product.price.toLocaleString()}</p>

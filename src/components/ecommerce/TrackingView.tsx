@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useStore } from '@/lib/store';
+import { useStore, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +91,7 @@ export function TrackingView() {
             <div className="flex gap-3 mb-8">
               {order.items.map((item, idx) => (
                 <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden bg-secondary border border-border relative">
-                  <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                  <Image src={safeImgSrc(item.productImage)} alt={item.productName} fill className="object-cover" />
                 </div>
               ))}
             </div>

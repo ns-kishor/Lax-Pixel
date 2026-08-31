@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const orderItems = items || cartItems.map(ci => ({
       productId: ci.product.id,
       productName: ci.product.name,
-      productImage: ci.product.image,
+      productImage: ci.product.image || '/products/hero.png',
       price: ci.product.price,
       quantity: ci.quantity,
     }));

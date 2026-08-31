@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package, ArrowRight, MapPin, Clock, CheckCircle2, Truck, Eye } from 'lucide-react';
@@ -63,7 +63,7 @@ export function OrdersView() {
                       {order.items.slice(0, 3).map(function(item, idx) {
                         return (
                           <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden border-2 border-secondary relative">
-                            <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                            <Image src={safeImgSrc(item.productImage)} alt={item.productName} fill className="object-cover" />
                           </div>
                         );
                       })}
@@ -166,7 +166,7 @@ export function OrderDetailView() {
             {order.items.map(item => (
               <div key={item.id} className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-background relative">
-                  <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                  <Image src={safeImgSrc(item.productImage)} alt={item.productName} fill className="object-cover" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.productName}</p>

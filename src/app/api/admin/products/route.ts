@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
         description,
         price,
         comparePrice,
-        image: images ? images.split(',')[0].trim() : '',
+        image: images ? images.split(',')[0].trim() : '/products/hero.png',
         images,
         categoryId,
         sellerId,
@@ -188,7 +188,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const data: Record<string, unknown> = {};
-    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'images'];
+    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'images', 'image'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
@@ -210,6 +210,12 @@ export async function PATCH(req: NextRequest) {
           data[field] = sanitizeInput(body[field]);
         }
       }
+    }
+
+    // If images are updated but image (singular) is not, derive it from images
+    if (data.images && !data.image) {
+      const firstImage = String(data.images).split(',')[0].trim();
+      if (firstImage) data.image = firstImage;
     }
 
     // Handle specs replacement

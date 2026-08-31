@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, X, ShoppingBag, ArrowRight, Trash2, Sparkles } from 'lucide-react';
@@ -78,7 +78,7 @@ export function CartView() {
               {cart.map((item) => (
                 <motion.div key={item.id} layout exit={{ opacity: 0, x: -20 }} className="flex gap-4 p-4 rounded-xl bg-secondary border border-border">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-background shrink-0 relative">
-                    <Image src={item.product.image} alt={item.product.name} fill className="object-cover" />
+                    <Image src={safeImgSrc(item.product.image)} alt={item.product.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between">

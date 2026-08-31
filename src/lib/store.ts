@@ -347,3 +347,9 @@ export function authHeaders(getStore: () => AppState): HeadersInit {
   }
   return h;
 }
+
+/** Safe image src helper — returns a placeholder if the value is empty/falsy */
+export function safeImgSrc(src: string | undefined | null): string {
+  if (src && src.trim()) return src;
+  return '/products/hero.png';
+}

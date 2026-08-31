@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -46,7 +46,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     >
       <div className="relative img-zoom rounded-lg overflow-hidden bg-secondary aspect-square">
         {!imgError ? (
-          <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" onError={() => setImgError(true)} />
+          <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" onError={() => setImgError(true)} />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-light">{product.name.charAt(0)}</div>
         )}
@@ -156,7 +156,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
               className="absolute inset-0"
             >
               <Image
-                src={slide.image}
+                src={safeImgSrc(slide.image)}
                 alt={slide.name}
                 fill
                 className="object-cover"

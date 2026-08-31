@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -164,7 +164,7 @@ export function ShopView() {
             {filtered.map((product, i) => (
               <motion.div key={product.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group cursor-pointer" onClick={() => selectProduct(product)}>
                 <div className="relative img-zoom rounded-lg overflow-hidden bg-secondary aspect-square">
-                  <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
+                  <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
                   {product.comparePrice && <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px]">-{Math.round((1 - product.price / product.comparePrice) * 100)}%</Badge>}
                   {product.aiTags && <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] gap-1"><Sparkles className="w-2.5 h-2.5" />AI</Badge>}
                   <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
@@ -191,7 +191,7 @@ export function ShopView() {
                 className="flex gap-4 p-3 rounded-lg border border-border hover:border-border cursor-pointer group transition-colors"
                 onClick={() => selectProduct(product)}>
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-secondary shrink-0">
-                  <Image src={product.image} alt={product.name} width={128} height={128} className="w-full h-full object-cover" />
+                  <Image src={safeImgSrc(product.image)} alt={product.name} width={128} height={128} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 py-1">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>

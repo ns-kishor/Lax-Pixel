@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -58,7 +58,7 @@ export function ProductView() {
           {/* Image */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary">
-              <Image src={product.image} alt={product.name} fill className="object-cover" priority />
+              <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" priority />
               {discount > 0 && <Badge className="absolute top-4 left-4 bg-foreground text-background text-xs">-{discount}%</Badge>}
               {product.aiTags && <Badge variant="secondary" className="absolute top-4 right-4 text-[10px] gap-1"><Sparkles className="w-3 h-3" /> {product.aiTags}</Badge>}
             </div>
