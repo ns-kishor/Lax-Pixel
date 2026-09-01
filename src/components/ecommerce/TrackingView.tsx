@@ -32,7 +32,10 @@ export function TrackingView() {
     setLoading(true);
     try {
       const isTrackingCode = orderNumber.length === 13 && /^\d+$/.test(orderNumber);
-      const res = await fetch(`/api/tracking?${isTrackingCode ? `trackingCode=${orderNumber.trim()}` : `orderNumber=${orderNumber.trim()}`});
+      const url = isTrackingCode
+        ? '/api/tracking?trackingCode=' + orderNumber.trim()
+        : '/api/tracking?orderNumber=' + orderNumber.trim();
+      const res = await fetch(url);
       const data = await res.json();
       if (data.error) { showToast(data.error, 'error'); setOrder(null); }
       else setOrder(data);
@@ -55,8 +58,14 @@ export function TrackingView() {
         <div className="flex gap-3 max-w-lg mx-auto mb-12">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={orderNumber} onChange={e => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 13))} onKeyDown={e => e.key === 'Enter' && track()}
-              placeholder="e.g. 1234567890123" className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg font-mono tracking-wider" maxLength={13} />
+            <Input
+              value={orderNumber}
+              onChange={e => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 13))}
+              onKeyDown={e => e.key === 'Enter' && track()}
+              placeholder="e.g. 1234567890123"
+              className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg font-mono tracking-wider"
+              maxLength={13}
+            />
           </div>
           <Button className="h-11 bg-foreground text-background text-xs tracking-wider px-6 rounded-lg" onClick={track} disabled={loading}>
             {loading ? '...' : 'Track'}
@@ -68,13 +77,16 @@ export function TrackingView() {
             <p className="text-xs tracking-wider uppercase text-muted-foreground mb-3">Your Recent Orders</p>
             <div className="space-y-2">
               {orders.slice(0, 3).map(o => (
-                <button key={o.id} onClick={() => { setOrderNumber(o.trackingCode || o.orderNumber); setOrder(o); }}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary border border-border hover:border-border transition-colors">
+                <button
+                  key={o.id}
+                  onClick={() => { setOrderNumber(o.trackingCode || o.orderNumber); setOrder(o); }}
+                  className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary border border-border hover:border-border transition-colors"
+                >
                   <div className="text-left">
                     <span className="text-sm font-medium block">{o.orderNumber}</span>
-                    {o.trackingCode && <span className="text-[10px] text-muted-foreground font-mono tracking-wider">{o.trackingCode}</span>}rackingCode}</span>}
+                    {o.trackingCode && <span className="text-[10px] text-muted-foreground font-mono tracking-wider">{o.trackingCode}</span>}
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${statusColors[o.status] || ''}`}>{o.status}</Badge>
+                  <Badge variant="outline" className={"text-[10px] " + (statusColors[o.status] || '')}>{o.status}</Badge>
                 </button>
               ))}
             </div>
@@ -89,10 +101,9 @@ export function TrackingView() {
                 {order.trackingCode && <p className="text-xs text-muted-foreground font-mono tracking-widest mt-0.5">Tracking Code: {order.trackingCode}</p>}
                 <p className="text-xs text-muted-foreground">Placed {new Date(order.createdAt).toLocaleDateString()}</p>
               </div>
-              <Badge variant="outline" className={`text-xs tracking-wider ${statusColors[order.status] || ''}`}>{order.status}</Badge>
+              <Badge variant="outline" className={"text-xs tracking-wider " + (statusColors[order.status] || '')}>{order.status}</Badge>
             </div>
 
-            {/* Items preview */}
             <div className="flex gap-3 mb-8">
               {order.items.map((item, idx) => (
                 <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden bg-secondary border border-border relative">
@@ -101,7 +112,6 @@ export function TrackingView() {
               ))}
             </div>
 
-            {/* Timeline */}
             <div className="p-6 rounded-xl bg-secondary border border-border">
               <h3 className="text-sm font-medium tracking-wide mb-6 flex items-center gap-2"><MapPin className="w-4 h-4" /> Shipment Progress</h3>
               <div className="relative">
@@ -110,13 +120,15 @@ export function TrackingView() {
                   const entry = order.tracking.find(t => t.status === step);
                   return (
                     <div key={step} className="flex gap-4 pb-8 last:pb-0 relative">
-                      {idx < steps.length - 1 && <div className={`absolute left-[15px] top-8 w-px h-full ${completed ? 'bg-foreground/30' : 'bg-muted'}`} />}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completed ? 'bg-foreground text-background' : 'bg-secondary border border-border'}`}>
+                      {idx < steps.length - 1 && (
+                        <div className={"absolute left-[15px] top-8 w-px h-full " + (completed ? 'bg-foreground/30' : 'bg-muted')} />
+                      )}
+                      <div className={"w-8 h-8 rounded-full flex items-center justify-center shrink-0 " + (completed ? 'bg-foreground text-background' : 'bg-secondary border border-border')}>
                         {completed ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-3.5 h-3.5 text-muted-foreground" />}
                       </div>
                       <div className="pt-1">
-                        <p className={`text-sm ${completed ? 'font-medium' : 'text-muted-foreground'}`}>{step.replace(/_/g, ' ')}</p>
-                        {entry && <p className="text-xs text-muted-foreground mt-0.5">{entry.description}{entry.location ? ` — ${entry.location}` : ''}</p>}
+                        <p className={"text-sm " + (completed ? 'font-medium' : 'text-muted-foreground')}>{step.replace(/_/g, ' ')}</p>
+                        {entry && <p className="text-xs text-muted-foreground mt-0.5">{entry.description}{entry.location ? ' — ' + entry.location : ''}</p>}
                         {entry && <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(entry.timestamp).toLocaleString()}</p>}
                       </div>
                     </div>

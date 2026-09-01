@@ -176,7 +176,7 @@ export function CheckoutView() {
             )}
           </div>
 
-          {/* Payment proof upload (not for COD) */
+          {/* Payment proof upload (not for COD) */}
           {needsProof && (
             <div className="p-6 rounded-xl bg-secondary border border-border mb-6">
               <h3 className="text-sm font-medium tracking-wide mb-1">Upload Payment Proof</h3>

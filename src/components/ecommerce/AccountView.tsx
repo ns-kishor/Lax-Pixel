@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useStore, authHeaders } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,8 +84,6 @@ export function AccountView() {
     finally { setUploading(false); }
   };
 
-  const isWished = wishlistIds.has(user.id);
-
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -110,7 +108,8 @@ export function AccountView() {
               <p className="text-xs text-muted-foreground">{user.email}</p>
               <Badge variant="secondary" className="mt-3 text-[10px] tracking-wider">{user.role}</Badge>
               <Separator className="bg-secondary my-4" />
-              <Button variant="outline" size="sm" className="w-full text-xs gap-2" onClick={() => fileRef.current?.click()}>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              <Button variant="outline" size="sm" className="w-full text-xs gap-2" onClick={() => avatarPreview ? saveAvatar() : fileRef.current?.click()}>
                 <Camera className="w-3.5 h-3.5" /> {avatarPreview ? 'Save Photo' : 'Change Photo'}
               </Button>
               {avatarPreview && (
@@ -145,11 +144,11 @@ export function AccountView() {
                   <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label><Input value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
                   <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP</Label><Input value={form.zipCode} onChange={e => setForm({ ...form, zipCode: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
                 </div>
-                <Button size="sm" className="bg-foreground text-background text-xs tracking-wider" onClick={saveProfile}><Save <Save className="w-3.5 h-3.5 mr-2" />Save Changes</Button>
+                <Button size="sm" className="bg-foreground text-background text-xs tracking-wider" onClick={saveProfile}><Save className="w-3.5 h-3.5 mr-2" />Save Changes</Button>
               </div>
             </motion.div>
 
-            {/* Change Password */
+            {/* Change Password */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-secondary border border-border">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-sm font-medium tracking-wide flex items-center gap-2"><Lock className="w-4 h-4" /> Change Password</h3>
@@ -198,6 +197,7 @@ export function AccountView() {
             </motion.div>
           </div>
         </div>
+      </div>
     </div>
   );
 }

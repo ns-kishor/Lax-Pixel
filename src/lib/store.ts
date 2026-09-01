@@ -87,6 +87,7 @@ export interface OrderTracking {
 export interface Order {
   id: string;
   orderNumber: string;
+  trackingCode?: string;
   userId: string;
   status: string;
   totalAmount: number;
