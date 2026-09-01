@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FolderTree,
   Ticket, ImageIcon, CreditCard, Settings, FileCheck, FootprintsIcon, Store,
-  LogOut, Menu, ChevronRight, AlertTriangle, RotateCcw,
+  Shield, LogOut, Menu, ChevronRight, AlertTriangle, RotateCcw,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AdminDashboard } from './AdminDashboard';
@@ -20,6 +20,7 @@ import { AdminPaymentProofs } from './AdminPaymentProofs';
 import { AdminFooter } from './AdminFooter';
 import { AdminSellers } from './AdminSellers';
 import { AdminSettings } from './AdminSettings';
+import { AdminVerifications } from './AdminVerifications';
 import { adminHeaders } from '@/lib/admin-utils';
 import { useStore } from '@/lib/store';
 
@@ -56,7 +57,7 @@ class AdminTabErrorBoundary extends Component<
 export type AdminTab =
   | 'dashboard' | 'users' | 'products' | 'orders' | 'categories'
   | 'coupons' | 'hero-slider' | 'payment-methods' | 'payment-proofs'
-  | 'footer' | 'sellers' | 'settings';
+  | 'footer' | 'sellers' | 'verifications' | 'settings';
 
 const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -70,6 +71,7 @@ const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard
   { key: 'payment-proofs', label: 'Payment Proof', icon: FileCheck },
   { key: 'footer', label: 'Footer', icon: FootprintsIcon },
   { key: 'sellers', label: 'Sellers', icon: Store },
+  { key: 'verifications', label: 'Verifications', icon: Shield },
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -166,6 +168,7 @@ export function AdminPanel() {
       case 'payment-proofs': return <AdminPaymentProofs />;
       case 'footer': return <AdminFooter />;
       case 'sellers': return <AdminSellers />;
+      case 'verifications': return <AdminVerifications />;
       case 'settings': return <AdminSettings />;
     }
   };
