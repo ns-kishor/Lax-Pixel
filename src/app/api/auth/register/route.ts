@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
 
     console.error('[USER-REGISTER] email:', JSON.stringify(email), 'name:', JSON.stringify(name), 'role:', role);
 
+    if (!body.termsAccepted) {
+      return NextResponse.json({ error: 'You must accept the Terms and Conditions' }, { status: 400 });
+    }
+
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'Email, password, and name are required' }, { status: 400 });
     }

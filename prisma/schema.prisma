@@ -122,6 +122,7 @@ model CartItem {
 model Order {
   id              String   @id @default(cuid())
   orderNumber     String   @unique
+  trackingCode    String   @unique
   userId          String
   status          String   @default("PENDING")
   totalAmount     Float

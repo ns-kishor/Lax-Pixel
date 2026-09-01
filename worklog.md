@@ -425,3 +425,36 @@ Stage Summary:
 - Defensive `safeImgSrc()` helper prevents future empty image issues
 - Admin API no longer creates products with empty images
 - Browser verification: 0 errors on homepage, shop page, and product detail page
+
+---
+Task ID: 2-a-backend
+Agent: Backend Agent
+Task: Implement 5 backend features - trackingCode, payment-methods, T&C validation, Google auth, order payment proof
+
+Work Log:
+- TASK 1: Added `trackingCode String @unique` field to Order model in prisma/schema.prisma. Force-reset database (required due to existing rows), updated seed.ts to include trackingCode for sample order, re-seeded successfully.
+- TASK 2: Created /api/payment-methods/route.ts - public GET endpoint returning active payment methods ordered by sortOrder asc. Format: { methods: [...] }.
+- TASK 3: Updated /api/auth/register/route.ts - added `termsAccepted` check before field validation, returns 400 'You must accept the Terms and Conditions'. Updated /api/auth/login/route.ts similarly with same validation.
+- TASK 4: Created /src/lib/google-auth.ts with `simulateGoogleAuth(idToken)` helper - if idToken contains '@' uses as email directly with name before @, otherwise generates `user_{random}@gmail.com` with name 'Google User'. Created /api/auth/google/route.ts - POST endpoint accepting { idToken }, creates new BUYER user if not found or logs in existing user, returns { user, sellerProfile } format.
+- TASK 5: Rewrote /api/orders/route.ts POST handler: added `generateTrackingCode()` (13-digit random), stores in trackingCode field. Added payment proof flow: accepts optional paymentMethodId and paymentProofImage, looks up PaymentMethod, validates proofRequired, sets paymentStatus to 'PENDING_VERIFICATION' or 'PENDING' (COD), creates PaymentProof record when proof provided. Stores payment method name in paymentMethod field.
+- ESLint passes with zero errors.
+
+Files Created:
+1. /src/app/api/payment-methods/route.ts
+2. /src/lib/google-auth.ts
+3. /src/app/api/auth/google/route.ts
+
+Files Modified:
+1. /prisma/schema.prisma (added trackingCode to Order)
+2. /src/lib/seed.ts (added trackingCode to sample order)
+3. /src/app/api/auth/register/route.ts (T&C validation)
+4. /src/app/api/auth/login/route.ts (T&C validation)
+5. /src/app/api/orders/route.ts (tracking code + payment proof flow)
+
+Stage Summary:
+- Order model now has 13-digit unique trackingCode field
+- Public payment-methods API returns active methods sorted by sortOrder
+- Auth routes enforce T&C acceptance (400 error if missing)
+- Google OAuth simulation endpoint creates/finds users with BUYER role
+- Order creation supports payment proof validation and PaymentProof record creation
+- Zero lint errors

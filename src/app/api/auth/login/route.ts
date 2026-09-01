@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
+    if (!body.termsAccepted) {
+      return NextResponse.json({ error: 'You must accept the Terms and Conditions' }, { status: 400 });
+    }
+
     const email = (body.email as string)?.trim();
     const password = body.password as string;
 

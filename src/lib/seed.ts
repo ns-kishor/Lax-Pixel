@@ -118,9 +118,11 @@ async function seed() {
 
   // Create a sample order for the buyer
   const orderNumber = `NOR-${Date.now().toString(36).toUpperCase()}`;
+  const trackingCode = String(Math.floor(Math.random() * (9999999999999 - 1000000000000 + 1)) + 1000000000000);
   const sampleOrder = await db.order.create({
     data: {
       orderNumber,
+      trackingCode,
       userId: buyer.id,
       status: 'SHIPPED',
       totalAmount: 4999.00,

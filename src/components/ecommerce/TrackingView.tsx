@@ -31,7 +31,8 @@ export function TrackingView() {
     if (!orderNumber.trim()) { showToast('Enter an order number', 'error'); return; }
     setLoading(true);
     try {
-      const res = await fetch(`/api/tracking?orderNumber=${orderNumber.trim()}`);
+      const isTrackingCode = orderNumber.length === 13 && /^\d+$/.test(orderNumber);
+      const res = await fetch(`/api/tracking?${isTrackingCode ? `trackingCode=${orderNumber.trim()}` : `orderNumber=${orderNumber.trim()}`});
       const data = await res.json();
       if (data.error) { showToast(data.error, 'error'); setOrder(null); }
       else setOrder(data);
@@ -48,14 +49,14 @@ export function TrackingView() {
 
         <div className="text-center mb-12">
           <h1 className="text-3xl font-light tracking-tight">Track Your Order</h1>
-          <p className="text-sm text-muted-foreground mt-2">Enter your order number to see real-time tracking</p>
+          <p className="text-sm text-muted-foreground mt-2">Enter your 13-digit tracking code or order number</p>
         </div>
 
         <div className="flex gap-3 max-w-lg mx-auto mb-12">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={orderNumber} onChange={e => setOrderNumber(e.target.value)} onKeyDown={e => e.key === 'Enter' && track()}
-              placeholder="e.g. NOR-MTEJTX9N" className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg" />
+            <Input value={orderNumber} onChange={e => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 13))} onKeyDown={e => e.key === 'Enter' && track()}
+              placeholder="e.g. 1234567890123" className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg font-mono tracking-wider" maxLength={13} />
           </div>
           <Button className="h-11 bg-foreground text-background text-xs tracking-wider px-6 rounded-lg" onClick={track} disabled={loading}>
             {loading ? '...' : 'Track'}
@@ -67,9 +68,12 @@ export function TrackingView() {
             <p className="text-xs tracking-wider uppercase text-muted-foreground mb-3">Your Recent Orders</p>
             <div className="space-y-2">
               {orders.slice(0, 3).map(o => (
-                <button key={o.id} onClick={() => { setOrderNumber(o.orderNumber); setOrder(o); }}
+                <button key={o.id} onClick={() => { setOrderNumber(o.trackingCode || o.orderNumber); setOrder(o); }}
                   className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary border border-border hover:border-border transition-colors">
-                  <span className="text-sm font-medium">{o.orderNumber}</span>
+                  <div className="text-left">
+                    <span className="text-sm font-medium block">{o.orderNumber}</span>
+                    {o.trackingCode && <span className="text-[10px] text-muted-foreground font-mono tracking-wider">{o.trackingCode}</span>}rackingCode}</span>}
+                  </div>
                   <Badge variant="outline" className={`text-[10px] ${statusColors[o.status] || ''}`}>{o.status}</Badge>
                 </button>
               ))}
@@ -82,6 +86,7 @@ export function TrackingView() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-light">{order.orderNumber}</h2>
+                {order.trackingCode && <p className="text-xs text-muted-foreground font-mono tracking-widest mt-0.5">Tracking Code: {order.trackingCode}</p>}
                 <p className="text-xs text-muted-foreground">Placed {new Date(order.createdAt).toLocaleDateString()}</p>
               </div>
               <Badge variant="outline" className={`text-xs tracking-wider ${statusColors[order.status] || ''}`}>{order.status}</Badge>
