@@ -1,7 +1,7 @@
 import ZAI from 'z-ai-web-dev-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const conversations = new Map<string, { role: string; content: string }[]>();
+const conversations = new Map<string, { role: 'user' | 'system' | 'assistant'; content: string }[]>();
 
 export async function POST(req: NextRequest) {
   try {

@@ -6,17 +6,27 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const orderNumber = searchParams.get('orderNumber');
     const trackingCode = searchParams.get('trackingCode');
-    const query = orderNumber || trackingCode;
+    const orderId = searchParams.get('orderId') || searchParams.get('id');
+    const query = orderNumber || trackingCode || orderId;
 
-    if (!query) return NextResponse.json({ error: 'Order number or tracking code required' }, { status: 400 });
+    if (!query) return NextResponse.json({ error: 'Order number, tracking code, or order ID required' }, { status: 400 });
+
+    let order: any = null;
+
+    if (orderId) {
+      order = await db.order.findUnique({
+        where: { id: orderId },
+        include: { items: true, tracking: { orderBy: { timestamp: 'asc' } }, user: { select: { name: true, email: true } } },
+      });
+    }
 
     // Try trackingCode first (exact match), then orderNumber
-    let order = trackingCode
-      ? await db.order.findUnique({
-          where: { trackingCode },
-          include: { items: true, tracking: { orderBy: { timestamp: 'asc' } }, user: { select: { name: true, email: true } } },
-        })
-      : null;
+    if (!order && trackingCode) {
+      order = await db.order.findUnique({
+        where: { trackingCode },
+        include: { items: true, tracking: { orderBy: { timestamp: 'asc' } }, user: { select: { name: true, email: true } } },
+      });
+    }
 
     if (!order && orderNumber) {
       order = await db.order.findUnique({

@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       include: { product: true },
     });
 
-    const orderItems = items || cartItems.map((ci: { product: { id: string; name: string; image: string }; quantity: number }) => ({
+    const orderItems = items || cartItems.map((ci: { product: { id: string; name: string; image: string; price: number }; quantity: number }) => ({
       productId: ci.product.id,
       productName: ci.product.name,
       productImage: ci.product.image || '/products/hero.png',

@@ -67,13 +67,13 @@ function restoreViewFromUrl() {
   if (view === 'product' && params.id) {
     const product = store.products.find(p => p.id === params.id);
     if (product) {
-      store.setState({ selectedProduct: product, view: 'product' });
+      useStore.setState({ selectedProduct: product, view: 'product' });
     } else if (store.products.length > 0) {
       // Products loaded but not found — go home
       store._setViewDirect('home');
     } else {
       // Products not loaded yet — set view, ProductView will handle missing product
-      store.setState({ view: 'product' });
+      useStore.setState({ view: 'product' });
     }
     return;
   }
@@ -82,12 +82,12 @@ function restoreViewFromUrl() {
   if (view === 'order-detail' && params.id) {
     const order = store.orders.find(o => o.id === params.id);
     if (order) {
-      store.setState({ selectedOrder: order, view: 'order-detail' });
+      useStore.setState({ selectedOrder: order, view: 'order-detail' });
     } else if (store.user) {
       fetch(`/api/tracking?orderId=${params.id}`, { headers: authHeaders(store) })
         .then(r => r.json())
         .then(data => {
-          if (data.id) store.setState({ selectedOrder: data, view: 'order-detail' });
+          if (data.id) useStore.setState({ selectedOrder: data, view: 'order-detail' });
           else store._setViewDirect('orders');
         })
         .catch(() => store._setViewDirect('orders'));

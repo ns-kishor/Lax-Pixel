@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     console.error('[USER-REGISTER] User created:', user.id);
 
-    let sellerProfile = null;
+    let sellerProfile: any = null;
     if (role === 'SELLER') {
       sellerProfile = await db.sellerProfile.create({
         data: {

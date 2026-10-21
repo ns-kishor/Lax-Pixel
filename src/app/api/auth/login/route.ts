@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       const valid = await compare(password, user.password);
       if (valid) {
         const { password: _, ...safeUser } = user;
-        let sellerProfile = null;
+        let sellerProfile: any = null;
         if (user.role === 'SELLER') {
           sellerProfile = await db.sellerProfile.findUnique({ where: { userId: user.id } });
         }

@@ -1,11 +1,14 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/admin-auth';
+import { verifyAdmin } from '../auth/route';
 
 // GET — list all verification requests
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    await adminAuth();
+    const admin = verifyAdmin(req.headers.get('x-admin-token'));
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
     const verifications = await db.sellerVerification.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -13,10 +16,7 @@ export async function GET() {
       },
     });
     return NextResponse.json({ verifications });
-  } catch (err: unknown) {
-    if (err instanceof Error && err.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
 }
@@ -24,7 +24,10 @@ export async function GET() {
 // PUT — approve or reject a verification
 export async function PUT(req: NextRequest) {
   try {
-    const admin = await adminAuth();
+    const admin = verifyAdmin(req.headers.get('x-admin-token'));
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
     const { id, action, rejectReason } = await req.json();
 
     if (!id || !action || !['APPROVE', 'REJECT'].includes(action)) {
@@ -40,7 +43,7 @@ export async function PUT(req: NextRequest) {
       where: { id },
       data: {
         status,
-        reviewedBy: admin.id,
+        reviewedBy: admin.adminId,
         reviewedAt: new Date(),
         rejectReason: action === 'REJECT' ? (rejectReason || 'Verification rejected') : null,
       },

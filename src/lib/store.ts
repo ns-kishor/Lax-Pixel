@@ -202,7 +202,7 @@ interface AppState {
   sellerStats: { productCount: number; totalRevenue: number; totalOrders: number; pendingOrders: number } | null;
   sellerProducts: Product[];
   sellerOrders: Order[];
-  setSellerData: (data: { stats: typeof AppState.sellerStats; products: Product[]; orders: Order[] }) => void;
+  setSellerData: (data: { stats: AppState['sellerStats']; products: Product[]; orders: Order[] }) => void;
 
   // Add to cart animation
   justAddedToCart: string | null;
@@ -339,9 +339,10 @@ export const useStore = create<AppState>((set, get) => ({
 }));
 
 // Helper: fetch with user headers
-export function authHeaders(getStore: () => AppState): HeadersInit {
+export function authHeaders(getStore: (() => AppState) | AppState): HeadersInit {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  const user = getStore().user;
+  const store = typeof getStore === 'function' ? getStore() : getStore;
+  const user = store?.user;
   if (user) {
     h['x-user-id'] = user.id;
     if (user.role === 'SELLER') h['x-seller-id'] = user.id;

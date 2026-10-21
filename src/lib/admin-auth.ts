@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { db } from './db';
 
+import bcrypt from 'bcryptjs';
+
 // Master password — the definitive admin login credential
 const ADMIN_MASTER_PASSWORD = process.env.ADMIN_MASTER_PASSWORD || 'admin123';
 
@@ -32,8 +34,17 @@ export function verifyAdminPassword(password: string, storedHash: string): boole
     const actualHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
     if (actualHash === expectedHash) return true;
   }
+  // Try bcrypt hash comparison (used by seed.mjs)
+  if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$') || storedHash.startsWith('$2y$')) {
+    try {
+      if (bcrypt.compareSync(password, storedHash)) return true;
+    } catch {
+      // fallback
+    }
+  }
   // Fallback: master password direct match
   if (password === ADMIN_MASTER_PASSWORD) return true;
+  if (password === storedHash) return true;
   return false;
 }
 

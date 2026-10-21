@@ -100,8 +100,8 @@ export async function PUT(req: NextRequest) {
 }
 
 // DELETE: Logout
-export async function DELETE() {
-  const authHeader = headers().get('x-admin-token');
+export async function DELETE(req: NextRequest) {
+  const authHeader = req.headers.get('x-admin-token');
   if (authHeader) sessions.delete(authHeader);
   return NextResponse.json({ success: true });
 }
