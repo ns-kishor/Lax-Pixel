@@ -58,7 +58,7 @@ export function ShopView() {
   };
 
   const filtered = useMemo(() => {
-    let f = [...products];
+    let f = Array.isArray(products) ? [...products] : [];
     if (priceRange[0] > 0) f = f.filter(p => p.price >= priceRange[0]);
     if (priceRange[1] < 10000) f = f.filter(p => p.price <= priceRange[1]);
     return f;
@@ -136,7 +136,7 @@ export function ShopView() {
                 <p className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2">Category</p>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => handleCategoryChange('')} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${!shopCategory ? 'bg-foreground text-background border-foreground' : 'border-border hover:border'}`}>All</button>
-                  {categories.map(c => (
+                  {(categories || []).map(c => (
                     <button key={c.id} onClick={() => handleCategoryChange(c.slug)} className={`px-3 py-1.5 rounded-full text-[11px] tracking-wide border transition-colors ${shopCategory === c.slug ? 'bg-foreground text-background border-foreground' : 'border-border hover:border'}`}>{c.name}</button>
                   ))}
                 </div>

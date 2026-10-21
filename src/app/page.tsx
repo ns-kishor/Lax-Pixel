@@ -106,13 +106,23 @@ export default function Page() {
 
   // ─── Load initial data ────────────────────────────────────
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(setCategories);
-    fetch('/api/products').then(r => r.json()).then((products) => {
-      setProducts(products);
-      // After products are loaded, restore the view from URL
-      // (in case it was a product page that needed products to resolve)
-      restoreViewFromUrl();
-    });
+    fetch('/api/categories')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]));
+
+    fetch('/api/products')
+      .then(r => r.ok ? r.json() : [])
+      .then((products) => {
+        setProducts(Array.isArray(products) ? products : []);
+        // After products are loaded, restore the view from URL
+        // (in case it was a product page that needed products to resolve)
+        restoreViewFromUrl();
+      })
+      .catch(() => {
+        setProducts([]);
+        restoreViewFromUrl();
+      });
   }, []);
 
   // ─── Browser history listener (Back / Forward buttons) ────

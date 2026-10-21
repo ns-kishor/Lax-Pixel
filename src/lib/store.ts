@@ -247,8 +247,8 @@ export const useStore = create<AppState>((set, get) => ({
   products: [],
   categories: [],
   selectedProduct: null,
-  setProducts: (products) => set({ products }),
-  setCategories: (categories) => set({ categories }),
+  setProducts: (products) => set({ products: Array.isArray(products) ? products : [] }),
+  setCategories: (categories) => set({ categories: Array.isArray(categories) ? categories : [] }),
   selectProduct: (product) => {
     pushNavigation('product', { id: product.id });
     set({ selectedProduct: product, view: 'product' });
@@ -256,14 +256,14 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Cart
   cart: [],
-  setCart: (cart) => set({ cart }),
-  cartCount: () => get().cart.reduce((s, i) => s + i.quantity, 0),
-  cartTotal: () => get().cart.reduce((s, i) => s + i.product.price * i.quantity, 0),
+  setCart: (cart) => set({ cart: Array.isArray(cart) ? cart : [] }),
+  cartCount: () => (Array.isArray(get().cart) ? get().cart : []).reduce((s, i) => s + i.quantity, 0),
+  cartTotal: () => (Array.isArray(get().cart) ? get().cart : []).reduce((s, i) => s + i.product.price * i.quantity, 0),
 
   // Orders
   orders: [],
   selectedOrder: null,
-  setOrders: (orders) => set({ orders }),
+  setOrders: (orders) => set({ orders: Array.isArray(orders) ? orders : [] }),
   selectOrder: (order) => {
     pushNavigation('order-detail', { id: order.id });
     set({ selectedOrder: order, view: 'order-detail' });
@@ -300,7 +300,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   // AI Recommendations
   recommendations: [],
-  setRecommendations: (products) => set({ recommendations: products }),
+  setRecommendations: (products) => set({ recommendations: Array.isArray(products) ? products : [] }),
 
   // Toast
   toast: null,

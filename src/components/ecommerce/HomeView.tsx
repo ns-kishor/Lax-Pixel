@@ -262,16 +262,26 @@ export function HomeView() {
   useEffect(() => {
     const load = async () => {
       setGlobalLoading(true);
-      const [pRes, cRes] = await Promise.all([
-        fetch('/api/products?featured=true'),
-        fetch('/api/categories'),
-      ]);
-      const p = await pRes.json();
-      const c = await cRes.json();
-      setProducts(p);
-      setCategories(c);
-      setFeaturedProducts(p.filter((pr: Product) => pr.featured));
-      setGlobalLoading(false);
+      try {
+        const [pRes, cRes] = await Promise.all([
+          fetch('/api/products?featured=true').catch(() => null),
+          fetch('/api/categories').catch(() => null),
+        ]);
+        const p = pRes && pRes.ok ? await pRes.json() : [];
+        const c = cRes && cRes.ok ? await cRes.json() : [];
+        const productList = Array.isArray(p) ? p : [];
+        const categoryList = Array.isArray(c) ? c : [];
+        setProducts(productList);
+        setCategories(categoryList);
+        setFeaturedProducts(productList.filter((pr: Product) => pr.featured));
+      } catch (e) {
+        console.error('Failed to load home data:', e);
+        setProducts([]);
+        setCategories([]);
+        setFeaturedProducts([]);
+      } finally {
+        setGlobalLoading(false);
+      }
     };
     load();
   }, []);
@@ -361,7 +371,7 @@ export function HomeView() {
         </div>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
           <button onClick={() => setView('shop')} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">All</button>
-          {categories.map(c => (
+          {(categories || []).map(c => (
             <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); useStore.getState().setShopCategory(c.slug); setView('shop', { category: c.slug }); }} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">{c.name}</button>
           ))}
         </div>

@@ -125,7 +125,7 @@ export function SellerDashboard() {
               <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category *</Label>
                 <select value={newProduct.categoryId} onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })} className="mt-1.5 h-10 w-full px-3 bg-secondary border border-border rounded-md text-sm">
                   <option value="">Select...</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {(categories || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price ($) *</Label><Input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
