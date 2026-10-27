@@ -139,11 +139,11 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full max-w-[300px] sm:max-w-[320px] mx-auto lg:mx-0 lg:ml-auto"
+      className="relative w-full max-w-[696px] mx-auto lg:mx-0 lg:ml-auto"
     >
-      <div className="relative glass rounded-xl border border-border overflow-hidden">
-        {/* Product Image */}
-        <div className="relative aspect-[16/11] overflow-hidden bg-secondary">
+      <div className="relative glass rounded-2xl border border-border overflow-hidden shadow-xl">
+        {/* Product Image - 16:9 ratio, 696px width, 393px height */}
+        <div className="relative w-full max-w-[696px] aspect-[16/9] md:w-[696px] md:h-[393px] overflow-hidden bg-secondary">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={slide.id}
@@ -160,14 +160,15 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
                 alt={slide.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes="(max-width: 1024px) 100vw, 696px"
+                priority
               />
             </motion.div>
           </AnimatePresence>
 
           {/* Discount badge */}
           {discount > 0 && (
-            <Badge className="absolute top-2 left-2 bg-foreground text-background text-[9px] tracking-wider z-10">
+            <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px] tracking-wider z-10 font-medium">
               -{discount}%
             </Badge>
           )}
@@ -177,22 +178,24 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); prev(); }}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-background/90 text-foreground transition-all shadow-md"
+                aria-label="Previous product"
               >
-                <ChevronLeft className="w-3 h-3" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); next(); }}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-secondary transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass border border-border flex items-center justify-center z-10 hover:bg-background/90 text-foreground transition-all shadow-md"
+                aria-label="Next product"
               >
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </>
           )}
         </div>
 
         {/* Card Content */}
-        <div className="p-3.5 sm:p-4">
+        <div className="p-4 sm:p-5">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={slide.id + '-info'}
@@ -201,50 +204,57 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
             >
-              <p className="text-[9px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5">
-                {slide.category?.name}
-              </p>
-              <h3 className="text-sm sm:text-[15px] font-light tracking-wide leading-tight">
-                {slide.name}
-              </h3>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <Star className="w-3 h-3 fill-foreground text-foreground" />
-                <span className="text-[11px] text-muted-foreground">
-                  {slide.rating} · {slide.reviewCount}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-base font-light">
-                  ${slide.price.toLocaleString()}
-                </span>
-                {slide.comparePrice && (
-                  <span className="text-xs text-muted-foreground line-through">
-                    ${slide.comparePrice.toLocaleString()}
-                  </span>
-                )}
+              <div>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5">
+                  {slide.category?.name}
+                </p>
+                <h3 className="text-base sm:text-lg font-light tracking-wide leading-tight">
+                  {slide.name}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-foreground text-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {slide.rating} · {slide.reviewCount}
+                    </span>
+                  </div>
+                  <span className="text-muted-foreground/30">•</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base sm:text-lg font-medium">
+                      ${slide.price.toLocaleString()}
+                    </span>
+                    {slide.comparePrice && (
+                      <span className="text-xs text-muted-foreground line-through">
+                        ${slide.comparePrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               <Button
-                className="w-full mt-3 h-9 bg-foreground text-background text-[11px] tracking-[0.12em] uppercase rounded-lg hover:bg-foreground/90"
+                className="w-full sm:w-auto h-10 px-6 bg-foreground text-background text-xs tracking-[0.12em] uppercase rounded-lg hover:bg-foreground/90 shrink-0"
                 onClick={() => selectProduct(slide)}
               >
-                Shop Now <ArrowRight className="w-3 h-3 ml-1.5" />
+                Shop Now <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </motion.div>
           </AnimatePresence>
 
           {/* Dots */}
           {slideCount > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-3">
+            <div className="flex items-center justify-center gap-2 mt-3 pt-2 border-t border-border/40">
               {slides.map((s, i) => (
                 <button
                   key={s.id}
                   onClick={() => goTo(i, i > current ? 1 : -1)}
-                  className={`h-1 rounded-full transition-all duration-300 ${
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
                     i === current
-                      ? 'w-5 bg-foreground'
-                      : 'w-1 bg-muted-foreground/40 hover:bg-muted-foreground/60'
+                      ? 'w-6 bg-foreground'
+                      : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/60'
                   }`}
+                  aria-label={`Go to slide ${i + 1}`}
                 />
               ))}
             </div>
@@ -307,39 +317,42 @@ export function HomeView() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative h-[80vh] min-h-[600px] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <Image src="/products/hero.png" alt="Lax Pixel" fill className="object-cover opacity-60" priority />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/30" />
-        </div>
+      <section className="relative min-h-[600px] py-14 lg:py-20 flex items-center overflow-hidden bg-background">
+        <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left - Text Content */}
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="lg:col-span-5"
+            >
               <Badge variant="secondary" className="mb-6 text-[10px] tracking-[0.3em] uppercase gap-2">
                 <Sparkles className="w-3 h-3" /> AI-Powered Luxury
               </Badge>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-extralight tracking-tight leading-tight max-w-2xl">
-                Redefine
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extralight tracking-tight leading-tight max-w-xl">
+                Everything You Love.
                 <br />
-                <span className="font-medium">Luxury.</span>
+                <span className="font-medium">All in One Place.</span>
               </h1>
-              <p className="mt-6 text-sm sm:text-base text-muted-foreground font-light max-w-md leading-relaxed">
-                Curated collections, intelligent recommendations, and timeless elegance. Experience shopping elevated by AI.
+              <p className="mt-6 text-sm sm:text-base text-muted-foreground font-light max-w-lg leading-relaxed">
+                Explore everyday essentials, discover new styles, and find products made for your lifestyle.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button size="lg" className="bg-foreground text-background h-12 px-8 text-xs tracking-[0.2em] uppercase hover:bg-foreground/90 rounded-lg" onClick={() => setView('shop')}>
                   Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('tracking')}>
-                  Track Order
+                <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('shop')}>
+                  Start Shopping
                 </Button>
               </div>
             </motion.div>
 
             {/* Right - Product Card Slider */}
-            <HeroSlider featuredProducts={featuredProducts} />
+            <div className="lg:col-span-7 flex justify-center lg:justify-end w-full">
+              <HeroSlider featuredProducts={featuredProducts} />
+            </div>
           </div>
         </div>
       </section>
