@@ -66,8 +66,8 @@ export function Header() {
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <div className="flex flex-col h-full">
                   <div className="p-6 border-b border-border flex items-center gap-3">
-                    <img src="/White mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain block dark:hidden" />
-                    <img src="/Dark mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain hidden dark:block" />
+                    <img src="/White mood.png" alt="Lax Pixel" className="h-8 w-auto object-contain block dark:hidden" />
+                    <img src="/Dark mood.png" alt="Lax Pixel" className="h-8 w-auto object-contain hidden dark:block" />
                     <h2 className="text-lg font-light tracking-widest">Lax Pixel</h2>
                   </div>
                   <nav className="flex-1 p-4 space-y-1">
@@ -103,9 +103,9 @@ export function Header() {
 
           {/* Logo */}
           <button onClick={() => setView('home')} className="flex items-center gap-3 group">
-            <div className="w-9 h-9 relative flex items-center justify-center transition-all duration-300">
-              <img src="/White mood.png" alt="Lax Pixel" className="w-9 h-9 object-contain block dark:hidden" />
-              <img src="/Dark mood.png" alt="Lax Pixel" className="w-9 h-9 object-contain hidden dark:block" />
+            <div className="h-10 sm:h-11 flex items-center justify-center transition-all duration-300">
+              <img src="/White mood.png" alt="Lax Pixel" className="h-10 sm:h-11 w-auto object-contain block dark:hidden" />
+              <img src="/Dark mood.png" alt="Lax Pixel" className="h-10 sm:h-11 w-auto object-contain hidden dark:block" />
             </div>
             <span className="text-lg sm:text-xl font-extralight tracking-[0.3em] hidden sm:block">Lax Pixel</span>
           </button>

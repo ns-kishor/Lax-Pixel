@@ -49,9 +49,9 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 relative flex items-center justify-center">
-                <img src="/White mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain block dark:hidden" />
-                <img src="/Dark mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain hidden dark:block" />
+              <div className="h-9 flex items-center justify-center">
+                <img src="/White mood.png" alt="Lax Pixel" className="h-9 w-auto object-contain block dark:hidden" />
+                <img src="/Dark mood.png" alt="Lax Pixel" className="h-9 w-auto object-contain hidden dark:block" />
               </div>
               <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
             </div>

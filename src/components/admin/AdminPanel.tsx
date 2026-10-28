@@ -87,9 +87,9 @@ function SidebarContent({ admin, activeTab, onSwitchTab, onLogout }: SidebarCont
     <div className="flex flex-col h-full">
       <div className="p-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center">
-            <img src="/White mood.png" alt="Lax Pixel" className="w-9 h-9 object-contain block dark:hidden" />
-            <img src="/Dark mood.png" alt="Lax Pixel" className="w-9 h-9 object-contain hidden dark:block" />
+          <div className="h-9 flex items-center justify-center">
+            <img src="/White mood.png" alt="Lax Pixel" className="h-9 w-auto object-contain block dark:hidden" />
+            <img src="/Dark mood.png" alt="Lax Pixel" className="h-9 w-auto object-contain hidden dark:block" />
           </div>
           <div>
             <p className="text-sm font-light tracking-[0.15em]">Lax Pixel</p>
