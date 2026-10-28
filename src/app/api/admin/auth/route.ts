@@ -7,9 +7,14 @@ export { sessions };
 /** Verify admin token — re-exported for other routes */
 export const verifyAdmin = verifyAdminToken;
 
-// GET: Check admin account status
-export async function GET() {
+// GET: Check admin account status (protected)
+export async function GET(req: NextRequest) {
   try {
+    const admin = verifyAdminToken(req.headers.get('x-admin-token'));
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
     const admins = await db.admin.findMany({
       select: { id: true, email: true, name: true, role: true, lastLogin: true },
     });
@@ -41,11 +46,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error('Admin login error:', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
 
-// PUT: Reset admin password to default OR change password with body params
+// PUT: Change password with body params or initial setup
 export async function PUT(req: NextRequest) {
   try {
     let body: Record<string, unknown> = {};
@@ -83,15 +89,23 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Password changed successfully.' });
     }
 
-    // Default: reset password to master password
-    const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
+    // Default / reset: only allowed during initial bootstrap if no admin exists, or by authenticated super admin
     const admin = await db.admin.findFirst();
     if (!admin) {
+      const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
       const created = await db.admin.create({
         data: { email: 'admin@laxpixel.com', password: newHash, name: 'Admin', role: 'SUPER_ADMIN' },
       });
-      return NextResponse.json({ success: true, message: 'Admin account created.', email: created.email });
+      return NextResponse.json({ success: true, message: 'Admin account initialized.', email: created.email });
     }
+
+    // If admin already exists, reset requires valid admin auth
+    const callerAdmin = verifyAdminToken(req.headers.get('x-admin-token'));
+    if (!callerAdmin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
     await db.admin.update({ where: { id: admin.id }, data: { password: newHash } });
     return NextResponse.json({ success: true, message: 'Password reset successfully.', email: admin.email });
   } catch (error) {

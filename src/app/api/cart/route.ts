@@ -25,22 +25,30 @@ export async function POST(req: NextRequest) {
     const { productId, quantity } = await req.json();
     if (!productId) return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
 
+    const product = await db.product.findUnique({ where: { id: productId } });
+    if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    if (product.stock <= 0) return NextResponse.json({ error: 'Product is currently out of stock' }, { status: 400 });
+
+    const addQty = Math.max(1, Math.min(50, Math.floor(Number(quantity) || 1)));
+
     const existing = await db.cartItem.findUnique({ where: { userId_productId: { userId, productId } } });
     if (existing) {
+      const newQty = Math.min(product.stock, existing.quantity + addQty);
       const updated = await db.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: (existing.quantity || 1) + (quantity || 1) },
+        data: { quantity: newQty },
         include: { product: true },
       });
       return NextResponse.json(updated);
     }
 
     const item = await db.cartItem.create({
-      data: { userId, productId, quantity: quantity || 1 },
+      data: { userId, productId, quantity: Math.min(product.stock, addQty) },
       include: { product: true },
     });
     return NextResponse.json(item, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error('Cart POST error:', error);
     return NextResponse.json({ error: 'Failed to add to cart' }, { status: 500 });
   }
 }
@@ -51,18 +59,27 @@ export async function PUT(req: NextRequest) {
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { productId, quantity } = await req.json();
-    if (quantity <= 0) {
-      await db.cartItem.delete({ where: { userId_productId: { userId, productId } } });
-      return NextResponse.json({ success: true });
+    if (!productId) return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+
+    const numQty = Math.floor(Number(quantity));
+    if (isNaN(numQty) || numQty <= 0) {
+      await db.cartItem.deleteMany({ where: { userId, productId } });
+      return NextResponse.json({ success: true, removed: true });
     }
+
+    const product = await db.product.findUnique({ where: { id: productId } });
+    if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
+    const clampedQty = Math.min(product.stock, Math.min(50, numQty));
 
     const updated = await db.cartItem.update({
       where: { userId_productId: { userId, productId } },
-      data: { quantity },
+      data: { quantity: clampedQty },
       include: { product: true },
     });
     return NextResponse.json(updated);
-  } catch {
+  } catch (error) {
+    console.error('Cart PUT error:', error);
     return NextResponse.json({ error: 'Failed to update cart' }, { status: 500 });
   }
 }
@@ -76,12 +93,14 @@ export async function DELETE(req: NextRequest) {
     const productId = searchParams.get('productId');
 
     if (productId) {
-      await db.cartItem.delete({ where: { userId_productId: { userId, productId } } });
+      await db.cartItem.deleteMany({ where: { userId, productId } });
     } else {
       await db.cartItem.deleteMany({ where: { userId } });
     }
+
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'Failed to remove from cart' }, { status: 500 });
+  } catch (error) {
+    console.error('Cart DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete cart item' }, { status: 500 });
   }
 }

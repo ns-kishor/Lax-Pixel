@@ -26,6 +26,9 @@ export async function POST(req: NextRequest) {
     // 1. Try regular user login first
     const user = await db.user.findUnique({ where: { email } });
     if (user) {
+      if (user.banned) {
+        return NextResponse.json({ error: 'Your account has been suspended. Please contact customer support.' }, { status: 403 });
+      }
       const valid = await compare(password, user.password);
       if (valid) {
         const { password: _, ...safeUser } = user;

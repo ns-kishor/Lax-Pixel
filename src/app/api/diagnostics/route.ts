@@ -1,8 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
+import { verifyAdminToken } from '@/lib/admin-auth';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Protect diagnostic endpoint: only authorized admins may view system diagnostics
+  const admin = verifyAdminToken(req.headers.get('x-admin-token'));
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
   const results: Record<string, unknown> = {};
 
   // 1. Test database connection
@@ -29,49 +36,14 @@ export async function GET() {
     results.bcrypt = { status: 'error', message: String(e) };
   }
 
-  // 3. Test admin credentials
+  // 3. Test admin account count
   try {
-    const admin = await db.admin.findFirst();
-    if (admin) {
-      const valid = await bcrypt.compare('admin123', admin.password);
-      results.adminAccount = {
-        status: 'ok',
-        email: admin.email,
-        passwordValid: valid,
-      };
-    } else {
-      results.adminAccount = { status: 'no_admin_found' };
-    }
+    const adminRecord = await db.admin.findFirst({ select: { id: true, email: true, role: true } });
+    results.adminAccount = adminRecord
+      ? { status: 'ok', email: adminRecord.email, role: adminRecord.role }
+      : { status: 'no_admin_found' };
   } catch (e) {
     results.adminAccount = { status: 'error', message: String(e) };
-  }
-
-  // 4. Test user credentials (first user)
-  try {
-    const firstUser = await db.user.findFirst();
-    if (firstUser) {
-      results.firstUser = {
-        status: 'ok',
-        email: firstUser.email,
-        name: firstUser.name,
-        role: firstUser.role,
-        passwordHashLength: firstUser.password.length,
-      };
-    } else {
-      results.firstUser = { status: 'no_users' };
-    }
-  } catch (e) {
-    results.firstUser = { status: 'error', message: String(e) };
-  }
-
-  // 5. Test full bcrypt round-trip (hash then compare in same process)
-  try {
-    const pw = 'roundtrip_test';
-    const hash = await bcrypt.hash(pw, 12);
-    const match = await bcrypt.compare(pw, hash);
-    results.roundtrip = { status: match ? 'ok' : 'fail', matched: match };
-  } catch (e) {
-    results.roundtrip = { status: 'error', message: String(e) };
   }
 
   return NextResponse.json(results);

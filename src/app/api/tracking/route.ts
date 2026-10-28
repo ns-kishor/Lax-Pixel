@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminToken } from '@/lib/admin-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,12 +45,41 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
-    if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const adminToken = req.headers.get('x-admin-token');
+    const isAdmin = adminToken ? verifyAdminToken(adminToken) : null;
+    const userId = req.headers.get('x-user-id');
+
+    if (!isAdmin && !userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
 
     const { orderId, status, description, location } = await req.json();
+    if (!orderId || !status) {
+      return NextResponse.json({ error: 'Order ID and status are required' }, { status: 400 });
+    }
+
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { product: true } } },
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Authorization check: Must be Admin OR Seller owning a product in the order
+    if (!isAdmin) {
+      const isOwnerSeller = order.items.some((item) => item.product?.sellerId === userId);
+      if (!isOwnerSeller) {
+        return NextResponse.json(
+          { error: 'Forbidden: You do not have permission to update tracking for this order' },
+          { status: 403 }
+        );
+      }
+    }
+
     const tracking = await db.orderTracking.create({
-      data: { orderId, status, description, location: location || '' },
+      data: { orderId, status, description: description || `Status updated to ${status}`, location: location || '' },
     });
 
     const statusMap: Record<string, string> = {
@@ -58,6 +88,7 @@ export async function POST(req: NextRequest) {
       SHIPPED: 'SHIPPED',
       OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
       DELIVERED: 'DELIVERED',
+      CANCELLED: 'CANCELLED',
     };
 
     if (statusMap[status]) {
@@ -65,7 +96,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(tracking, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error('Tracking update error:', error);
     return NextResponse.json({ error: 'Failed to add tracking update' }, { status: 500 });
   }
 }

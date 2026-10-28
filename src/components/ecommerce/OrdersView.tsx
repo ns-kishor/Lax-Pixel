@@ -25,8 +25,13 @@ export function OrdersView() {
   useEffect(() => {
     if (!user) return;
     const h = authHeaders(useStore.getState);
-    fetch('/api/orders', { headers: h }).then(r => r.json()).then(setOrders);
-  }, [user?.id]);
+    fetch('/api/orders', { headers: h })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setOrders(data);
+      })
+      .catch(() => {});
+  }, [user?.id, setOrders]);
 
   if (!user) {
     return (
@@ -40,12 +45,14 @@ export function OrdersView() {
     );
   }
 
+  const orderList = Array.isArray(orders) ? orders : [];
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <h1 className="text-3xl font-light tracking-tight mb-8">My Orders</h1>
 
-        {orders.length === 0 ? (
+        {orderList.length === 0 ? (
           <div className="text-center py-20">
             <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground">No orders yet</p>
@@ -53,43 +60,44 @@ export function OrdersView() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order, i) => (
-              <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="p-5 rounded-xl bg-secondary border border-border hover:border-border transition-colors cursor-pointer"
-                onClick={() => selectOrder(order)}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex -space-x-2">
-                      {order.items.slice(0, 3).map(function(item, idx) {
-                        return (
+            {orderList.map((order, i) => {
+              const items = order.items || [];
+              return (
+                <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="p-5 rounded-xl bg-secondary border border-border hover:border-border transition-colors cursor-pointer"
+                  onClick={() => selectOrder(order)}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex -space-x-2">
+                        {items.slice(0, 3).map((item, idx) => (
                           <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden border-2 border-secondary relative">
-                            <Image src={safeImgSrc(item.productImage)} alt={item.productName} fill className="object-cover" />
+                            <Image src={safeImgSrc(item.productImage)} alt={item.productName || 'Product'} fill className="object-cover" />
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{order.orderNumber}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{items.length} item{items.length !== 1 ? 's' : ''} • {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}</p>
+                        {order.trackingCode && <p className="text-[10px] text-muted-foreground font-mono tracking-wider mt-0.5">Code: {order.trackingCode}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{order.orderNumber}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{order.items.length} item{order.items.length > 1 ? 's' : ''} • {new Date(order.createdAt).toLocaleDateString()}</p>
-                      {order.trackingCode && <p className="text-[10px] text-muted-foreground font-mono tracking-wider mt-0.5">Code: {order.trackingCode}</p>}
+                    <div className="flex items-center gap-4">
+                      <Badge variant="outline" className={`text-[10px] tracking-wider ${statusColors[order.status] || ''}`}>{order.status}</Badge>
+                      {order.paymentStatus === 'PENDING_VERIFICATION' && <Badge variant="outline" className="text-[10px] tracking-wider bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Payment Pending</Badge>}
+                      <span className="text-sm font-light">${(order.totalAmount || 0).toLocaleString()}</span>
+                      <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={(e) => { e.stopPropagation(); selectOrder(order); }}><Eye className="w-3.5 h-3.5" />View</Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className={`text-[10px] tracking-wider ${statusColors[order.status] || ''}`}>{order.status}</Badge>
-                    {order.paymentStatus === 'PENDING_VERIFICATION' && <Badge variant="outline" className="text-[10px] tracking-wider bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Payment Pending</Badge>}
-                    <span className="text-sm font-light">${order.totalAmount.toLocaleString()}</span>
-                    <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={(e) => { e.stopPropagation(); selectOrder(order); }}><Eye className="w-3.5 h-3.5" />View</Button>
-                  </div>
-                </div>
-                {order.trackingNumber && (
-                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
-                    <Truck className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Tracking: {order.trackingNumber}</span>
-                    {order.estimatedDelivery && <span className="text-xs text-muted-foreground ml-auto">Est. delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  {order.trackingNumber && (
+                    <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+                      <Truck className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Tracking: {order.trackingNumber}</span>
+                      {order.estimatedDelivery && <span className="text-xs text-muted-foreground ml-auto">Est. delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}</span>}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -106,18 +114,31 @@ export function OrderDetailView() {
 
   const steps = ['ORDERED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'];
   const currentStepIdx = steps.indexOf(order.status);
+  const items = order.items || [];
+  const trackingEntries = order.tracking || [];
 
   const addTrackingUpdate = async () => {
     if (!updateStatus || user?.role !== 'SELLER') return;
-    await fetch('/api/tracking', {
-      method: 'POST', headers: authHeaders(useStore.getState),
-      body: JSON.stringify({ orderId: order.id, status: updateStatus, description: updateDesc || `Order ${updateStatus.toLowerCase()}` }),
-    });
-    showToast('Tracking updated');
-    setUpdateStatus('');
-    setUpdateDesc('');
-    const res = await fetch('/api/orders', { headers: authHeaders(useStore.getState) });
-    useStore.getState().setOrders(await res.json());
+    try {
+      const res = await fetch('/api/tracking', {
+        method: 'POST',
+        headers: authHeaders(useStore.getState),
+        body: JSON.stringify({ orderId: order.id, status: updateStatus, description: updateDesc || `Order ${updateStatus.toLowerCase()}` }),
+      });
+      if (res.ok) {
+        showToast('Tracking updated');
+        setUpdateStatus('');
+        setUpdateDesc('');
+        const ordersRes = await fetch('/api/orders', { headers: authHeaders(useStore.getState) });
+        const data = await ordersRes.json();
+        if (Array.isArray(data)) setOrders(data);
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to update tracking', 'error');
+      }
+    } catch {
+      showToast('Network error while updating tracking', 'error');
+    }
   };
 
   return (
@@ -130,7 +151,9 @@ export function OrderDetailView() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-light tracking-tight">Order {order.orderNumber}</h1>
-            <p className="text-xs text-muted-foreground mt-1">Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+            </p>
             {order.trackingCode && <p className="text-xs text-muted-foreground font-mono tracking-widest mt-1">Tracking Code: {order.trackingCode}</p>}
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -145,7 +168,7 @@ export function OrderDetailView() {
           <div className="relative">
             {steps.map((step, idx) => {
               const completed = idx <= currentStepIdx;
-              const trackingEntry = order.tracking.find(t => t.status === step);
+              const trackingEntry = trackingEntries.find((t) => t.status === step);
               return (
                 <div key={step} className="flex gap-4 pb-8 last:pb-0 relative">
                   {idx < steps.length - 1 && (
@@ -169,16 +192,16 @@ export function OrderDetailView() {
         <div className="p-6 rounded-xl bg-secondary border border-border mb-6">
           <h3 className="text-sm font-medium tracking-wide mb-4">Items</h3>
           <div className="space-y-3">
-            {order.items.map(item => (
+            {items.map((item) => (
               <div key={item.id} className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-background relative">
-                  <Image src={safeImgSrc(item.productImage)} alt={item.productName} fill className="object-cover" />
+                  <Image src={safeImgSrc(item.productImage)} alt={item.productName || 'Product'} fill className="object-cover" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.productName}</p>
                   <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
-                <span className="text-sm">${(item.price * item.quantity).toLocaleString()}</span>
+                <span className="text-sm">${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -197,10 +220,10 @@ export function OrderDetailView() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span>{order.paymentMethod}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className={order.paymentStatus === 'PENDING_VERIFICATION' ? 'text-yellow-500' : ''}>{order.paymentStatus?.replace(/_/g, ' ')}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${order.subtotal.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${order.shippingCost}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${order.tax.toFixed(2)}</span></div>
-                <div className="flex justify-between font-medium pt-2 border-t border-border"><span>Total</span><span>${order.totalAmount.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(order.subtotal || 0).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${order.shippingCost || 0}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(order.tax || 0).toFixed(2)}</span></div>
+                <div className="flex justify-between font-medium pt-2 border-t border-border"><span>Total</span><span>${(order.totalAmount || 0).toLocaleString()}</span></div>
               </div>
             </div>
           </div>

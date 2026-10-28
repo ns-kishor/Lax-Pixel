@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { compare, hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(req: NextRequest) {
@@ -17,18 +18,22 @@ export async function PUT(req: NextRequest) {
     const user = await db.user.findUnique({ where: { id: userId } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    // Simple password check (no hashing in this project)
-    if (user.password !== currentPassword) {
+    // Securely compare password with bcrypt
+    const isMatch = await compare(currentPassword, user.password);
+    if (!isMatch) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
     }
 
+    // Hash new password before saving
+    const hashedPassword = await hash(newPassword, 12);
     await db.user.update({
       where: { id: userId },
-      data: { password: newPassword },
+      data: { password: hashedPassword },
     });
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('Password change error:', error);
     return NextResponse.json({ error: 'Failed to change password' }, { status: 500 });
   }
 }

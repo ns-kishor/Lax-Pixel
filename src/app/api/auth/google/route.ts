@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
 
     let user = await db.user.findUnique({ where: { email } });
 
+    if (user && user.banned) {
+      return NextResponse.json({ error: 'Your account has been suspended. Please contact customer support.' }, { status: 403 });
+    }
+
     if (!user) {
       // Create new user with BUYER role and a random password (they auth via Google)
       const { hash } = await import('bcryptjs');

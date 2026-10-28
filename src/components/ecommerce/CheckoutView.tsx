@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Lock, CreditCard, Truck, Upload, X, Info, CheckCircle2, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, CreditCard, Truck, Upload, X, Info, CheckCircle2, Loader2, LogIn } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface PaymentMethod {
   id: string;
@@ -44,10 +44,29 @@ export function CheckoutView() {
   const total = subtotal + shipping + tax;
 
   useEffect(() => {
-    fetch('/api/payment-methods').then(r => r.json()).then(d => {
-      if (d.methods) setPaymentMethods(d.methods);
-    });
+    fetch('/api/payment-methods')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.methods) {
+          setPaymentMethods(d.methods);
+          if (d.methods.length > 0 && !selectedMethod) {
+            setSelectedMethod(d.methods[0]);
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        shippingAddress: prev.shippingAddress || user.address || '',
+        shippingCity: prev.shippingCity || user.city || '',
+        shippingCountry: prev.shippingCountry || user.country || '',
+        shippingZip: prev.shippingZip || user.zipCode || '',
+      }));
+    }
+  }, [user]);
 
   const isCod = selectedMethod?.name === 'Cash on Delivery' || selectedMethod?.name === 'COD';
   const needsProof = selectedMethod?.proofRequired && !isCod;
@@ -55,7 +74,10 @@ export function CheckoutView() {
   const handleProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image must be under 5MB', 'error');
+      return;
+    }
     setProofFile(file);
     const reader = new FileReader();
     reader.onload = () => setProofPreview(reader.result as string);
@@ -63,21 +85,42 @@ export function CheckoutView() {
   };
 
   const goToPayment = () => {
-    if (!form.shippingAddress || !form.shippingCity || !form.shippingCountry) {
-      showToast('Please fill in all required shipping fields', 'error'); return;
+    if (!user) {
+      showToast('Please sign in to proceed with checkout', 'error');
+      setView('auth');
+      return;
     }
-    if (!selectedMethod) { showToast('Please select a payment method', 'error'); return; }
+    if (!form.shippingAddress.trim() || !form.shippingCity.trim() || !form.shippingCountry.trim()) {
+      showToast('Please fill in all required shipping fields', 'error');
+      return;
+    }
+    if (!selectedMethod) {
+      showToast('Please select a payment method', 'error');
+      return;
+    }
     setStep('payment');
   };
 
   const confirmOrder = async () => {
+    if (!user) {
+      showToast('Please sign in to place an order', 'error');
+      setView('auth');
+      return;
+    }
     if (needsProof && !proofPreview) {
-      showToast('Please upload payment proof', 'error'); return;
+      showToast('Please upload payment proof', 'error');
+      return;
     }
     setLoading(true);
     try {
       const body: Record<string, unknown> = {
-        items: cart.map(i => ({ productId: i.productId, productName: i.product.name, productImage: safeImgSrc(i.product.image), price: i.product.price, quantity: i.quantity })),
+        items: cart.map((i) => ({
+          productId: i.productId,
+          productName: i.product.name,
+          productImage: safeImgSrc(i.product.image),
+          price: i.product.price,
+          quantity: i.quantity,
+        })),
         ...form,
         paymentMethodId: selectedMethod?.id,
         paymentMethod: selectedMethod?.name,
@@ -88,16 +131,24 @@ export function CheckoutView() {
       }
 
       const res = await fetch('/api/orders', {
-        method: 'POST', headers: authHeaders(useStore.getState),
+        method: 'POST',
+        headers: authHeaders(useStore.getState),
         body: JSON.stringify(body),
       });
       const order = await res.json();
-      if (order.error) { showToast(order.error, 'error'); return; }
+      if (!res.ok || order.error) {
+        showToast(order.error || 'Failed to place order', 'error');
+        setLoading(false);
+        return;
+      }
       if (order.id) {
         setCreatedOrder(order);
         setStep('success');
         setCart([]);
-        fetch('/api/orders', { headers: authHeaders(useStore.getState) }).then(r => r.json()).then(setOrders);
+        fetch('/api/orders', { headers: authHeaders(useStore.getState) })
+          .then((r) => r.json())
+          .then(setOrders)
+          .catch(() => {});
         showToast('Order placed successfully!');
       }
     } catch {
@@ -111,7 +162,9 @@ export function CheckoutView() {
       <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg font-light">No items to checkout</p>
-          <Button className="mt-4 bg-foreground text-background text-xs tracking-wider" onClick={() => setView('shop')}>Continue Shopping</Button>
+          <Button className="mt-4 bg-foreground text-background text-xs tracking-wider" onClick={() => setView('shop')}>
+            Continue Shopping
+          </Button>
         </div>
       </div>
     );
@@ -126,17 +179,38 @@ export function CheckoutView() {
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
           <h1 className="text-2xl font-light tracking-tight mb-2">Order Placed!</h1>
-          <p className="text-sm text-muted-foreground mb-6">Your order has been {needsProof ? 'submitted for payment verification' : 'confirmed'}.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Your order has been {needsProof ? 'submitted for payment verification' : 'confirmed'}.
+          </p>
           <div className="p-4 rounded-xl bg-secondary border border-border space-y-2 text-left mb-6">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Order Number</span><span>{createdOrder.orderNumber}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Tracking Code</span><span className="font-mono tracking-wider">{createdOrder.trackingCode}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Total</span><span>${createdOrder.totalAmount?.toLocaleString()}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Payment</span><span>{createdOrder.paymentMethod}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Status</span><Badge variant="outline" className="text-[10px]">{createdOrder.paymentStatus}</Badge></div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Order Number</span>
+              <span>{createdOrder.orderNumber}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Tracking Code</span>
+              <span className="font-mono tracking-wider">{createdOrder.trackingCode}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span>${createdOrder.totalAmount?.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Payment</span>
+              <span>{createdOrder.paymentMethod}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant="outline" className="text-[10px]">{createdOrder.paymentStatus}</Badge>
+            </div>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 border-border text-xs tracking-wider" onClick={() => setView('orders')}>View Orders</Button>
-            <Button className="flex-1 bg-foreground text-background text-xs tracking-wider" onClick={() => setView('shop')}>Continue Shopping</Button>
+            <Button variant="outline" className="flex-1 border-border text-xs tracking-wider" onClick={() => setView('orders')}>
+              View Orders
+            </Button>
+            <Button className="flex-1 bg-foreground text-background text-xs tracking-wider" onClick={() => setView('shop')}>
+              Continue Shopping
+            </Button>
           </div>
         </motion.div>
       </div>
@@ -185,7 +259,10 @@ export function CheckoutView() {
               {proofPreview ? (
                 <div className="relative rounded-lg overflow-hidden border border-border">
                   <img src={proofPreview} alt="Payment proof" className="w-full max-h-64 object-contain bg-background" />
-                  <button onClick={() => { setProofPreview(null); setProofFile(null); }} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background">
+                  <button
+                    onClick={() => { setProofPreview(null); setProofFile(null); }}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -222,6 +299,18 @@ export function CheckoutView() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <h1 className="text-3xl font-light tracking-tight mb-8">Checkout</h1>
 
+        {!user && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LogIn className="w-4 h-4 shrink-0" />
+              <span>You are checking out as a guest. Please sign in to link this order to your account.</span>
+            </div>
+            <Button variant="outline" size="sm" className="text-xs h-8 border-amber-500/30 shrink-0" onClick={() => setView('auth')}>
+              Sign In
+            </Button>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 space-y-6">
             {/* Shipping */}
@@ -231,12 +320,24 @@ export function CheckoutView() {
                 <h2 className="text-sm font-medium tracking-wide">Shipping Address</h2>
               </div>
               <div className="space-y-4">
-                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address *</Label><Input value={form.shippingAddress} onChange={e => setForm({ ...form, shippingAddress: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" placeholder="Street address" /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City *</Label><Input value={form.shippingCity} onChange={e => setForm({ ...form, shippingCity: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
-                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP Code</Label><Input value={form.shippingZip} onChange={e => setForm({ ...form, shippingZip: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address *</Label>
+                  <Input value={form.shippingAddress} onChange={e => setForm({ ...form, shippingAddress: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" placeholder="Street address" />
                 </div>
-                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label><Input value={form.shippingCountry} onChange={e => setForm({ ...form, shippingCountry: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City *</Label>
+                    <Input value={form.shippingCity} onChange={e => setForm({ ...form, shippingCity: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP Code</Label>
+                    <Input value={form.shippingZip} onChange={e => setForm({ ...form, shippingZip: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label>
+                  <Input value={form.shippingCountry} onChange={e => setForm({ ...form, shippingCountry: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" />
+                </div>
               </div>
             </motion.div>
 
