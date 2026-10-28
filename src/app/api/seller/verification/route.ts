@@ -63,6 +63,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Ensure sellerProfile exists in pending state & update role
+    await db.sellerProfile.upsert({
+      where: { userId },
+      update: { companyName: businessName, description: description || '', website: website || null },
+      create: { userId, companyName: businessName, description: description || '', website: website || null, approved: false },
+    });
+    await db.user.update({
+      where: { id: userId },
+      data: { role: 'SELLER' },
+    }).catch(() => {});
+
     return NextResponse.json({ verification, message: 'Verification submitted successfully' });
   } catch {
     return NextResponse.json({ error: 'Failed to submit verification' }, { status: 500 });

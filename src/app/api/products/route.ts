@@ -39,7 +39,11 @@ export async function GET(req: NextRequest) {
       include: { category: true, seller: { select: { id: true, name: true } } },
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json(products, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
   }
@@ -52,6 +56,14 @@ export async function POST(req: NextRequest) {
 
     if (!name || !price || !categoryId || !sellerId) {
       return NextResponse.json({ error: 'Name, price, category, and seller are required' }, { status: 400 });
+    }
+
+    // Check seller verification approval
+    const sellerProfile = await db.sellerProfile.findUnique({ where: { userId: sellerId } });
+    if (sellerProfile && !sellerProfile.approved) {
+      return NextResponse.json({
+        error: 'Your seller account has not been approved yet. Please wait for admin verification.',
+      }, { status: 403 });
     }
 
     const product = await db.product.create({

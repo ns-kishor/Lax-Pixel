@@ -11,32 +11,49 @@ export async function POST(req: NextRequest) {
     });
 
     const productContext = products.map(p => 
-      `${p.name} ($${p.price}) - ${p.category.name} - Rating: ${p.rating} - Tags: ${p.tags}`
+      `${p.name} ($${p.price}) - ${p.category?.name || ''} - Rating: ${p.rating} - Tags: ${p.tags}`
     ).join('\n');
 
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages: [{
-        role: 'assistant',
-        content: `You are a luxury product recommendation engine for Lax Pixel. Based on the customer query and their browsing history, recommend the most suitable products. Respond with a JSON array of product names only, no explanation. Pick 1-4 products.
+    let recommended = products.slice(0, 4);
+
+    try {
+      const aiPromise = (async () => {
+        const zai = await ZAI.create();
+        return await zai.chat.completions.create({
+          messages: [{
+            role: 'assistant',
+            content: `You are a luxury product recommendation engine for Lax Pixel. Based on the customer query and their browsing history, recommend the most suitable products. Respond with a JSON array of product names only, no explanation. Pick 1-4 products.
 
 Available products:
 ${productContext}
 
 Customer query: ${query || 'General luxury recommendations'}
 Customer history: ${userHistory || 'New customer'}`,
-      }, {
-        role: 'user',
-        content: 'Recommend products based on the above context. Return only a JSON array of product names.',
-      }],
-      thinking: { type: 'disabled' },
-    });
+          }, {
+            role: 'user',
+            content: 'Recommend products based on the above context. Return only a JSON array of product names.',
+          }],
+          thinking: { type: 'disabled' },
+        });
+      })();
 
-    const text = completion.choices[0]?.message?.content || '[]';
-    const match = text.match(/\[[\s\S]*?\]/);
-    const names = match ? JSON.parse(match[0]) : [];
-    const recommended = products.filter(p => names.some((n: string) => p.name.toLowerCase().includes(n.toLowerCase())));
-    return NextResponse.json(recommended.length > 0 ? recommended : products.slice(0, 4));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AI timeout')), 1200));
+      const completion: any = await Promise.race([aiPromise, timeoutPromise]);
+      const text = completion.choices[0]?.message?.content || '[]';
+      const match = text.match(/\[[\s\S]*?\]/);
+      const names = match ? JSON.parse(match[0]) : [];
+      const filtered = products.filter(p => names.some((n: string) => p.name.toLowerCase().includes(n.toLowerCase())));
+      if (filtered.length > 0) recommended = filtered;
+    } catch {
+      // Fast fallback to top rated / featured products
+      recommended = products.sort((a, b) => b.rating - a.rating).slice(0, 4);
+    }
+
+    return NextResponse.json(recommended, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch {
     const fallback = await db.product.findMany({ where: { featured: true }, take: 4, include: { category: true } });
     return NextResponse.json(fallback);

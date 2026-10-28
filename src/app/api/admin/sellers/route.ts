@@ -52,22 +52,112 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Attach product count and revenue
+    // Attach comprehensive analytics per seller
     const sellersWithCounts = await Promise.all(
       sellers.map(async (s) => {
-        const [productCount, productStats] = await Promise.all([
-          db.product.count({ where: { sellerId: s.userId } }),
+        const [products, orderItems, verification] = await Promise.all([
+          db.product.findMany({
+            where: { sellerId: s.userId },
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              stock: true,
+              image: true,
+              salesCount: true,
+              productCode: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+          }),
           db.orderItem.findMany({
             where: { product: { sellerId: s.userId } },
-            select: { price: true, quantity: true },
+            select: {
+              id: true,
+              productId: true,
+              price: true,
+              quantity: true,
+              createdAt: true,
+              order: {
+                select: {
+                  id: true,
+                  status: true,
+                  createdAt: true,
+                },
+              },
+            },
+          }),
+          db.sellerVerification.findUnique({
+            where: { userId: s.userId },
+            select: {
+              id: true,
+              businessName: true,
+              businessType: true,
+              businessAddress: true,
+              businessCity: true,
+              businessCountry: true,
+              nidNumber: true,
+              phone: true,
+              website: true,
+              status: true,
+              createdAt: true,
+            },
           }),
         ]);
-        const totalRevenue = productStats.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        let totalRevenue = 0;
+        let totalSales = 0;
+        const uniqueOrders = new Set<string>();
+        let confirmedOrders = 0;
+        const monthlyMap = new Map<string, { revenue: number; sales: number }>();
+        const productRevenueMap = new Map<string, number>();
+
+        for (const item of orderItems) {
+          const itemRev = item.price * item.quantity;
+          totalSales += item.quantity;
+
+          if (item.order) {
+            uniqueOrders.add(item.order.id);
+            if (['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(item.order.status)) {
+              confirmedOrders++;
+            }
+            if (item.order.status !== 'CANCELLED') {
+              totalRevenue += itemRev;
+              // Monthly stats
+              const date = new Date(item.order.createdAt);
+              const mKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+              const prev = monthlyMap.get(mKey) || { revenue: 0, sales: 0 };
+              monthlyMap.set(mKey, { revenue: prev.revenue + itemRev, sales: prev.sales + item.quantity });
+            }
+          }
+
+          // Product revenue
+          const pRev = productRevenueMap.get(item.productId) || 0;
+          productRevenueMap.set(item.productId, pRev + itemRev);
+        }
+
+        const monthlyRevenue = Array.from(monthlyMap.entries()).map(([month, data]) => ({
+          month,
+          revenue: Math.round(data.revenue * 100) / 100,
+          sales: data.sales,
+        })).sort((a, b) => b.month.localeCompare(a.month));
+
+        const productsWithRevenue = products.map(p => ({
+          ...p,
+          revenue: Math.round((productRevenueMap.get(p.id) || 0) * 100) / 100,
+        }));
+
         return {
           ...s,
+          verification,
+          products: productsWithRevenue,
+          monthlyRevenue,
+          totalSales,
+          totalOrders: uniqueOrders.size,
+          confirmedOrders,
           user: {
             ...s.user,
-            productCount,
+            productCount: products.length,
             totalRevenue: Math.round(totalRevenue * 100) / 100,
           },
         };

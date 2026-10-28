@@ -26,6 +26,38 @@ interface SellerUser {
   totalRevenue: number;
 }
 
+interface SellerProduct {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  image: string;
+  salesCount: number;
+  revenue: number;
+  productCode: string | null;
+  createdAt: string;
+}
+
+interface MonthlyRevenue {
+  month: string;
+  revenue: number;
+  sales: number;
+}
+
+interface SellerVerificationData {
+  id: string;
+  businessName: string;
+  businessType: string;
+  businessAddress: string;
+  businessCity: string;
+  businessCountry: string;
+  nidNumber: string;
+  phone: string;
+  website: string | null;
+  status: string;
+  createdAt: string;
+}
+
 interface Seller {
   id: string;
   companyName: string;
@@ -35,9 +67,14 @@ interface Seller {
   approved: boolean;
   rating: number;
   totalSales: number;
+  totalOrders?: number;
+  confirmedOrders?: number;
   createdAt: string;
   userId: string;
   user: SellerUser;
+  products?: SellerProduct[];
+  monthlyRevenue?: MonthlyRevenue[];
+  verification?: SellerVerificationData | null;
 }
 
 const STATUS_OPTIONS = ['All', 'approved', 'pending', 'banned'];
@@ -379,12 +416,15 @@ export function AdminSellers() {
 
       {/* Seller Detail Dialog */}
       <Dialog open={!!detailTarget} onOpenChange={open => !open && setDetailTarget(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base">Seller Details</DialogTitle>
+            <DialogTitle className="text-base flex items-center justify-between">
+              <span>Seller Performance & Details</span>
+              {detailTarget && <SellerStatusBadge seller={detailTarget} />}
+            </DialogTitle>
           </DialogHeader>
           {detailTarget && (
-            <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
               {/* Company Info */}
               <div className="flex items-center gap-4">
                 {detailTarget.logo ? (
@@ -393,67 +433,114 @@ export function AdminSellers() {
                   <div className="w-14 h-14 rounded-xl bg-secondary border border-border flex items-center justify-center text-lg font-bold">{detailTarget.companyName.charAt(0)}</div>
                 )}
                 <div>
-                  <h3 className="text-sm font-medium">{detailTarget.companyName}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <SellerStatusBadge seller={detailTarget} />
-                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                      <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" /> {detailTarget.rating}
-                    </span>
-                  </div>
+                  <h3 className="text-base font-medium">{detailTarget.companyName}</h3>
+                  <p className="text-xs text-muted-foreground">{detailTarget.user.name} ({detailTarget.user.email})</p>
+                  {detailTarget.verification?.nidNumber && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      NID/Trade: <span className="text-foreground font-mono">{detailTarget.verification.nidNumber}</span> • Type: {detailTarget.verification.businessType}
+                    </p>
+                  )}
                 </div>
               </div>
-
-              {detailTarget.description && (
-                <p className="text-xs text-muted-foreground leading-relaxed">{detailTarget.description}</p>
-              )}
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-3">
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
                   <Package className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                  <p className="text-sm font-medium">{detailTarget.user.productCount}</p>
-                  <p className="text-[10px] text-muted-foreground">Products</p>
+                  <p className="text-base font-medium">{detailTarget.user.productCount}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Products</p>
                 </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
+                <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
                   <ShoppingCart className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                  <p className="text-sm font-medium">{detailTarget.user._count.orders}</p>
-                  <p className="text-[10px] text-muted-foreground">Orders</p>
+                  <p className="text-base font-medium">{detailTarget.totalOrders ?? detailTarget.user._count.orders}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Orders ({detailTarget.confirmedOrders ?? 0} Confirmed)</p>
                 </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-sm font-medium">${detailTarget.user.totalRevenue.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Revenue</p>
+                <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
+                  <p className="text-base font-medium text-green-500">${detailTarget.user.totalRevenue.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Revenue</p>
                 </div>
-                <div className="bg-secondary/50 rounded-lg p-3 text-center">
-                  <p className="text-sm font-medium">{detailTarget.totalSales}</p>
-                  <p className="text-[10px] text-muted-foreground">Total Sales</p>
+                <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
+                  <p className="text-base font-medium text-blue-500">{detailTarget.totalSales}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Items Sold</p>
                 </div>
               </div>
 
-              {/* Owner Info */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-medium">Owner Information</h4>
-                <div className="grid gap-2.5">
-                  <div className="flex items-center gap-2.5 text-xs">
-                    <span className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-[10px] font-medium">{detailTarget.user.name.charAt(0)}</span>
-                    <span className="font-medium">{detailTarget.user.name}</span>
-                    <span className="text-muted-foreground ml-auto">Joined {new Date(detailTarget.user.createdAt).toLocaleDateString()}</span>
+              {/* Seller's Products Performance */}
+              <div>
+                <h4 className="text-xs tracking-wider uppercase text-muted-foreground font-medium mb-2.5">
+                  Uploaded Products ({detailTarget.products?.length || 0})
+                </h4>
+                {(!detailTarget.products || detailTarget.products.length === 0) ? (
+                  <p className="text-xs text-muted-foreground bg-secondary/30 rounded-lg p-3 text-center">No products uploaded by this seller yet.</p>
+                ) : (
+                  <div className="border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-secondary/70 text-muted-foreground border-b border-border">
+                        <tr>
+                          <th className="p-2 text-left">Product</th>
+                          <th className="p-2 text-right">Price</th>
+                          <th className="p-2 text-center">Stock</th>
+                          <th className="p-2 text-center">Sales</th>
+                          <th className="p-2 text-right">Total Rev</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {detailTarget.products.map(p => (
+                          <tr key={p.id} className="hover:bg-secondary/40">
+                            <td className="p-2 flex items-center gap-2">
+                              {p.image ? (
+                                <img src={p.image} alt="" className="w-7 h-7 rounded object-cover shrink-0" />
+                              ) : null}
+                              <span className="truncate max-w-[180px] font-medium">{p.name}</span>
+                            </td>
+                            <td className="p-2 text-right">${p.price}</td>
+                            <td className="p-2 text-center">{p.stock}</td>
+                            <td className="p-2 text-center font-medium">{p.salesCount || 0}</td>
+                            <td className="p-2 text-right font-medium text-green-500">${p.revenue.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                )}
+              </div>
+
+              {/* Monthly Revenue Breakdown */}
+              {detailTarget.monthlyRevenue && detailTarget.monthlyRevenue.length > 0 && (
+                <div>
+                  <h4 className="text-xs tracking-wider uppercase text-muted-foreground font-medium mb-2.5">
+                    Monthly Revenue Breakdown
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {detailTarget.monthlyRevenue.map(m => (
+                      <div key={m.month} className="p-2.5 bg-secondary/40 border border-border rounded-lg">
+                        <p className="text-[10px] text-muted-foreground">{m.month}</p>
+                        <p className="text-sm font-medium mt-0.5">${m.revenue.toLocaleString()}</p>
+                        <p className="text-[10px] text-muted-foreground">{m.sales} units sold</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Business & Owner Info */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-medium">Business & Contact Info</h4>
+                <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 shrink-0" />
                     <span>{detailTarget.user.email}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span>{detailTarget.user.phone || 'Not provided'}</span>
+                    <span>{detailTarget.verification?.phone || detailTarget.user.phone || 'Not provided'}</span>
                   </div>
-                  {(detailTarget.user.address || detailTarget.user.city || detailTarget.user.country) && (
-                    <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span>{[detailTarget.user.address, detailTarget.user.city, detailTarget.user.country].filter(Boolean).join(', ') || 'Not provided'}</span>
-                    </div>
-                  )}
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>{[detailTarget.verification?.businessAddress || detailTarget.user.address, detailTarget.verification?.businessCity || detailTarget.user.city, detailTarget.verification?.businessCountry || detailTarget.user.country].filter(Boolean).join(', ') || 'Not provided'}</span>
+                  </div>
                   {detailTarget.website && (
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
                       <Globe className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{detailTarget.website}</span>
                     </div>
@@ -462,7 +549,7 @@ export function AdminSellers() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-border">
+              <div className="flex items-center gap-2 pt-3 border-t border-border">
                 {!detailTarget.approved && !detailTarget.user.banned && (
                   <Button
                     size="sm"
@@ -470,7 +557,7 @@ export function AdminSellers() {
                     onClick={() => { handleApprove(detailTarget); setDetailTarget(null); }}
                     disabled={actionId === detailTarget.id}
                   >
-                    <CheckCircle className="w-3.5 h-3.5" /> Approve
+                    <CheckCircle className="w-3.5 h-3.5" /> Approve Seller
                   </Button>
                 )}
                 {detailTarget.user.banned ? (

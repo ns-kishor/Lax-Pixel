@@ -106,6 +106,7 @@ export interface Order {
   items: OrderItem[];
   tracking: OrderTracking[];
   user?: { name: string; email: string };
+  sellerTotal?: number;
 }
 
 export interface Category {
@@ -199,7 +200,7 @@ interface AppState {
   setGlobalLoading: (loading: boolean) => void;
 
   // Seller
-  sellerStats: { productCount: number; totalRevenue: number; totalOrders: number; pendingOrders: number } | null;
+  sellerStats: { productCount: number; totalRevenue: number; totalSales?: number; totalOrders: number; pendingOrders: number; confirmedOrders?: number; conversionRate?: number } | null;
   sellerProducts: Product[];
   sellerOrders: Order[];
   setSellerData: (data: { stats: AppState['sellerStats']; products: Product[]; orders: Order[] }) => void;

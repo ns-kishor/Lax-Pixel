@@ -51,10 +51,20 @@ export async function PUT(req: NextRequest) {
 
     // If approved, also update sellerProfile.approved
     if (action === 'APPROVE') {
-      await db.sellerProfile.update({
+      await db.sellerProfile.upsert({
         where: { userId: verification.userId },
-        data: { approved: true },
+        update: { approved: true },
+        create: {
+          userId: verification.userId,
+          companyName: verification.businessName,
+          description: verification.description || '',
+          approved: true,
+        },
       });
+      await db.user.update({
+        where: { id: verification.userId },
+        data: { role: 'SELLER' },
+      }).catch(() => {});
     } else {
       // If rejected, ensure approved is false
       await db.sellerProfile.updateMany({

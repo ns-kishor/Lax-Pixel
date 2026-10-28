@@ -267,34 +267,31 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 
 export function HomeView() {
   const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView, setGlobalLoading } = useStore();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(() => {
+    return products.filter((p: Product) => p.featured);
+  });
 
   useEffect(() => {
-    const load = async () => {
-      setGlobalLoading(true);
-      try {
-        const [pRes, cRes] = await Promise.all([
-          fetch('/api/products?featured=true').catch(() => null),
-          fetch('/api/categories').catch(() => null),
-        ]);
+    if (products.length > 0) {
+      const feat = products.filter((p: Product) => p.featured);
+      setFeaturedProducts(feat.length > 0 ? feat : products.slice(0, 6));
+    } else {
+      // Background load if store is empty
+      Promise.all([
+        fetch('/api/products?featured=true').catch(() => null),
+        fetch('/api/categories').catch(() => null),
+      ]).then(async ([pRes, cRes]) => {
         const p = pRes && pRes.ok ? await pRes.json() : [];
         const c = cRes && cRes.ok ? await cRes.json() : [];
-        const productList = Array.isArray(p) ? p : [];
-        const categoryList = Array.isArray(c) ? c : [];
-        setProducts(productList);
-        setCategories(categoryList);
-        setFeaturedProducts(productList.filter((pr: Product) => pr.featured));
-      } catch (e) {
-        console.error('Failed to load home data:', e);
-        setProducts([]);
-        setCategories([]);
-        setFeaturedProducts([]);
-      } finally {
-        setGlobalLoading(false);
-      }
-    };
-    load();
-  }, []);
+        if (Array.isArray(p) && p.length > 0) {
+          setProducts(p);
+          const feat = p.filter((pr: Product) => pr.featured);
+          setFeaturedProducts(feat.length > 0 ? feat : p.slice(0, 6));
+        }
+        if (Array.isArray(c) && c.length > 0) setCategories(c);
+      }).catch(() => {});
+    }
+  }, [products, setProducts, setCategories]);
 
   useEffect(() => {
     const loadRecs = async () => {

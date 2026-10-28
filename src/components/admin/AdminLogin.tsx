@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
 
 export function AdminLogin() {
-  const [email, setEmail] = useState('admin@laxpixel.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -98,7 +98,7 @@ export function AdminLogin() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="admin@laxpixel.com"
+              placeholder="admin@example.com"
               required
               className="h-11 bg-secondary border-border text-sm"
               autoComplete="email"
@@ -115,7 +115,7 @@ export function AdminLogin() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="admin123"
+                placeholder="••••••••"
                 required
                 className="h-11 bg-secondary border-border text-sm pr-10"
                 autoComplete="current-password"
@@ -129,10 +129,6 @@ export function AdminLogin() {
               </button>
             </div>
           </div>
-
-          <p className="text-[10px] text-muted-foreground text-center">
-            Default: admin@laxpixel.com / admin123
-          </p>
 
           {error && (
             <motion.div
@@ -159,18 +155,6 @@ export function AdminLogin() {
             )}
           </Button>
         </form>
-
-        <div className="mt-5 text-center">
-          <button
-            type="button"
-            onClick={handleResetPassword}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <KeyRound className="w-3.5 h-3.5" />
-            Reset password to default
-          </button>
-        </div>
 
         <div className="mt-6 text-center">
           <button

@@ -12,10 +12,11 @@ import type { Product } from '@/lib/store';
 import Image from 'next/image';
 
 export function ShopView() {
-  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setGlobalLoading, setView } = useStore();
+  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setView } = useStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [fetching, setFetching] = useState(false);
   const initializedRef = useRef(false);
 
   // Sync shopCategory from URL on mount
@@ -33,19 +34,27 @@ export function ShopView() {
   }, [shopCategory, setShopCategory, setShopSort]);
 
   useEffect(() => {
+    let active = true;
     const load = async () => {
-      setGlobalLoading(true);
+      setFetching(true);
       const params = new URLSearchParams();
       if (shopCategory) params.set('category', shopCategory);
       if (searchQuery) params.set('search', searchQuery);
       params.set('sort', shopSort);
-      const res = await fetch(`/api/products?${params}`);
-      const data = await res.json();
-      setProducts(data);
-      setGlobalLoading(false);
+      try {
+        const res = await fetch(`/api/products?${params}`);
+        if (res.ok && active) {
+          const data = await res.json();
+          setProducts(Array.isArray(data) ? data : []);
+        }
+      } catch {}
+      finally {
+        if (active) setFetching(false);
+      }
     };
     load();
-  }, [shopCategory, shopSort, searchQuery]);
+    return () => { active = false; };
+  }, [shopCategory, shopSort, searchQuery, setProducts]);
 
   // Push history entry when category changes (within shop view)
   const handleCategoryChange = (slug: string) => {
