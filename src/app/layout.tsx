@@ -17,7 +17,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lax Pixel — Luxury Redefined",
   description: "Premium AI-powered luxury ecommerce. Curated collections, intelligent shopping, and timeless elegance.",
-  icons: { icon: "/logo.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/White mood.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

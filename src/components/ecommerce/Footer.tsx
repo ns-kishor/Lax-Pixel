@@ -48,9 +48,10 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-full border flex items-center justify-center">
-                <span className="text-[10px] font-bold">LP</span>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 relative flex items-center justify-center">
+                <img src="/White mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain block dark:hidden" />
+                <img src="/Dark mood.png" alt="Lax Pixel" className="w-8 h-8 object-contain hidden dark:block" />
               </div>
               <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
             </div>

@@ -81,8 +81,9 @@ export function AdminLogin() {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10">
-          <div className="w-12 h-12 rounded-full border border-border mx-auto flex items-center justify-center mb-4">
-            <span className="text-sm font-bold">LP</span>
+          <div className="w-16 h-16 mx-auto flex items-center justify-center mb-4">
+            <img src="/White mood.png" alt="Lax Pixel" className="w-16 h-16 object-contain block dark:hidden" />
+            <img src="/Dark mood.png" alt="Lax Pixel" className="w-16 h-16 object-contain hidden dark:block" />
           </div>
           <h1 className="text-xl font-extralight tracking-[0.2em] uppercase">Lax Pixel</h1>
           <p className="text-xs text-muted-foreground mt-2 tracking-wider">Administration</p>
