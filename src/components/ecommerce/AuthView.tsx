@@ -173,6 +173,8 @@ export function AuthView() {
     }
   }, [goBack, setUser, setView, showToast]);
 
+  const [hasGsi, setHasGsi] = useState(false);
+
   // Initialize Google Identity Services if client ID is configured
   useEffect(() => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -195,6 +197,35 @@ export function AuthView() {
             auto_select: false,
             cancel_on_tap_outside: true,
           });
+
+          // Render Google button directly into login container
+          const loginContainer = document.getElementById('gsi-btn-login');
+          if (loginContainer) {
+            loginContainer.innerHTML = '';
+            (window as any).google.accounts.id.renderButton(loginContainer, {
+              type: 'standard',
+              theme: 'outline',
+              size: 'large',
+              text: 'continue_with',
+              shape: 'rectangular',
+              width: 380,
+            });
+            setHasGsi(true);
+          }
+
+          // Render Google button directly into register container
+          const regContainer = document.getElementById('gsi-btn-register');
+          if (regContainer) {
+            regContainer.innerHTML = '';
+            (window as any).google.accounts.id.renderButton(regContainer, {
+              type: 'standard',
+              theme: 'outline',
+              size: 'large',
+              text: 'continue_with',
+              shape: 'rectangular',
+              width: 380,
+            });
+          }
         }
       } catch (err) {
         console.error('Google Identity init error:', err);
@@ -322,10 +353,11 @@ export function AuthView() {
               <span className="relative bg-background px-3 text-[10px] text-muted-foreground uppercase tracking-wider">or</span>
             </div>
 
+            <div id="gsi-btn-login" className="w-full flex justify-center min-h-[44px]" />
             <Button
               variant="outline"
               type="button"
-              className="w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors"
+              className={`w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors ${hasGsi ? 'hidden' : 'flex'}`}
               onClick={() => googleAuth('BUYER')}
               disabled={loading}
             >
@@ -466,10 +498,11 @@ export function AuthView() {
               <span className="relative bg-background px-3 text-[10px] text-muted-foreground uppercase tracking-wider">or</span>
             </div>
 
+            <div id="gsi-btn-register" className="w-full flex justify-center min-h-[44px]" />
             <Button
               variant="outline"
               type="button"
-              className="w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors"
+              className={`w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors ${hasGsi ? 'hidden' : 'flex'}`}
               onClick={() => googleAuth(registerForm.role as 'BUYER' | 'SELLER')}
               disabled={loading}
             >
