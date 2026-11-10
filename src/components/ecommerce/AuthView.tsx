@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore, authHeaders } from '@/lib/store';
 import { supabase } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
@@ -141,29 +141,111 @@ export function AuthView() {
     }
   };
 
+  const handleGoogleIdToken = useCallback(async (idToken: string) => {
+    setLoading(true);
+    try {
+      const role = (typeof window !== 'undefined' ? sessionStorage.getItem('lp-oauth-role') : null) || 'BUYER';
+      if (typeof window !== 'undefined') sessionStorage.removeItem('lp-oauth-role');
+
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, role }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Google sign-in failed', 'error');
+        setLoading(false);
+        return;
+      }
+
+      setUser(data.user, data.sellerProfile);
+      showToast(`Welcome back, ${data.user.name}`);
+      if (data.user.role === 'SELLER') {
+        setView('seller-dashboard');
+      } else {
+        goBack();
+      }
+    } catch (err) {
+      showToast('Google sign-in failed: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [goBack, setUser, setView, showToast]);
+
+  // Initialize Google Identity Services if client ID is configured
+  useEffect(() => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!googleClientId || typeof window === 'undefined') return;
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      try {
+        if ((window as any).google?.accounts?.id) {
+          (window as any).google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: (response: any) => {
+              if (response?.credential) {
+                handleGoogleIdToken(response.credential);
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+        }
+      } catch (err) {
+        console.error('Google Identity init error:', err);
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, [handleGoogleIdToken]);
+
+  const runSupabaseOAuth = async (role: 'BUYER' | 'SELLER') => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://lax-pixel-opal.vercel.app';
+    const redirectUrl = `${origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+
+    if (error) {
+      showToast(error.message, 'error');
+      setLoading(false);
+    }
+  };
+
   const googleAuth = async (role: 'BUYER' | 'SELLER' = 'BUYER') => {
     setLoading(true);
     try {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('lp-oauth-role', role);
       }
-      const redirectUrl = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-        },
-      });
 
-      if (error) {
-        showToast(error.message, 'error');
-        setLoading(false);
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      // If Google Client ID is configured on the frontend, prompt native Google picker directly
+      if (googleClientId && (window as any).google?.accounts?.id) {
+        (window as any).google.accounts.id.prompt((notification: any) => {
+          if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+            runSupabaseOAuth(role);
+          }
+        });
+        return;
       }
-      // Browser automatically redirects to accounts.google.com
+
+      await runSupabaseOAuth(role);
     } catch (err) {
       showToast('Google sign-in failed: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
       setLoading(false);
