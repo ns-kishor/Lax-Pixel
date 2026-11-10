@@ -173,9 +173,7 @@ export function AuthView() {
     }
   }, [goBack, setUser, setView, showToast]);
 
-  const [hasGsi, setHasGsi] = useState(false);
-
-  // Initialize Google Identity Services if client ID is configured
+  // Initialize Google One Tap if client ID is configured
   useEffect(() => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!googleClientId || typeof window === 'undefined') return;
@@ -198,37 +196,11 @@ export function AuthView() {
             cancel_on_tap_outside: true,
           });
 
-          // Render Google button directly into login container
-          const loginContainer = document.getElementById('gsi-btn-login');
-          if (loginContainer) {
-            loginContainer.innerHTML = '';
-            (window as any).google.accounts.id.renderButton(loginContainer, {
-              type: 'standard',
-              theme: 'outline',
-              size: 'large',
-              text: 'continue_with',
-              shape: 'rectangular',
-              width: 380,
-            });
-            setHasGsi(true);
-          }
-
-          // Render Google button directly into register container
-          const regContainer = document.getElementById('gsi-btn-register');
-          if (regContainer) {
-            regContainer.innerHTML = '';
-            (window as any).google.accounts.id.renderButton(regContainer, {
-              type: 'standard',
-              theme: 'outline',
-              size: 'large',
-              text: 'continue_with',
-              shape: 'rectangular',
-              width: 380,
-            });
-          }
+          // Attempt passive One Tap prompt (non-intrusive)
+          (window as any).google.accounts.id.prompt();
         }
       } catch (err) {
-        console.error('Google Identity init error:', err);
+        console.warn('Google One Tap init notice:', err);
       }
     };
     document.body.appendChild(script);
@@ -264,18 +236,6 @@ export function AuthView() {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('lp-oauth-role', role);
       }
-
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      // If Google Client ID is configured on the frontend, prompt native Google picker directly
-      if (googleClientId && (window as any).google?.accounts?.id) {
-        (window as any).google.accounts.id.prompt((notification: any) => {
-          if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
-            runSupabaseOAuth(role);
-          }
-        });
-        return;
-      }
-
       await runSupabaseOAuth(role);
     } catch (err) {
       showToast('Google sign-in failed: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error');
@@ -353,15 +313,14 @@ export function AuthView() {
               <span className="relative bg-background px-3 text-[10px] text-muted-foreground uppercase tracking-wider">or</span>
             </div>
 
-            <div id="gsi-btn-login" className="w-full flex justify-center min-h-[44px]" />
             <Button
               variant="outline"
               type="button"
-              className={`w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors ${hasGsi ? 'hidden' : 'flex'}`}
+              className="w-full h-11 border-border text-xs tracking-wider gap-2.5 rounded-lg hover:bg-secondary transition-colors flex items-center justify-center font-medium"
               onClick={() => googleAuth('BUYER')}
               disabled={loading}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -498,15 +457,14 @@ export function AuthView() {
               <span className="relative bg-background px-3 text-[10px] text-muted-foreground uppercase tracking-wider">or</span>
             </div>
 
-            <div id="gsi-btn-register" className="w-full flex justify-center min-h-[44px]" />
             <Button
               variant="outline"
               type="button"
-              className={`w-full h-11 border-border text-xs tracking-wider gap-2 rounded-lg hover:bg-secondary transition-colors ${hasGsi ? 'hidden' : 'flex'}`}
+              className="w-full h-11 border-border text-xs tracking-wider gap-2.5 rounded-lg hover:bg-secondary transition-colors flex items-center justify-center font-medium"
               onClick={() => googleAuth(registerForm.role as 'BUYER' | 'SELLER')}
               disabled={loading}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
