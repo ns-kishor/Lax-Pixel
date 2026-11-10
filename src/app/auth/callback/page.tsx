@@ -84,8 +84,10 @@ export default function AuthCallbackPage() {
 
       // Clean redirect to dashboard or home
       if (data.user.role === 'SELLER') {
+        useStore.getState().setView('seller-dashboard');
         router.replace('/seller');
       } else {
+        useStore.getState().setView('home');
         router.replace('/');
       }
     }
