@@ -137,6 +137,7 @@ interface AppState {
   sellerProfile: SellerProfile | null;
   setUser: (user: User | null, profile?: SellerProfile | null) => void;
   logout: () => void;
+  initAuth: () => void;
 
   // Products
   products: Product[];
@@ -238,10 +239,48 @@ export const useStore = create<AppState>((set, get) => ({
   // Auth
   user: null,
   sellerProfile: null,
-  setUser: (user, profile) => set({ user, sellerProfile: profile || null }),
+  setUser: (user, profile) => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (user) {
+          localStorage.setItem('lp-user', JSON.stringify(user));
+          if (profile) localStorage.setItem('lp-seller-profile', JSON.stringify(profile));
+          else localStorage.removeItem('lp-seller-profile');
+        } else {
+          localStorage.removeItem('lp-user');
+          localStorage.removeItem('lp-seller-profile');
+        }
+      } catch (e) {
+        console.error('Failed to save user session to localStorage:', e);
+      }
+    }
+    set({ user, sellerProfile: profile || null });
+  },
   logout: () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('lp-user');
+        localStorage.removeItem('lp-seller-profile');
+      } catch (e) {
+        console.error('Failed to clear user session from localStorage:', e);
+      }
+    }
     pushNavigation('home');
     set({ user: null, sellerProfile: null, cart: [], orders: [], view: 'home' });
+  },
+  initAuth: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const rawUser = localStorage.getItem('lp-user');
+      const rawProfile = localStorage.getItem('lp-seller-profile');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        const p = rawProfile ? JSON.parse(rawProfile) : null;
+        set({ user: u, sellerProfile: p });
+      }
+    } catch (e) {
+      console.error('Failed to restore user session:', e);
+    }
   },
 
   // Products

@@ -106,6 +106,8 @@ export default function Page() {
 
   // ─── Load initial data ────────────────────────────────────
   useEffect(() => {
+    useStore.getState().initAuth();
+
     fetch('/api/categories')
       .then(r => r.ok ? r.json() : [])
       .then(data => setCategories(Array.isArray(data) ? data : []))

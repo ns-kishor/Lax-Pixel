@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
+import { hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { simulateGoogleAuth } from '@/lib/google-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,31 +11,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const idToken = body.idToken as string;
-    if (!idToken) {
-      return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
+    const rawEmail = (body.email as string)?.trim();
+    if (!rawEmail) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const { email, name, avatar } = simulateGoogleAuth(idToken);
+    const email = rawEmail.toLowerCase();
+    const name = String(body.name || '').trim() || email.split('@')[0] || 'Google User';
+    const avatar = String(body.avatar || '');
+    const requestedRole = body.role === 'SELLER' ? 'SELLER' : 'BUYER';
 
+    // 1. Check if user already exists (case-insensitive lookup)
     let user = await db.user.findUnique({ where: { email } });
+    if (!user && rawEmail !== email) {
+      user = await db.user.findUnique({ where: { email: rawEmail } });
+    }
 
+    // 2. Enforce ban check
     if (user && user.banned) {
       return NextResponse.json({ error: 'Your account has been suspended. Please contact customer support.' }, { status: 403 });
     }
 
+    // 3. Create user if new
     if (!user) {
-      // Create new user with BUYER role and a random password (they auth via Google)
-      const { hash } = await import('bcryptjs');
       const randomPassword = await hash(`google_${Date.now()}_${Math.random()}`, 12);
       user = await db.user.create({
         data: {
           email,
           name,
           password: randomPassword,
-          role: 'BUYER',
+          role: requestedRole,
           avatar: avatar || '',
         },
+      });
+
+      if (requestedRole === 'SELLER') {
+        await db.sellerProfile.create({
+          data: {
+            userId: user.id,
+            companyName: name,
+            description: '',
+            approved: false,
+          },
+        });
+      }
+    } else if (avatar && !user.avatar) {
+      // Update avatar if missing
+      user = await db.user.update({
+        where: { id: user.id },
+        data: { avatar },
       });
     }
 

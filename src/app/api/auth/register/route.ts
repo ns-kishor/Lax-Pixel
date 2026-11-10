@@ -11,32 +11,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { email, password, name, role, phone, address, city, country, zipCode, companyName, companyDescription } = body;
+    const { password, name, role, phone, address, city, country, zipCode, companyName, companyDescription } = body;
 
-    console.error('[USER-REGISTER] email:', JSON.stringify(email), 'name:', JSON.stringify(name), 'role:', role);
-
-    if (!body.termsAccepted) {
-      return NextResponse.json({ error: 'You must accept the Terms and Conditions' }, { status: 400 });
-    }
-
-    if (!email || !password || !name) {
+    const rawEmail = (body.email as string)?.trim();
+    if (!rawEmail || !password || !name) {
       return NextResponse.json({ error: 'Email, password, and name are required' }, { status: 400 });
     }
 
-    const existing = await db.user.findUnique({ where: { email: email as string } });
-    if (existing) {
-      return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+    if (String(password).length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const hashedPassword = await hash(password as string, 12);
-    console.error('[USER-REGISTER] Hashed pw, creating user...');
+    const email = rawEmail.toLowerCase();
+
+    // Check existing email case-insensitively
+    let existing = await db.user.findUnique({ where: { email } });
+    if (!existing && rawEmail !== email) {
+      existing = await db.user.findUnique({ where: { email: rawEmail } });
+    }
+    if (existing) {
+      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
+    }
+
+    const hashedPassword = await hash(String(password), 12);
+    const assignedRole = role === 'SELLER' ? 'SELLER' : 'BUYER';
 
     const user = await db.user.create({
       data: {
-        email: email as string,
+        email,
         password: hashedPassword,
-        name: name as string,
-        role: (role as string) || 'BUYER',
+        name: String(name).trim(),
+        role: assignedRole,
         phone: (phone as string) || '',
         address: (address as string) || '',
         city: (city as string) || '',
@@ -45,14 +50,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.error('[USER-REGISTER] User created:', user.id);
-
     let sellerProfile: any = null;
-    if (role === 'SELLER') {
+    if (assignedRole === 'SELLER') {
       sellerProfile = await db.sellerProfile.create({
         data: {
           userId: user.id,
-          companyName: (companyName as string) || (name as string),
+          companyName: (companyName as string) || String(name).trim(),
           description: (companyDescription as string) || '',
           approved: false,
         },
@@ -60,7 +63,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { password: _, ...safeUser } = user;
-    console.error('[USER-REGISTER] SUCCESS:', user.email);
     return NextResponse.json({ user: safeUser, sellerProfile }, { status: 201 });
   } catch (error) {
     console.error('[USER-REGISTER] EXCEPTION:', error);

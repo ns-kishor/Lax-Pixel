@@ -12,19 +12,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    if (!body.termsAccepted) {
-      return NextResponse.json({ error: 'You must accept the Terms and Conditions' }, { status: 400 });
-    }
-
-    const email = (body.email as string)?.trim();
+    const rawEmail = (body.email as string)?.trim();
     const password = body.password as string;
 
-    if (!email || !password) {
+    if (!rawEmail || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // 1. Try regular user login first
-    const user = await db.user.findUnique({ where: { email } });
+    const email = rawEmail.toLowerCase();
+
+    // 1. Try regular user login (case-insensitive email lookup)
+    let user = await db.user.findUnique({ where: { email } });
+    if (!user && rawEmail !== email) {
+      user = await db.user.findUnique({ where: { email: rawEmail } });
+    }
+
     if (user) {
       if (user.banned) {
         return NextResponse.json({ error: 'Your account has been suspended. Please contact customer support.' }, { status: 403 });
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. If no user found or password didn't match, try admin login
-    const adminResult = await tryAdminLogin(email, password);
+    const adminResult = await tryAdminLogin(rawEmail, password);
     if (adminResult) {
       return NextResponse.json({
         isAdmin: true,
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   } catch (error) {
     console.error('[LOGIN] Exception:', error);
     return NextResponse.json({ error: 'Login failed: ' + String(error) }, { status: 500 });
