@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, Trash2, Pencil, Star, StarOff, ChevronLeft, ChevronRight, Package, Plus, X, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useStore } from '@/lib/store';
+import { useStore, safeImgSrc } from '@/lib/store';
 
 interface AdminProduct {
   id: string;
@@ -134,13 +134,17 @@ export function AdminProducts() {
     if (!form.name || !form.price || !form.categoryId) { showToast('Name, price, and category are required', 'error'); return; }
     setSaving(true);
     try {
+      const imgList = (form.images || '').split(',').map(s => s.trim()).filter(Boolean);
+      const primaryImage = imgList[0] || '/products/hero.png';
       const body: Record<string, unknown> = {
         name: form.name, price: parseFloat(form.price), categoryId: form.categoryId,
         description: form.description, featured: form.featured,
         stock: parseInt(form.stock, 10) || 0, tags: form.tags,
         productCode: form.productCode || null,
         comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
-        images: form.images, specs: form.specs.filter(s => s.label),
+        images: imgList.join(','),
+        image: primaryImage,
+        specs: form.specs.filter(s => s.label),
       };
 
       if (isNew) {
@@ -218,7 +222,7 @@ export function AdminProducts() {
               <tbody>
                 {products.map((p, i) => (
                   <motion.tr key={p.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }} className="border-b border-border hover:bg-secondary/50 transition-colors">
-                    <td className="p-3"><div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary"><img src={p.image} alt={p.name} className="w-full h-full object-cover" /></div></td>
+                    <td className="p-3"><div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary"><img src={safeImgSrc(p.image)} alt={p.name} className="w-full h-full object-cover" /></div></td>
                     <td className="p-3 text-xs font-medium max-w-[180px] truncate">{p.name}</td>
                     <td className="p-3 text-xs font-mono text-muted-foreground hidden lg:table-cell">{p.productCode || '—'}</td>
                     <td className="p-3 text-xs">

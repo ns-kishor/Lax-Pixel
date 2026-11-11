@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Store, User, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Store, User, Sparkles, Loader2, Mail, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Checkbox } from '@/components/ui/checkbox';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 export function AuthView() {
   const { goBack, setUser, showToast, setCart, setOrders, setWishlist, setView, setAdminUser, setAdminAuthed } = useStore();
@@ -19,6 +20,20 @@ export function AuthView() {
   const [registerTerms, setRegisterTerms] = useState(true);
   const [termsOpen, setTermsOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [otpPending, setOtpPending] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
   const [registerForm, setRegisterForm] = useState({
     name: '',
     email: '',
@@ -126,6 +141,15 @@ export function AuthView() {
         return;
       }
 
+      if (data.requireOtp) {
+        setOtpPending(true);
+        setOtpEmail(data.email);
+        setOtpCode('');
+        setResendCooldown(60);
+        showToast(data.message || 'Verification code sent to your email.');
+        return;
+      }
+
       setUser(data.user, data.sellerProfile);
       showToast(`Welcome to Lax Pixel, ${data.user.name}!`);
 
@@ -138,6 +162,66 @@ export function AuthView() {
       showToast('Registration failed: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (otpCode.length < 6) {
+      showToast('Please enter the 6-digit code', 'error');
+      return;
+    }
+    setVerifying(true);
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: otpEmail, code: otpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Verification failed', 'error');
+        setVerifying(false);
+        return;
+      }
+
+      setUser(data.user, data.sellerProfile);
+      showToast(`Account verified! Welcome to Lax Pixel, ${data.user.name}!`);
+      setOtpPending(false);
+
+      if (data.user.role === 'SELLER') {
+        setView('seller-dashboard');
+      } else {
+        goBack();
+      }
+    } catch (err) {
+      showToast('Verification failed: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setResending(true);
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: otpEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to resend code', 'error');
+        setResending(false);
+        return;
+      }
+
+      setResendCooldown(60);
+      showToast('A new 6-digit code has been sent to your email.');
+    } catch (err) {
+      showToast('Failed to resend code: ' + (err instanceof Error ? err.message : 'Network error'), 'error');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -242,6 +326,86 @@ export function AuthView() {
       setLoading(false);
     }
   };
+
+  if (otpPending) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 flex items-start justify-center">
+        <div className="w-full max-w-md px-4">
+          <button
+            onClick={() => setOtpPending(false)}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Registration
+          </button>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-2xl p-6 sm:p-8 text-center space-y-6 shadow-sm"
+          >
+            <div className="w-14 h-14 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto text-foreground">
+              <Mail className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h1 className="text-2xl font-light tracking-tight">Verify Your Email</h1>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Please enter the 6-digit verification code sent to
+              </p>
+              <p className="text-xs font-medium text-foreground tracking-wide font-mono bg-secondary/60 py-1 px-2.5 rounded-md inline-block">
+                {otpEmail}
+              </p>
+            </div>
+
+            <div className="flex justify-center py-2">
+              <InputOTP
+                maxLength={6}
+                value={otpCode}
+                onChange={(val) => setOtpCode(val)}
+              >
+                <InputOTPGroup className="gap-2">
+                  <InputOTPSlot index={0} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                  <InputOTPSlot index={1} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                  <InputOTPSlot index={2} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                  <InputOTPSlot index={3} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                  <InputOTPSlot index={4} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                  <InputOTPSlot index={5} className="w-10 sm:w-11 h-12 text-lg font-mono rounded-lg border-border" />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              className="w-full h-11 bg-foreground text-background text-xs tracking-[0.15em] uppercase rounded-lg hover:bg-foreground/90 font-medium"
+              onClick={verifyOtp}
+              disabled={verifying || otpCode.length < 6}
+            >
+              {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Enter Dashboard'}
+            </Button>
+
+            <div className="pt-2 flex flex-col gap-2.5 items-center text-xs text-muted-foreground">
+              <button
+                type="button"
+                onClick={resendOtp}
+                disabled={resending || resendCooldown > 0}
+                className="hover:text-foreground transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {resending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend Code'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOtpPending(false)}
+                className="text-[11px] underline underline-offset-4 hover:text-foreground transition-colors"
+              >
+                Change email address
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16 flex items-start justify-center">

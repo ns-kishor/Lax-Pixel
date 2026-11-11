@@ -9,6 +9,11 @@ function sanitizeInput(input: unknown): string {
   return input.trim().slice(0, 1000);
 }
 
+function cleanImageUrls(input: unknown): string {
+  if (typeof input !== 'string') return '';
+  return input.replace(/[\r\n\t]+/g, '').trim();
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -122,7 +127,8 @@ export async function POST(req: NextRequest) {
     const featured = body.featured !== undefined ? Boolean(body.featured) : false;
     const productCode = body.productCode !== undefined ? sanitizeInput(body.productCode) || null : null;
     const tags = body.tags !== undefined ? sanitizeInput(body.tags) : '';
-    const images = body.images !== undefined ? sanitizeInput(body.images) : '';
+    const images = body.images !== undefined ? cleanImageUrls(body.images) : '';
+    const mainImage = cleanImageUrls(body.image) || (images ? images.split(',')[0].trim() : '') || '/products/hero.png';
 
     let slug = slugify(name);
     // Ensure unique slug
@@ -147,7 +153,7 @@ export async function POST(req: NextRequest) {
         description,
         price,
         comparePrice,
-        image: images ? images.split(',')[0].trim() : '/products/hero.png',
+        image: mainImage,
         images,
         categoryId,
         sellerId,
@@ -206,6 +212,8 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid stock value.' }, { status: 400 });
           }
           data[field] = val;
+        } else if (field === 'images' || field === 'image') {
+          data[field] = cleanImageUrls(body[field]);
         } else {
           data[field] = sanitizeInput(body[field]);
         }
@@ -215,7 +223,7 @@ export async function PATCH(req: NextRequest) {
     // If images are updated but image (singular) is not, derive it from images
     if (data.images && !data.image) {
       const firstImage = String(data.images).split(',')[0].trim();
-      if (firstImage) data.image = firstImage;
+      if (firstImage) data.image = cleanImageUrls(firstImage);
     }
 
     // Handle specs replacement

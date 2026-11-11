@@ -21,8 +21,9 @@ export async function POST(req: NextRequest) {
     const ext = originalName.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `upload_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yywssvjzjhqvdvsvoipy.supabase.co';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const rawSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yywssvjzjhqvdvsvoipy.supabase.co';
+    const supabaseUrl = rawSupabaseUrl.replace(/[\r\n\t\s]+/g, '').trim().replace(/\/+$/, '');
+    const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/[\r\n\t\s]+/g, '').trim();
 
     // Attempt Supabase Storage upload
     if (supabaseUrl && serviceKey) {

@@ -5,6 +5,19 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["./db/**/*", "./prisma/**/*"],
   },
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
+    ],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
