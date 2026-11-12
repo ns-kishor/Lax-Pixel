@@ -52,11 +52,24 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, slug, description, price, comparePrice, image, categoryId, sellerId, stock, featured, tags } = body;
+    const { name, slug, description, price, comparePrice, image, images, categoryId, sellerId, stock, featured, tags } = body;
 
-    if (!name || !price || !categoryId || !sellerId) {
+    const trimmedName = String(name || '').trim();
+    if (!trimmedName || price === undefined || price === null || !categoryId || !sellerId) {
       return NextResponse.json({ error: 'Name, price, category, and seller are required' }, { status: 400 });
     }
+
+    const parsedPrice = parseFloat(String(price));
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+    }
+
+    const parsedComparePrice = comparePrice !== undefined && comparePrice !== null && String(comparePrice).trim() !== ''
+      ? parseFloat(String(comparePrice))
+      : null;
+
+    const parsedStock = parseInt(String(stock || '0'), 10);
+    const validStock = isNaN(parsedStock) || parsedStock < 0 ? 0 : parsedStock;
 
     // Check seller verification approval
     const sellerProfile = await db.sellerProfile.findUnique({ where: { userId: sellerId } });
@@ -66,26 +79,50 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
+    // Generate safe and guaranteed-unique slug
+    let baseSlug = (slug ? String(slug) : trimmedName)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    if (!baseSlug) {
+      baseSlug = 'product';
+    }
+
+    let finalSlug = baseSlug;
+    const existing = await db.product.findUnique({ where: { slug: finalSlug } });
+    if (existing) {
+      finalSlug = `${baseSlug}-${Date.now().toString(36)}`;
+    }
+
+    // Clean image URLs (remove newlines, whitespace)
+    const cleanImg = image ? String(image).replace(/[\r\n\t]+/g, '').trim() : '/products/hero.png';
+    const cleanImgs = images ? String(images).replace(/[\r\n\t]+/g, '').trim() : cleanImg;
+
     const product = await db.product.create({
       data: {
-        name,
-        slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        description: description || '',
-        price: Number(price),
-        comparePrice: comparePrice ? Number(comparePrice) : null,
-        image: image || '/products/hero.png',
+        name: trimmedName,
+        slug: finalSlug,
+        description: String(description || ''),
+        price: parsedPrice,
+        comparePrice: parsedComparePrice !== null && !isNaN(parsedComparePrice) ? parsedComparePrice : null,
+        image: cleanImg || '/products/hero.png',
+        images: cleanImgs || cleanImg || '/products/hero.png',
         categoryId,
         sellerId,
-        stock: stock || 0,
-        featured: featured || false,
-        tags: tags || '',
-        aiGenerated: true,
-        aiTags: 'AI-created',
+        stock: validStock,
+        featured: Boolean(featured),
+        tags: String(tags || ''),
+        aiGenerated: false,
+        aiTags: '',
       },
     });
 
     return NextResponse.json(product, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+  } catch (error) {
+    console.error('[CREATE-PRODUCT-ERROR]:', error);
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Failed to create product',
+    }, { status: 500 });
   }
 }

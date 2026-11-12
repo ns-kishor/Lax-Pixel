@@ -170,7 +170,11 @@ export function SellerDashboard() {
       body: JSON.stringify({
         ...newProduct,
         sellerId: user.id,
+        price: parseFloat(newProduct.price) || 0,
+        comparePrice: newProduct.comparePrice ? parseFloat(newProduct.comparePrice) : null,
+        stock: parseInt(newProduct.stock, 10) || 0,
         image: newProduct.image || '/products/hero.png',
+        images: newProduct.image || '/products/hero.png',
         featured: false,
       }),
     });
