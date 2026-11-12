@@ -102,3 +102,4 @@ export async function sendOtpEmail({ to, name, code }: SendOtpEmailParams): Prom
     return { sent: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
+
