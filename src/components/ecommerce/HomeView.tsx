@@ -384,18 +384,18 @@ export function HomeView() {
               className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5"
             >
               {/* Card 1: Delivery All Over Bangladesh */}
-              <div className="flex-1 group relative rounded-2xl border border-border/80 bg-gradient-to-br from-card/95 via-card/60 to-secondary/30 p-5 sm:p-6 lg:p-6 backdrop-blur-md shadow-sm hover:shadow-md hover:border-foreground/30 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
+              <div className="flex-1 group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 lg:p-6 shadow-sm hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
                 <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 group-hover:border-emerald-500/50 transition-all duration-300 shadow-inner">
-                    <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-400" />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-background animate-pulse" />
+                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-sm">
+                    <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
+                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
                       <h3 className="text-base sm:text-lg lg:text-xl font-medium tracking-tight text-foreground">
                         Delivery All Over Bangladesh
                       </h3>
-                      <Badge variant="outline" className="text-[10px] tracking-wider uppercase border-emerald-500/40 text-emerald-400 bg-emerald-500/10 shrink-0 font-medium px-2.5 py-0.5">
+                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
                         64 Districts
                       </Badge>
                     </div>
@@ -405,26 +405,26 @@ export function HomeView() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-border/40 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground/90 font-light">
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Nationwide Coverage</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Express Dispatch</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Live Tracking</span>
+                <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Nationwide Coverage</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Express Dispatch</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Live Tracking</span>
                 </div>
               </div>
 
               {/* Card 2: Easy Exchange Available */}
-              <div className="flex-1 group relative rounded-2xl border border-border/80 bg-gradient-to-br from-card/95 via-card/60 to-secondary/30 p-5 sm:p-6 lg:p-6 backdrop-blur-md shadow-sm hover:shadow-md hover:border-foreground/30 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
+              <div className="flex-1 group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 lg:p-6 shadow-sm hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
                 <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 via-blue-500/10 to-transparent border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-105 group-hover:border-sky-500/50 transition-all duration-300 shadow-inner">
-                    <ArrowLeftRight className="w-6 h-6 sm:w-8 sm:h-8 text-sky-400" />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-sky-500 ring-2 ring-background animate-pulse" />
+                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-sm">
+                    <ArrowLeftRight className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
+                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
                       <h3 className="text-base sm:text-lg lg:text-xl font-medium tracking-tight text-foreground">
                         Easy Exchange Available
                       </h3>
-                      <Badge variant="outline" className="text-[10px] tracking-wider uppercase border-sky-500/40 text-sky-400 bg-sky-500/10 shrink-0 font-medium px-2.5 py-0.5">
+                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
                         7-Day Policy
                       </Badge>
                     </div>
@@ -434,10 +434,10 @@ export function HomeView() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-border/40 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground/90 font-light">
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-sky-400" /> Seamless Replacement</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-sky-400" /> Quick Processing</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-sky-400" /> Zero Hassle</span>
+                <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Seamless Replacement</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Quick Processing</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Zero Hassle</span>
                 </div>
               </div>
 
