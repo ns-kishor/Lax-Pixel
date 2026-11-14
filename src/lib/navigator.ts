@@ -45,6 +45,8 @@ export function buildUrl(view: View, params?: Record<string, string>): string {
       return '/admin/login';
     case 'admin':
       return '/admin';
+    case 'support':
+      return '/support';
     default:
       return '/';
   }
@@ -93,6 +95,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
     '/auth': 'auth',
     '/tracking': 'tracking',
     '/account': 'account',
+    '/support': 'support',
     '/seller': 'seller-dashboard',
     '/admin/login': 'admin-login',
     '/admin': 'admin',

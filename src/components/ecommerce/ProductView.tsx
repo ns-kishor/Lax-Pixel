@@ -14,8 +14,6 @@ export function ProductView() {
   const { selectedProduct: product, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setCart, goBack } = useStore();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [aiDesc, setAiDesc] = useState('');
-  const [showAiDesc, setShowAiDesc] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -35,16 +33,6 @@ export function ProductView() {
     showToast(`${product.name} added to bag`);
   };
 
-  const generateAiDesc = async () => {
-    setShowAiDesc(true);
-    const res = await fetch('/api/ai/describe', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productName: product.name, productDetails: product.description, type: 'description' }),
-    });
-    const data = await res.json();
-    setAiDesc(data.result);
-  };
-
   const isWished = wishlistIds.has(product.id);
 
   return (
@@ -60,7 +48,6 @@ export function ProductView() {
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary">
               <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" priority />
               {discount > 0 && <Badge className="absolute top-4 left-4 bg-foreground text-background text-xs">-{discount}%</Badge>}
-              {product.aiTags && <Badge variant="secondary" className="absolute top-4 right-4 text-[10px] gap-1"><Sparkles className="w-3 h-3" /> {product.aiTags}</Badge>}
             </div>
           </motion.div>
 
@@ -86,21 +73,6 @@ export function ProductView() {
             <Separator className="bg-secondary" />
 
             <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-
-            {/* AI Enhancement */}
-            <div className="p-4 rounded-lg bg-secondary border border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-xs tracking-wider uppercase font-medium">AI Enhanced Description</span>
-              </div>
-              {showAiDesc ? (
-                <p className="text-xs text-muted-foreground leading-relaxed">{aiDesc || 'Generating...'}</p>
-              ) : (
-                <Button variant="outline" size="sm" className="border-border text-xs h-8" onClick={generateAiDesc}>
-                  <Sparkles className="w-3 h-3 mr-2" /> Generate AI Description
-                </Button>
-              )}
-            </div>
 
             {/* Quantity & Add to Cart */}
             <div className="flex items-center gap-4">

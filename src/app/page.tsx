@@ -17,7 +17,7 @@ import { SellerDashboard } from '@/components/ecommerce/SellerDashboard';
 import { ContentView } from '@/components/ecommerce/ContentView';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminPanel } from '@/components/admin/AdminPanel';
-import { AIChat } from '@/components/ecommerce/AIChat';
+import { SupportView } from '@/components/ecommerce/SupportView';
 import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
 import { Loader2 } from 'lucide-react';
@@ -45,6 +45,7 @@ function ViewRouter() {
         {view === 'seller-orders' && <SellerDashboard />}
         {view === 'admin-login' && <AdminLogin />}
         {view === 'admin' && <AdminPanel />}
+        {view === 'support' && <SupportView />}
       </motion.div>
     </AnimatePresence>
   );
@@ -174,7 +175,6 @@ export default function Page() {
         <ViewRouter />
       </main>
       {!isAdmin && <Footer />}
-      {!isAdmin && <AIChat />}
       <Toast />
     </div>
   );

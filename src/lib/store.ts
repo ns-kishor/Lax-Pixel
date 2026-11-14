@@ -4,7 +4,7 @@ import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
   | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders'
-  | 'auth' | 'tracking' | 'search' | 'content'
+  | 'auth' | 'tracking' | 'search' | 'content' | 'support'
   | 'admin-login' | 'admin';
 
 export interface User {

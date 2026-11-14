@@ -83,15 +83,11 @@ function ProductCard({
           )}
         </div>
 
-        {product.salesCount > 0 ? (
+        {product.salesCount > 0 && (
           <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1 bg-background/85 backdrop-blur-sm border border-border/60">
             <TrendingUp className="w-2.5 h-2.5 text-emerald-500" /> {product.salesCount} sold
           </Badge>
-        ) : product.aiTags ? (
-          <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1 bg-background/85 backdrop-blur-sm border border-border/60">
-            <Sparkles className="w-2.5 h-2.5" /> AI PICK
-          </Badge>
-        ) : null}
+        )}
 
         {useStore.getState().justAddedToCart === product.id && (
           <div className="absolute inset-0 bg-muted flex items-center justify-center animate-fade-in z-20">
@@ -300,7 +296,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 }
 
 export function HomeView() {
-  const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView } = useStore();
+  const { products, categories, setProducts, setCategories, setView } = useStore();
   const [heroProducts, setHeroProducts] = useState<Product[]>([]);
 
   // Authoritative Hero Slides fetch from /api/hero (managed in Admin Hero Slider)
@@ -351,21 +347,10 @@ export function HomeView() {
     });
   }, [products]);
 
-  useEffect(() => {
-    const loadRecs = async () => {
-      try {
-        const res = await fetch('/api/ai/recommendations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'luxury premium items trending bestsellers' }) });
-        const data = await res.json();
-        if (data.length > 0) setRecommendations(data);
-      } catch {}
-    };
-    if (products.length > 0) loadRecs();
-  }, [products.length, setRecommendations]);
-
   const features = [
     { icon: Truck, title: 'Free Express Shipping', desc: 'On orders over $2,000' },
     { icon: Shield, title: 'Authenticity Guaranteed', desc: 'Every piece verified' },
-    { icon: Sparkles, title: 'AI Curated', desc: 'Personalized for you' },
+    { icon: Sparkles, title: 'Quality Curated', desc: 'Handpicked for your style' },
     { icon: Eye, title: 'Real-time Tracking', desc: 'From warehouse to door' },
   ];
 
@@ -576,26 +561,6 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* AI Recommendations */}
-      {recommendations.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-          <div className="flex items-end justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-light tracking-tight">AI Picks For You</h2>
-                <p className="text-xs text-muted-foreground mt-1 tracking-wide">Personalized recommendations powered by intelligence</p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {recommendations.slice(0, 4).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-          </div>
-        </section>
-      )}
-
       {/* CTA Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         <div className="relative rounded-2xl border border-border bg-secondary p-8 sm:p-12 overflow-hidden">
@@ -603,7 +568,7 @@ export function HomeView() {
           <div className="relative max-w-lg">
             <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Become a <span className="font-medium">Seller</span></h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              List your luxury products on Lax Pixel and reach discerning customers worldwide. AI-powered tools help you optimize listings and grow sales.
+              List your luxury products on Lax Pixel and reach discerning customers worldwide. Advanced seller tools help you optimize listings and grow sales.
             </p>
             <Button className="mt-6 bg-foreground text-background text-xs tracking-[0.2em] uppercase h-11 px-8 rounded-lg" onClick={() => setView('auth')}>
               Start Selling <ArrowRight className="w-4 h-4 ml-2" />

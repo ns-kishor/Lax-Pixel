@@ -209,49 +209,6 @@ export function SellerDashboard() {
     }
   };
 
-  const aiGenerateDesc = async () => {
-    showToast('Generating with AI...', 'info');
-    try {
-      const res = await fetch('/api/ai/describe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productName: newProduct.name,
-          productDetails: `Price: $${newProduct.price}, Category: ${categories.find(c => c.id === newProduct.categoryId)?.name || ''}`,
-          type: 'description',
-        }),
-      });
-      const data = await res.json();
-      if (data.result) {
-        setNewProduct(prev => ({ ...prev, description: data.result }));
-        showToast('AI description generated!');
-      }
-    } catch {
-      showToast('AI generation failed', 'error');
-    }
-  };
-
-  const aiGenerateTags = async () => {
-    try {
-      const res = await fetch('/api/ai/describe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productName: newProduct.name,
-          productDetails: newProduct.description,
-          type: 'tags',
-        }),
-      });
-      const data = await res.json();
-      if (data.result) {
-        setNewProduct(prev => ({ ...prev, tags: data.result }));
-        showToast('Tags generated!');
-      }
-    } catch {
-      showToast('AI generation failed', 'error');
-    }
-  };
-
   const stats = sellerStats || {
     productCount: 0,
     totalRevenue: 0,
@@ -720,12 +677,7 @@ export function SellerDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Description</Label>
-                  <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7" onClick={aiGenerateDesc}>
-                    <Sparkles className="w-3 h-3" /> AI Generate
-                  </Button>
-                </div>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Description</Label>
                 <textarea
                   value={newProduct.description}
                   onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
@@ -736,12 +688,7 @@ export function SellerDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Tags</Label>
-                  <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7" onClick={aiGenerateTags}>
-                    <Sparkles className="w-3 h-3" /> AI Generate
-                  </Button>
-                </div>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Tags</Label>
                 <Input
                   value={newProduct.tags}
                   onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })}
@@ -815,11 +762,6 @@ export function SellerDashboard() {
                         <Badge variant="secondary" className="text-[10px] bg-foreground/5 font-medium">
                           {p.salesCount || 0} Sold
                         </Badge>
-                        {p.aiGenerated && (
-                          <Badge variant="outline" className="text-[9px] gap-1 border-border">
-                            <Sparkles className="w-2.5 h-2.5" /> AI
-                          </Badge>
-                        )}
                       </div>
                       <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
                         View Product →

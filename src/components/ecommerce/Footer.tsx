@@ -29,6 +29,7 @@ export function Footer() {
   ];
 
   const supportLinks = [
+    { label: 'Get Support', action: () => setView('support') },
     { label: 'Track Order', action: () => setView('tracking') },
     { label: 'Contact', action: () => setView('content', { slug: 'contact' }) },
     { label: 'FAQ', action: () => setView('content', { slug: 'faq' }) },
@@ -56,7 +57,7 @@ export function Footer() {
               <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5">
-              AI-powered luxury ecommerce. Curated collections and intelligent shopping.
+              Premium luxury ecommerce. Curated collections and exceptional shopping experience.
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-2">
@@ -136,7 +137,7 @@ export function Footer() {
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[10px] text-muted-foreground">© 2025 Lax Pixel. All rights reserved.</p>
           <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
-            Powered by <Sparkles className="w-3 h-3" /> AI Intelligence
+            Lax Pixel • Luxury Redefined
           </p>
         </div>
       </div>

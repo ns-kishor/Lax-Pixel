@@ -50,6 +50,7 @@ export function Header() {
   const navLinks = [
     { label: 'Home', view: 'home' as const },
     { label: 'Shop', view: 'shop' as const },
+    { label: 'Support', view: 'support' as const },
   ];
 
   return (
