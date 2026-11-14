@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
 
 const SETTINGS_KEYS = [
+  { key: 'seller_verification_fee', label: 'Seller Verification Fee (BDT)', type: 'text' as const },
   { key: 'footer_description', label: 'Footer Description', type: 'textarea' as const },
   { key: 'footer_copyright', label: 'Footer Copyright', type: 'text' as const },
   { key: 'social_facebook', label: 'Facebook URL', type: 'text' as const },

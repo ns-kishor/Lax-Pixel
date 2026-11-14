@@ -21,6 +21,10 @@ interface Verification {
   phone: string;
   website: string | null;
   description: string | null;
+  feeAmount: number | null;
+  paymentMethod: string | null;
+  transactionId: string | null;
+  senderNumber: string | null;
   status: string;
   rejectReason: string | null;
   createdAt: string;
@@ -181,6 +185,31 @@ export function AdminVerifications() {
                   <div><span className="text-muted-foreground">NID / Trade License:</span> {selected.nidNumber}</div>
                   {selected.website && <div className="sm:col-span-2"><span className="text-muted-foreground">Website:</span> {selected.website}</div>}
                   {selected.description && <div className="sm:col-span-2"><span className="text-muted-foreground">Description:</span> {selected.description}</div>}
+                </div>
+              </div>
+
+              {/* Verification Fee Payment Details */}
+              <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+                <h4 className="text-xs tracking-wider uppercase text-amber-500 font-medium flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5" /> Approval Fee Payment Verification
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Fee Amount:</span>{' '}
+                    <span className="font-semibold text-foreground">{selected.feeAmount ? `${selected.feeAmount} BDT` : 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Payment Method:</span>{' '}
+                    <span className="font-medium text-foreground">{selected.paymentMethod || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Transaction ID (TrxID):</span>{' '}
+                    <span className="font-mono text-xs bg-background/50 px-2 py-0.5 rounded border border-border">{selected.transactionId || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Sender Phone Number:</span>{' '}
+                    <span className="font-mono text-xs text-foreground">{selected.senderNumber || 'N/A'}</span>
+                  </div>
                 </div>
               </div>
 

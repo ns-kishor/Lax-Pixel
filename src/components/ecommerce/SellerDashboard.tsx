@@ -48,7 +48,13 @@ export function SellerDashboard() {
     phone: '',
     website: '',
     description: '',
+    paymentMethod: 'bKash',
+    transactionId: '',
+    senderNumber: '',
   });
+
+  const [verificationFee, setVerificationFee] = useState<number>(500);
+  const [digitalPaymentMethods, setDigitalPaymentMethods] = useState<any[]>([]);
 
   const loadSellerData = async () => {
     if (!user) return;
@@ -60,6 +66,12 @@ export function SellerDashboard() {
         setSellerData(data);
         setApproved(Boolean(data.approved));
         setVerification(data.verification || null);
+        if (data.feeAmount !== undefined) {
+          setVerificationFee(data.feeAmount);
+        }
+        if (data.paymentMethods && Array.isArray(data.paymentMethods)) {
+          setDigitalPaymentMethods(data.paymentMethods);
+        }
         if (data.verification) {
           setVerificationForm({
             businessName: data.verification.businessName || '',
@@ -71,6 +83,9 @@ export function SellerDashboard() {
             phone: data.verification.phone || '',
             website: data.verification.website || '',
             description: data.verification.description || '',
+            paymentMethod: data.verification.paymentMethod || (data.paymentMethods?.[0]?.name ?? 'bKash'),
+            transactionId: data.verification.transactionId || '',
+            senderNumber: data.verification.senderNumber || '',
           });
         }
       }
@@ -134,6 +149,11 @@ export function SellerDashboard() {
       return;
     }
 
+    if (!verificationForm.paymentMethod || !verificationForm.transactionId.trim() || !verificationForm.senderNumber.trim()) {
+      showToast('Please select payment method and provide Transaction ID (TrxID) and Sender Phone Number for verification fee', 'error');
+      return;
+    }
+
     setSubmittingVerification(true);
     try {
       const res = await fetch('/api/seller/verification', {
@@ -143,7 +163,7 @@ export function SellerDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Verification submitted! Admin will review your details.');
+        showToast('Verification and fee details submitted! Admin will review your account.');
         loadSellerData();
       } else {
         showToast(data.error || 'Submission failed', 'error');
@@ -342,6 +362,22 @@ export function SellerDashboard() {
                         <span className="text-muted-foreground block text-[10px] uppercase">Address</span>
                         <span>{verification.businessAddress}, {verification.businessCity}, {verification.businessCountry}</span>
                       </div>
+                      {verification.paymentMethod && (
+                        <div className="sm:col-span-3 p-3 rounded-lg bg-background/60 border border-border mt-1 grid sm:grid-cols-3 gap-2">
+                          <div>
+                            <span className="text-muted-foreground block text-[10px] uppercase">Approval Fee</span>
+                            <span className="font-medium text-foreground">{verification.feeAmount ? `৳ ${verification.feeAmount}` : 'Paid'}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground block text-[10px] uppercase">Method</span>
+                            <span className="font-medium text-foreground">{verification.paymentMethod}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground block text-[10px] uppercase">TrxID / Sender</span>
+                            <span className="font-mono text-foreground">{verification.transactionId || '—'} ({verification.senderNumber || '—'})</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -465,6 +501,97 @@ export function SellerDashboard() {
                           placeholder="Tell us about the products you intend to sell, your business background, etc."
                           className="mt-1.5 w-full p-3 bg-background border border-border rounded-md text-xs resize-none"
                         />
+                      </div>
+                    </div>
+
+                    {/* ─── Verification & Approval Fee Payment Section ─── */}
+                    <div className="pt-4 border-t border-border space-y-4">
+                      <div className="p-4 rounded-xl bg-background border border-border">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                          <div>
+                            <h3 className="text-sm font-medium text-foreground">অ্যাকাউন্ট ভেরিফিকেশন ও অনুমোদন ফি (Approval Fee)</h3>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              সেলার অ্যাকাউন্ট ভেরিফিকেশনের জন্য নির্ধারিত ফি প্রদান করে নিচে ট্রানজেকশন আইডি ও আপনার সেন্ডার নাম্বার দিন।
+                            </p>
+                          </div>
+                          <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
+                            ফি: ৳ {verificationFee}
+                          </div>
+                        </div>
+
+                        {/* Payment Method Selector Grid */}
+                        <div className="space-y-2 mb-4">
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">পেমেন্ট মেথড সিলেক্ট করুন *</Label>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                            {digitalPaymentMethods.map((m) => {
+                              const isSelected = verificationForm.paymentMethod === m.name;
+                              return (
+                                <button
+                                  key={m.id || m.name}
+                                  type="button"
+                                  onClick={() => setVerificationForm({ ...verificationForm, paymentMethod: m.name })}
+                                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
+                                    isSelected
+                                      ? 'border-foreground bg-secondary ring-1 ring-foreground'
+                                      : 'border-border bg-card hover:border-muted-foreground/40'
+                                  }`}
+                                >
+                                  {m.icon && (
+                                    <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+                                      {m.icon.startsWith('/') || m.icon.startsWith('http') ? (
+                                        <img src={m.icon} alt={m.name} className="w-full h-full object-contain" />
+                                      ) : (
+                                        <span className="text-xl">{m.icon}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                  <span className="text-[11px] font-medium leading-tight">{m.name}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Selected Method Instructions */}
+                        {(() => {
+                          const activeMethod = digitalPaymentMethods.find(m => m.name === verificationForm.paymentMethod);
+                          return activeMethod?.instructions ? (
+                            <div className="p-3 rounded-lg bg-secondary/80 border border-border text-xs text-muted-foreground mb-4">
+                              <p className="font-medium text-foreground mb-1">{activeMethod.name} পেমেন্ট নির্দেশনা:</p>
+                              <p className="leading-relaxed">{activeMethod.instructions}</p>
+                            </div>
+                          ) : null;
+                        })()}
+
+                        {/* TrxID & Sender Phone Number inputs */}
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                              Transaction ID (TrxID) *
+                            </Label>
+                            <Input
+                              required
+                              value={verificationForm.transactionId}
+                              onChange={e => setVerificationForm({ ...verificationForm, transactionId: e.target.value })}
+                              placeholder="e.g. 9J8B7C6D5E"
+                              className="mt-1.5 h-10 bg-secondary border-border font-mono text-xs uppercase"
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">পেমেন্ট সফল হওয়ার পর প্রাপ্ত ট্রানজেকশন আইডি দিন</p>
+                          </div>
+                          <div>
+                            <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                              Sender Phone Number * (প্রেরকের নাম্বার)
+                            </Label>
+                            <Input
+                              required
+                              value={verificationForm.senderNumber}
+                              onChange={e => setVerificationForm({ ...verificationForm, senderNumber: e.target.value })}
+                              placeholder="e.g. 017XXXXXXXX"
+                              className="mt-1.5 h-10 bg-secondary border-border font-mono text-xs"
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">যে মোবাইল নাম্বার থেকে টাকা পাঠিয়েছেন</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

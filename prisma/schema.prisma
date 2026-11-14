@@ -292,6 +292,10 @@ model SellerVerification {
   phone           String
   website         String?
   description     String?
+  feeAmount       Float?    @default(0)
+  paymentMethod   String?
+  transactionId   String?
+  senderNumber    String?
   status          String    @default("PENDING")
   reviewedBy      String?
   reviewedAt      DateTime?

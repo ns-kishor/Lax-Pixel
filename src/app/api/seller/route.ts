@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
     const sellerId = req.headers.get('x-user-id');
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const [profile, verification, products] = await Promise.all([
+    const [profile, verification, products, feeSetting, paymentMethods] = await Promise.all([
       db.sellerProfile.findUnique({ where: { userId: sellerId } }),
       db.sellerVerification.findUnique({
         where: { userId: sellerId },
@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
           id: true, businessName: true, businessType: true, businessAddress: true,
           businessCity: true, businessCountry: true, nidNumber: true, phone: true,
           website: true, description: true, status: true, rejectReason: true,
+          feeAmount: true, paymentMethod: true, transactionId: true, senderNumber: true,
           createdAt: true, reviewedAt: true,
         },
       }),
@@ -21,6 +22,14 @@ export async function GET(req: NextRequest) {
         where: { sellerId },
         include: { category: true },
         orderBy: { createdAt: 'desc' },
+      }),
+      db.siteSetting.findUnique({ where: { key: 'seller_verification_fee' } }),
+      db.paymentMethod.findMany({
+        where: {
+          active: true,
+          name: { notIn: ['cash_on_delivery', 'Cash on Delivery', 'COD'] },
+        },
+        orderBy: { sortOrder: 'asc' },
       }),
     ]);
 
@@ -98,6 +107,8 @@ export async function GET(req: NextRequest) {
       profile,
       verification,
       approved: isApproved,
+      feeAmount: feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500,
+      paymentMethods,
       stats: {
         productCount,
         totalRevenue: Math.round(totalRevenue * 100) / 100,

@@ -62,7 +62,31 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { items, shippingAddress, shippingCity, shippingCountry, shippingZip, paymentMethod: paymentMethodInput, paymentMethodId, paymentProofImage } = body;
+    const {
+      items,
+      phone,
+      shippingAddress,
+      shippingCity,
+      shippingCountry,
+      shippingZip,
+      paymentMethod: paymentMethodInput,
+      paymentMethodId,
+      transactionId,
+      senderNumber,
+      paymentProofImage,
+    } = body;
+
+    const buyerPhone = phone ? String(phone).trim() : (user.phone ? String(user.phone).trim() : '');
+    if (!buyerPhone) {
+      return NextResponse.json({ error: 'Contact phone number is required to place an order' }, { status: 400 });
+    }
+
+    if (buyerPhone && buyerPhone !== user.phone) {
+      await db.user.update({
+        where: { id: userId },
+        data: { phone: buyerPhone },
+      }).catch(() => {});
+    }
 
     // Gather requested items
     interface RawOrderItemInput {
@@ -135,9 +159,7 @@ export async function POST(req: NextRequest) {
     const trackingCode = generateTrackingCode();
 
     // Resolve payment method details
-    let resolvedPaymentMethod = paymentMethodInput || 'CREDIT_CARD';
-    let paymentStatus = 'PAID';
-    let needsProof = false;
+    let resolvedPaymentMethod = paymentMethodInput || 'cash_on_delivery';
     let resolvedPaymentMethodId: string | undefined;
 
     if (paymentMethodId) {
@@ -145,17 +167,35 @@ export async function POST(req: NextRequest) {
       if (method) {
         resolvedPaymentMethod = method.name;
         resolvedPaymentMethodId = method.id;
-
-        if (method.proofRequired) {
-          needsProof = true;
-          if (!paymentProofImage) {
-            return NextResponse.json({ error: `Payment proof is required for ${method.name}` }, { status: 400 });
-          }
-          paymentStatus = 'PENDING_VERIFICATION';
-        } else if (method.name === 'COD') {
-          paymentStatus = 'PENDING';
-        }
       }
+    } else {
+      const defaultMethod = await db.paymentMethod.findFirst({
+        where: { name: resolvedPaymentMethod, active: true },
+      });
+      if (defaultMethod) {
+        resolvedPaymentMethodId = defaultMethod.id;
+      }
+    }
+
+    const isCod = resolvedPaymentMethod === 'cash_on_delivery' ||
+                  resolvedPaymentMethod === 'Cash on Delivery' ||
+                  resolvedPaymentMethod === 'COD';
+
+    let paymentStatus = 'PAID';
+    let needsProof = false;
+
+    if (isCod) {
+      paymentStatus = 'PENDING';
+      needsProof = false;
+    } else {
+      // Non-COD methods require Transaction ID and Sender Phone Number
+      if (!transactionId || !String(transactionId).trim() || !senderNumber || !String(senderNumber).trim()) {
+        return NextResponse.json({
+          error: `Transaction ID and Sender Phone Number are required for ${resolvedPaymentMethod}`,
+        }, { status: 400 });
+      }
+      paymentStatus = 'PENDING_VERIFICATION';
+      needsProof = true;
     }
 
     // Atomic transaction for order creation and inventory decrement
@@ -201,15 +241,16 @@ export async function POST(req: NextRequest) {
         include: { items: true, tracking: true },
       });
 
-      // Create payment proof if needed
-      if (needsProof && paymentProofImage && resolvedPaymentMethodId) {
+      // Create payment proof if needed (TrxID + Sender Number)
+      if (needsProof && resolvedPaymentMethodId) {
         await tx.paymentProof.create({
           data: {
             orderId: newOrder.id,
             userId,
             paymentMethodId: resolvedPaymentMethodId,
             amount: totalAmount,
-            proofImage: paymentProofImage,
+            proofImage: paymentProofImage || null,
+            notes: `TrxID: ${String(transactionId).trim()} | Sender: ${String(senderNumber).trim()}`,
             status: 'PENDING',
           },
         });

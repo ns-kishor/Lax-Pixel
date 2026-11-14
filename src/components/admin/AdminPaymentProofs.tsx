@@ -237,6 +237,10 @@ ${'='.repeat(50)}
                         >
                           <img src={proof.proofImage} alt="Proof" className="w-full h-full object-cover" />
                         </button>
+                      ) : proof.notes ? (
+                        <div className="font-mono text-[11px] bg-background/80 px-2 py-1 rounded border border-border max-w-[220px] truncate text-foreground" title={proof.notes}>
+                          {proof.notes}
+                        </div>
                       ) : (
                         <div className="w-10 h-10 rounded-md border border-border bg-secondary flex items-center justify-center">
                           <ImageOff className="w-4 h-4 text-muted-foreground" />

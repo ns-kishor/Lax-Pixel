@@ -268,7 +268,13 @@ export function AdminPaymentMethods() {
                   >
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        {method.icon && <span className="text-base">{method.icon}</span>}
+                        {method.icon && (
+                          method.icon.startsWith('/') || method.icon.startsWith('http') ? (
+                            <img src={method.icon} alt={method.name} className="w-6 h-6 object-contain rounded" />
+                          ) : (
+                            <span className="text-base">{method.icon}</span>
+                          )
+                        )}
                         <span className="text-xs font-medium">{method.name}</span>
                       </div>
                     </td>
