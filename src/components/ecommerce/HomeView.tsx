@@ -357,7 +357,7 @@ export function HomeView() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative min-h-[580px] py-12 lg:py-16 flex items-center overflow-hidden bg-background">
+      <section className="relative min-h-[580px] pt-24 sm:pt-28 lg:pt-32 xl:pt-36 pb-12 lg:pb-16 flex items-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
