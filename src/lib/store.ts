@@ -118,13 +118,6 @@ export interface Category {
   _count?: { products: number };
 }
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
 interface AppState {
   // Navigation
   view: View;
@@ -169,23 +162,10 @@ interface AppState {
   shopSort: string;
   setShopSort: (sort: string) => void;
 
-  // AI Chat
-  chatMessages: ChatMessage[];
-  chatOpen: boolean;
-  chatLoading: boolean;
-  setChatMessages: (msgs: ChatMessage[]) => void;
-  addChatMessage: (msg: ChatMessage) => void;
-  setChatOpen: (open: boolean) => void;
-  setChatLoading: (loading: boolean) => void;
-
   // Wishlist
   wishlistIds: Set<string>;
   toggleWishlist: (productId: string) => void;
   setWishlist: (ids: string[]) => void;
-
-  // AI Recommendations
-  recommendations: Product[];
-  setRecommendations: (products: Product[]) => void;
 
   // Toast
   toast: { message: string; type: 'success' | 'error' | 'info' } | null;
@@ -319,15 +299,6 @@ export const useStore = create<AppState>((set, get) => ({
   shopSort: 'createdAt',
   setShopSort: (sort) => set({ shopSort: sort }),
 
-  // AI Chat
-  chatMessages: [{ id: '0', role: 'assistant', content: 'Welcome to Lax Pixel. I am your AI shopping assistant. How may I help you today?', timestamp: new Date() }],
-  chatOpen: false,
-  chatLoading: false,
-  setChatMessages: (msgs) => set({ chatMessages: msgs }),
-  addChatMessage: (msg) => set({ chatMessages: [...get().chatMessages, msg] }),
-  setChatOpen: (open) => set({ chatOpen: open }),
-  setChatLoading: (loading) => set({ chatLoading: loading }),
-
   // Wishlist
   wishlistIds: new Set<string>(),
   toggleWishlist: (productId) => {
@@ -337,10 +308,6 @@ export const useStore = create<AppState>((set, get) => ({
     set({ wishlistIds: current });
   },
   setWishlist: (ids) => set({ wishlistIds: new Set(ids) }),
-
-  // AI Recommendations
-  recommendations: [],
-  setRecommendations: (products) => set({ recommendations: Array.isArray(products) ? products : [] }),
 
   // Toast
   toast: null,

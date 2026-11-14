@@ -10,15 +10,15 @@ const content: Record<string, { title: string; sections: { heading: string; body
     sections: [
       {
         heading: 'Our Story',
-        body: 'Lax Pixel was founded with a singular vision: to redefine luxury shopping through the power of artificial intelligence. We believe that the future of ecommerce lies at the intersection of timeless elegance and cutting-edge technology. Every product in our curated collection is handpicked by our AI systems, ensuring that only the finest pieces reach our discerning customers.',
+        body: 'Lax Pixel was founded with a singular vision: to redefine luxury shopping through elegance, authenticity, and premium craftsmanship. We believe that the future of ecommerce lies at the intersection of timeless elegance and exceptional service. Every product in our curated collection is handpicked to ensure only the finest pieces reach our discerning customers.',
       },
       {
-        heading: 'AI-Powered Curation',
-        body: 'Our proprietary AI algorithms analyze global fashion trends, customer preferences, and quality metrics to curate a selection that is truly exceptional. From luxury timepieces and designer eyewear to premium electronics and artisan fragrances, every category is continuously refined to deliver an unparalleled shopping experience.',
+        heading: 'Expert Curation',
+        body: 'Our expert curators analyze global fashion trends, customer preferences, and quality metrics to curate a selection that is truly exceptional. From luxury timepieces and designer eyewear to premium electronics and artisan fragrances, every category is continuously refined to deliver an unparalleled shopping experience.',
       },
       {
         heading: 'Our Commitment',
-        body: 'We are committed to authenticity, quality, and customer satisfaction. Every item listed on Lax Pixel undergoes rigorous verification. Our real-time order tracking, AI-powered customer support, and seamless shopping experience reflect our dedication to excellence. We partner directly with brands and authorized sellers to guarantee genuine products.',
+        body: 'We are committed to authenticity, quality, and customer satisfaction. Every item listed on Lax Pixel undergoes rigorous verification. Our real-time order tracking, dedicated customer support, and seamless shopping experience reflect our dedication to excellence. We partner directly with brands and authorized sellers to guarantee genuine products.',
       },
     ],
   },
@@ -43,7 +43,7 @@ const content: Record<string, { title: string; sections: { heading: string; body
       },
       {
         heading: 'How do I become a seller?',
-        body: 'Click "Become a Seller" in the footer or sign up for a seller account during registration. After verification, you can list your luxury products and reach our global customer base. Our AI tools help optimize your listings for maximum visibility.',
+        body: 'Click "Become a Seller" in the footer or sign up for a seller account during registration. After verification, you can list your luxury products and reach our global customer base. Our advanced seller tools help optimize your listings for maximum visibility.',
       },
       {
         heading: 'Is my payment secure?',
@@ -85,7 +85,7 @@ const content: Record<string, { title: string; sections: { heading: string; body
       },
       {
         heading: 'How We Use Your Information',
-        body: 'We use your information to process orders, provide customer support, personalize your shopping experience, improve our services, and communicate with you about orders, products, and promotions. Our AI systems use anonymized data to improve product recommendations.',
+        body: 'We use your information to process orders, provide customer support, personalize your shopping experience, improve our services, and communicate with you about orders, products, and promotions.',
       },
       {
         heading: 'Data Security',
@@ -131,7 +131,7 @@ const content: Record<string, { title: string; sections: { heading: string; body
       },
       {
         heading: 'Customer Support',
-        body: 'For order inquiries, returns, and general questions, you can reach our AI-powered support assistant available 24/7 via the chat widget. For complex issues, our human support team is available Monday through Friday, 9 AM to 6 PM.',
+        body: 'For order inquiries, returns, and general questions, you can reach our dedicated support team via WhatsApp, Telegram, Gmail, or Messenger on our Get Support page. Our team is available to assist you.',
       },
       {
         heading: 'Business Inquiries',
