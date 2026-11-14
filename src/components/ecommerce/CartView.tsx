@@ -64,7 +64,7 @@ export function CartView() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light tracking-tight">Shopping Bag ({cart.length})</h1>
           <Button variant="ghost" size="sm" className="text-xs text-destructive hover:text-destructive" onClick={clearCart}>

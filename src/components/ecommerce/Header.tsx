@@ -55,7 +55,7 @@ export function Header() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'glass border-b border-border' : 'bg-transparent'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Mobile menu */}
           <div className="lg:hidden">
@@ -128,7 +128,7 @@ export function Header() {
           </nav>
 
           {/* Search - Desktop */}
-          <div className={`hidden md:flex items-center transition-all duration-300 ${searchFocused ? 'w-72' : 'w-48'}`}>
+          <div className={`hidden md:flex items-center transition-all duration-300 ${searchFocused ? 'w-80 lg:w-96' : 'w-52 lg:w-72'}`}>
             <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input

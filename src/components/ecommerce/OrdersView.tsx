@@ -49,7 +49,7 @@ export function OrdersView() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 xl:px-12">
         <h1 className="text-3xl font-light tracking-tight mb-8">My Orders</h1>
 
         {orderList.length === 0 ? (
@@ -143,7 +143,7 @@ export function OrderDetailView() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 xl:px-12">
         <button onClick={goBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8">
           <ArrowRight className="w-3.5 h-3.5 rotate-180" /> Back to Orders
         </button>

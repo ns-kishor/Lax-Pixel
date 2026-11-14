@@ -37,7 +37,7 @@ export function ProductView() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         <button onClick={goBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>

@@ -169,11 +169,11 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full max-w-[696px] mx-auto lg:mx-0 lg:ml-auto h-full flex flex-col justify-between"
+      className="relative w-full mx-auto lg:mx-0 lg:ml-auto h-full flex flex-col justify-between"
     >
       <div className="relative glass rounded-2xl border border-border overflow-hidden shadow-xl flex flex-col h-full justify-between">
-        {/* Product Image - 16:9 ratio, 696px width, 393px height */}
-        <div className="relative w-full max-w-[696px] aspect-[16/9] md:w-[696px] md:h-[393px] overflow-hidden bg-secondary shrink-0">
+        {/* Product Image - fluid 16:9 ratio */}
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-secondary shrink-0 rounded-t-2xl">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={slide.id}
@@ -190,7 +190,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
                 alt={slide.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 696px"
+                sizes="(max-width: 1024px) 100vw, (max-width: 1536px) 55vw, 950px"
                 priority
               />
             </motion.div>
@@ -359,7 +359,7 @@ export function HomeView() {
       {/* Hero */}
       <section className="relative min-h-[580px] py-12 lg:py-16 flex items-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full">
+        <div className="relative max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
             {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
             <motion.div
@@ -464,7 +464,7 @@ export function HomeView() {
 
       {/* Features */}
       <section className="border-y border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-8 sm:py-10 grid grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8">
           {features.map((f, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
@@ -480,7 +480,7 @@ export function HomeView() {
       </section>
 
       {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-12 sm:py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
             <h2 className="text-2xl font-light tracking-tight">Categories</h2>
@@ -496,7 +496,7 @@ export function HomeView() {
       </section>
 
       {/* Section 1: Recently Added Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="flex items-end justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
@@ -521,15 +521,15 @@ export function HomeView() {
             View All <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {recentProducts.slice(0, 8).map((p, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6 xl:gap-7 2xl:gap-8">
+          {recentProducts.slice(0, 12).map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} badgeText="NEW" badgeVariant="new" />
           ))}
         </div>
       </section>
 
       {/* Section 2: Best Selling Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="flex items-end justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
@@ -554,15 +554,15 @@ export function HomeView() {
             View All <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {bestSellingProducts.slice(0, 8).map((p, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6 xl:gap-7 2xl:gap-8">
+          {bestSellingProducts.slice(0, 12).map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} badgeText="HOT" badgeVariant="popular" />
           ))}
         </div>
       </section>
 
       {/* CTA Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="relative rounded-2xl border border-border bg-secondary p-8 sm:p-12 overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative max-w-lg">

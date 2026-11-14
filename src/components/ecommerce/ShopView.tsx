@@ -92,7 +92,7 @@ export function ShopView() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         {/* Header */}
         <div className="mb-8">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-light tracking-tight">
@@ -169,13 +169,12 @@ export function ShopView() {
             <Button variant="outline" className="mt-4 border-border text-xs" onClick={() => { setSearchQuery(''); handleCategoryChange(''); }}>Clear Filters</Button>
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6 xl:gap-7 2xl:gap-8">
             {filtered.map((product, i) => (
               <motion.div key={product.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group cursor-pointer" onClick={() => selectProduct(product)}>
                 <div className="relative img-zoom rounded-lg overflow-hidden bg-secondary aspect-square">
-                  <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, 25vw" />
+                  <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" />
                   {product.comparePrice && <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px]">-{Math.round((1 - product.price / product.comparePrice) * 100)}%</Badge>}
-                  {product.aiTags && <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] gap-1"><Sparkles className="w-2.5 h-2.5" />AI</Badge>}
                   <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                     <Button size="sm" className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider rounded-lg" onClick={e => addToCart(e, product)}>Add to Bag</Button>
                     <Button size="icon" variant="secondary" className={`h-9 w-9 rounded-lg ${wishlistIds.has(product.id) ? 'bg-foreground text-background' : ''}`} onClick={e => toggleWish(e, product.id)}><Heart className="w-3.5 h-3.5" /></Button>

@@ -131,7 +131,7 @@ export function SupportView() {
 
   return (
     <div className="min-h-screen py-10 sm:py-16 bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 space-y-12">
         {/* ─── Header ────────────────────────────────────────── */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <Badge variant="secondary" className="text-[10px] tracking-[0.25em] uppercase px-3 py-1 font-medium">

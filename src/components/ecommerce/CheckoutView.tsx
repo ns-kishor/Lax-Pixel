@@ -345,7 +345,7 @@ export function CheckoutView() {
   // Main checkout (shipping details + payment method selection)
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 xl:px-12">
         <h1 className="text-3xl font-light tracking-tight mb-8">Checkout</h1>
 
         {!user && (
