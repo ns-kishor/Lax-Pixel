@@ -25,13 +25,13 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const orderBy: Record<string, string> = {};
-    if (sort === 'price-asc') orderBy.price = 'asc';
-    else if (sort === 'price-desc') orderBy.price = 'desc';
-    else if (sort === 'rating') orderBy.rating = 'desc';
-    else if (sort === 'popular') orderBy.salesCount = 'desc';
-    else if (sort === 'discount') orderBy.price = 'asc';
-    else orderBy.createdAt = 'desc';
+    let orderBy: any;
+    if (sort === 'price-asc') orderBy = [{ price: 'asc' }];
+    else if (sort === 'price-desc') orderBy = [{ price: 'desc' }];
+    else if (sort === 'rating') orderBy = [{ rating: 'desc' }, { reviewCount: 'desc' }];
+    else if (sort === 'popular') orderBy = [{ salesCount: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }];
+    else if (sort === 'discount') orderBy = [{ price: 'asc' }];
+    else orderBy = [{ createdAt: 'desc' }];
 
     const products = await db.product.findMany({
       where,

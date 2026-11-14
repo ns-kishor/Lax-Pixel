@@ -1,15 +1,25 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product, Category } from '@/lib/store';
 import Image from 'next/image';
 
-function ProductCard({ product, index }: { product: Product; index: number }) {
+function ProductCard({
+  product,
+  index,
+  badgeText,
+  badgeVariant = 'default',
+}: {
+  product: Product;
+  index: number;
+  badgeText?: string;
+  badgeVariant?: 'new' | 'popular' | 'default';
+}) {
   const { selectProduct, wishlistIds, toggleWishlist, showToast, user, setJustAddedToCart, setView } = useStore();
   const isWished = wishlistIds.has(product.id);
   const [imgError, setImgError] = useState(false);
@@ -40,7 +50,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
       className="group cursor-pointer"
       onClick={() => selectProduct(product)}
     >
@@ -51,22 +61,46 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-light">{product.name.charAt(0)}</div>
         )}
 
-        {discount > 0 && (
-          <Badge className="absolute top-3 left-3 bg-foreground text-background text-[10px] tracking-wider hover:bg-foreground">-{discount}%</Badge>
-        )}
-        {product.aiTags && (
-          <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+          {badgeText && (
+            <Badge
+              className={`text-[9px] tracking-wider font-semibold uppercase px-2.5 py-0.5 border shadow-sm ${
+                badgeVariant === 'new'
+                  ? 'bg-blue-600/90 text-white border-blue-400/30'
+                  : badgeVariant === 'popular'
+                  ? 'bg-amber-600/90 text-white border-amber-400/30'
+                  : 'bg-foreground text-background border-transparent'
+              }`}
+            >
+              {badgeVariant === 'popular' && <Flame className="w-2.5 h-2.5 mr-1 inline fill-current" />}
+              {badgeText}
+            </Badge>
+          )}
+          {discount > 0 && (
+            <Badge className="bg-red-500/90 text-white border border-red-400/30 text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-sm">
+              -{discount}%
+            </Badge>
+          )}
+        </div>
+
+        {product.salesCount > 0 ? (
+          <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1 bg-background/85 backdrop-blur-sm border border-border/60">
+            <TrendingUp className="w-2.5 h-2.5 text-emerald-500" /> {product.salesCount} sold
+          </Badge>
+        ) : product.aiTags ? (
+          <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1 bg-background/85 backdrop-blur-sm border border-border/60">
             <Sparkles className="w-2.5 h-2.5" /> AI PICK
           </Badge>
-        )}
+        ) : null}
+
         {useStore.getState().justAddedToCart === product.id && (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center animate-fade-in">
-            <span className="text-xs tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full">Added</span>
+          <div className="absolute inset-0 bg-muted flex items-center justify-center animate-fade-in z-20">
+            <span className="text-xs tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full font-medium">Added</span>
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
-          <Button size="sm" className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider hover:bg-foreground/90 rounded-lg" onClick={addToCart}>
+        <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2 z-10">
+          <Button size="sm" className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider hover:bg-foreground/90 rounded-lg font-medium" onClick={addToCart}>
             Add to Bag
           </Button>
           <Button size="icon" variant="secondary" className={`h-9 w-9 rounded-lg ${isWished ? 'bg-foreground text-background' : ''}`} onClick={toggleWish}>
@@ -77,7 +111,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
       <div className="mt-3 space-y-1">
         <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>
-        <h3 className="text-sm font-medium tracking-wide group-hover:text-gradient">{product.name}</h3>
+        <h3 className="text-sm font-medium tracking-wide group-hover:text-gradient truncate">{product.name}</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm font-light">${product.price.toLocaleString()}</span>
           {product.comparePrice && (
@@ -266,11 +300,8 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 }
 
 export function HomeView() {
-  const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView, setGlobalLoading } = useStore();
+  const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView } = useStore();
   const [heroProducts, setHeroProducts] = useState<Product[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(() => {
-    return products.filter((p: Product) => p.featured);
-  });
 
   // Authoritative Hero Slides fetch from /api/hero (managed in Admin Hero Slider)
   useEffect(() => {
@@ -289,27 +320,36 @@ export function HomeView() {
       .catch(() => {});
   }, []);
 
+  // Background load all products and categories if store is empty
   useEffect(() => {
-    if (products.length > 0) {
-      const feat = products.filter((p: Product) => p.featured);
-      setFeaturedProducts(feat.length > 0 ? feat : products.slice(0, 6));
-    } else {
-      // Background load if store is empty
+    if (products.length === 0) {
       Promise.all([
-        fetch('/api/products?featured=true').catch(() => null),
+        fetch('/api/products').catch(() => null),
         fetch('/api/categories').catch(() => null),
       ]).then(async ([pRes, cRes]) => {
         const p = pRes && pRes.ok ? await pRes.json() : [];
         const c = cRes && cRes.ok ? await cRes.json() : [];
-        if (Array.isArray(p) && p.length > 0) {
-          setProducts(p);
-          const feat = p.filter((pr: Product) => pr.featured);
-          setFeaturedProducts(feat.length > 0 ? feat : p.slice(0, 6));
-        }
+        if (Array.isArray(p) && p.length > 0) setProducts(p);
         if (Array.isArray(c) && c.length > 0) setCategories(c);
       }).catch(() => {});
     }
-  }, [products, setProducts, setCategories]);
+  }, [products.length, setProducts, setCategories]);
+
+  // Derived: Recently added products (newest first)
+  const recentProducts = useMemo(() => {
+    return [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [products]);
+
+  // Derived: Best selling products (highest salesCount first, fallback to rating and date)
+  const bestSellingProducts = useMemo(() => {
+    return [...products].sort((a, b) => {
+      const diff = (b.salesCount || 0) - (a.salesCount || 0);
+      if (diff !== 0) return diff;
+      const rateDiff = (b.rating || 0) - (a.rating || 0);
+      if (rateDiff !== 0) return rateDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [products]);
 
   useEffect(() => {
     const loadRecs = async () => {
@@ -320,7 +360,7 @@ export function HomeView() {
       } catch {}
     };
     if (products.length > 0) loadRecs();
-  }, [products.length]);
+  }, [products.length, setRecommendations]);
 
   const features = [
     { icon: Truck, title: 'Free Express Shipping', desc: 'On orders over $2,000' },
@@ -332,33 +372,78 @@ export function HomeView() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative min-h-[600px] py-14 lg:py-20 flex items-center overflow-hidden bg-background">
+      <section className="relative min-h-[580px] py-12 lg:py-16 flex items-center overflow-hidden bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left - Text Content */}
+            {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-5"
+              className="lg:col-span-5 flex flex-col justify-center space-y-4 sm:space-y-5"
             >
-              <Badge variant="secondary" className="mb-6 text-[10px] tracking-[0.3em] uppercase gap-2">
-                <Sparkles className="w-3 h-3" /> AI-Powered Luxury
-              </Badge>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extralight tracking-tight leading-tight max-w-xl">
-                Everything You Love.
-                <br />
-                <span className="font-medium">All in One Place.</span>
-              </h1>
-              <p className="mt-6 text-sm sm:text-base text-muted-foreground font-light max-w-lg leading-relaxed">
-                Explore everyday essentials, discover new styles, and find products made for your lifestyle.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="lg" className="bg-foreground text-background h-12 px-8 text-xs tracking-[0.2em] uppercase hover:bg-foreground/90 rounded-lg" onClick={() => setView('shop')}>
+              {/* Card 1: Delivery All Over Bangladesh */}
+              <div className="group relative rounded-2xl border border-border/80 bg-gradient-to-br from-card/95 via-card/60 to-secondary/30 p-5 sm:p-6 backdrop-blur-md shadow-sm hover:shadow-md hover:border-foreground/30 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 group-hover:border-emerald-500/50 transition-all duration-300">
+                    <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400" />
+                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-background animate-pulse" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
+                        Delivery All Over Bangladesh
+                      </h3>
+                      <Badge variant="outline" className="text-[10px] tracking-wider uppercase border-emerald-500/40 text-emerald-400 bg-emerald-500/10 shrink-0">
+                        64 Districts
+                      </Badge>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground font-light leading-relaxed">
+                      Fast, dependable doorstep express delivery across every district in Bangladesh with live tracking and secure handling.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Easy Exchange Available */}
+              <div className="group relative rounded-2xl border border-border/80 bg-gradient-to-br from-card/95 via-card/60 to-secondary/30 p-5 sm:p-6 backdrop-blur-md shadow-sm hover:shadow-md hover:border-foreground/30 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-sky-500/20 via-blue-500/10 to-transparent border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-105 group-hover:border-sky-500/50 transition-all duration-300">
+                    <ArrowLeftRight className="w-6 h-6 sm:w-7 sm:h-7 text-sky-400" />
+                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-sky-500 ring-2 ring-background animate-pulse" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
+                        Easy Exchange Available
+                      </h3>
+                      <Badge variant="outline" className="text-[10px] tracking-wider uppercase border-sky-500/40 text-sky-400 bg-sky-500/10 shrink-0">
+                        7-Day Policy
+                      </Badge>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground font-light leading-relaxed">
+                      Hassle-free 7-day exchange and replacement guarantee. Shop with 100% confidence and complete peace of mind.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Buttons - Lowered with spacing & balanced alignment */}
+              <div className="pt-3 sm:pt-4 flex flex-wrap sm:flex-nowrap items-center gap-3.5">
+                <Button
+                  size="lg"
+                  className="flex-1 h-12 px-7 bg-foreground text-background text-xs tracking-[0.18em] uppercase hover:bg-foreground/90 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+                  onClick={() => setView('shop')}
+                >
                   Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button size="lg" variant="outline" className="h-12 px-8 text-xs tracking-[0.2em] uppercase border hover:bg-secondary rounded-lg" onClick={() => setView('shop')}>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 h-12 px-7 text-xs tracking-[0.18em] uppercase border-border/80 hover:bg-secondary rounded-xl font-medium transition-all"
+                  onClick={() => setView('shop')}
+                >
                   Start Shopping
                 </Button>
               </div>
@@ -366,7 +451,15 @@ export function HomeView() {
 
             {/* Right - Product Card Slider */}
             <div className="lg:col-span-7 flex justify-center lg:justify-end w-full">
-              <HeroSlider featuredProducts={heroProducts.length > 0 ? heroProducts : featuredProducts} />
+              <HeroSlider
+                featuredProducts={
+                  heroProducts.length > 0
+                    ? heroProducts
+                    : products.filter(p => p.featured).length > 0
+                    ? products.filter(p => p.featured)
+                    : products.slice(0, 8)
+                }
+              />
             </div>
           </div>
         </div>
@@ -405,19 +498,69 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Section 1: Recently Added Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-light tracking-tight">Featured</h2>
-            <p className="text-xs text-muted-foreground mt-1 tracking-wide">Handpicked by our AI curators</p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-blue-500 bg-blue-500/10 border-blue-500/25">
+                Fresh Arrivals
+              </Badge>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Recently Added Products</h2>
+            <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+              Discover the latest products and newly listed collections
+            </p>
           </div>
-          <button onClick={() => setView('shop')} className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors">
+          <button
+            onClick={() => {
+              useStore.getState().setShopCategory('');
+              useStore.getState().setSearchQuery('');
+              useStore.getState().setShopSort('createdAt');
+              setView('shop', { sort: 'createdAt' });
+            }}
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors font-medium shrink-0"
+          >
             View All <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {featuredProducts.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+          {recentProducts.slice(0, 8).map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} badgeText="NEW" badgeVariant="new" />
+          ))}
+        </div>
+      </section>
+
+      {/* Section 2: Best Selling Products */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-amber-500 bg-amber-500/10 border-amber-500/25">
+                <Flame className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" /> Top Trending
+              </Badge>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Best Selling Products</h2>
+            <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+              Customer favorites with the highest orders and glowing ratings
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              useStore.getState().setShopCategory('');
+              useStore.getState().setSearchQuery('');
+              useStore.getState().setShopSort('popular');
+              setView('shop', { sort: 'popular' });
+            }}
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors font-medium shrink-0"
+          >
+            View All <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {bestSellingProducts.slice(0, 8).map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} badgeText="HOT" badgeVariant="popular" />
+          ))}
         </div>
       </section>
 
