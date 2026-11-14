@@ -67,17 +67,22 @@ export function AdminHeroSlider() {
       if (res.ok) {
         const data = await res.json();
         setSlides(data.slides || []);
+      } else if (res.status === 401) {
+        showToast('Admin session expired. Please sign in again.', 'error');
       }
     } catch {
       // ignore
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/products?limit=100', { headers: adminHeaders() });
+      let res = await fetch('/api/admin/products?limit=100', { headers: adminHeaders() });
+      if (!res.ok) {
+        res = await fetch('/api/products');
+      }
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.products || []);
@@ -258,13 +263,20 @@ export function AdminHeroSlider() {
                     <td className="p-3 text-xs font-medium w-12">{slide.sortOrder}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-3">
-                        {getProductImage(slide.productId) && (
-                          <img
-                            src={getProductImage(slide.productId)!}
-                            alt=""
-                            className="w-10 h-10 rounded-md object-cover border border-border"
-                          />
-                        )}
+                        {(() => {
+                          const img = slide.product?.image || getProductImage(slide.productId);
+                          return img ? (
+                            <img
+                              src={img}
+                              alt=""
+                              className="w-10 h-10 rounded-md object-cover border border-border"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-md bg-secondary border border-border flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          );
+                        })()}
                         <div>
                           <p className="text-xs font-medium">{slide.product?.name || getProductName(slide.productId)}</p>
                           <p className="text-[10px] text-muted-foreground">${slide.product?.price || 0}</p>

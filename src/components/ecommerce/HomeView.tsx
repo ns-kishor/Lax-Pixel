@@ -99,7 +99,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { selectProduct } = useStore();
 
-  const slideCount = Math.min(featuredProducts.length, 6);
+  const slideCount = Math.min(featuredProducts.length, 12);
   const slides = featuredProducts.slice(0, slideCount);
 
   const goTo = useCallback((idx: number, dir: number) => {
@@ -267,9 +267,27 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 
 export function HomeView() {
   const { products, categories, recommendations, setProducts, setCategories, setRecommendations, setView, setGlobalLoading } = useStore();
+  const [heroProducts, setHeroProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>(() => {
     return products.filter((p: Product) => p.featured);
   });
+
+  // Authoritative Hero Slides fetch from /api/hero (managed in Admin Hero Slider)
+  useEffect(() => {
+    fetch('/api/hero')
+      .then(r => r.json())
+      .then(data => {
+        if (data.slides && Array.isArray(data.slides) && data.slides.length > 0) {
+          const prods = data.slides
+            .map((s: any) => s.product)
+            .filter((p: any) => p && p.id);
+          if (prods.length > 0) {
+            setHeroProducts(prods);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (products.length > 0) {
@@ -348,7 +366,7 @@ export function HomeView() {
 
             {/* Right - Product Card Slider */}
             <div className="lg:col-span-7 flex justify-center lg:justify-end w-full">
-              <HeroSlider featuredProducts={featuredProducts} />
+              <HeroSlider featuredProducts={heroProducts.length > 0 ? heroProducts : featuredProducts} />
             </div>
           </div>
         </div>

@@ -20,17 +20,39 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusParam = sanitizeInput(searchParams.get('status'));
 
+    // Auto-create SellerProfile for any orphaned SELLER users
+    const orphanedSellerUsers = await db.user.findMany({
+      where: {
+        role: 'SELLER',
+        sellerProfile: null,
+      },
+      include: { sellerVerification: true },
+    });
+    for (const u of orphanedSellerUsers) {
+      await db.sellerProfile.create({
+        data: {
+          userId: u.id,
+          companyName: u.sellerVerification?.businessName || u.name || 'Store',
+          description: u.sellerVerification?.description || '',
+          approved: u.sellerVerification?.status === 'APPROVED',
+        },
+      }).catch(() => {});
+    }
+
     const where: Record<string, unknown> = {};
     if (statusParam === 'approved') {
       where.approved = true;
+      where.user = { banned: false };
     } else if (statusParam === 'rejected') {
       where.approved = false;
     } else if (statusParam === 'pending') {
-      // pending = not approved and recently created (no explicit field, use approved=false)
       where.approved = false;
+      where.user = { banned: false };
+    } else if (statusParam === 'banned') {
+      where.user = { banned: true };
     }
 
-    const sellers = await db.sellerProfile.findMany({
+    const rawSellers = await db.sellerProfile.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -51,6 +73,8 @@ export async function GET(req: NextRequest) {
         },
       },
     });
+
+    const sellers = rawSellers.filter(s => !!s.user);
 
     // Attach comprehensive analytics per seller
     const sellersWithCounts = await Promise.all(

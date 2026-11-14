@@ -80,7 +80,7 @@ interface Seller {
 const STATUS_OPTIONS = ['All', 'approved', 'pending', 'banned'];
 
 function SellerStatusBadge({ seller }: { seller: Seller }) {
-  if (seller.user.banned) {
+  if (seller.user?.banned) {
     return <Badge className="bg-red-500/10 text-red-600 border-0 text-[10px]">Banned</Badge>;
   }
   if (seller.approved) {
@@ -119,13 +119,18 @@ export function AdminSellers() {
       if (res.ok) {
         const data = await res.json();
         setSellers(data.sellers || []);
+      } else if (res.status === 401) {
+        showToast('Admin session expired. Please sign in again.', 'error');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to load sellers', 'error');
       }
     } catch {
-      // ignore
+      showToast('Network error while loading sellers', 'error');
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, showToast]);
 
   useEffect(() => {
     fetchSellers();
@@ -135,12 +140,12 @@ export function AdminSellers() {
     setPage(1);
   }, [statusFilter, debouncedSearch]);
 
-  // Client-side search filtering
+  // Client-side search filtering with safe checks
   const filteredSellers = debouncedSearch
     ? sellers.filter(s =>
-        s.companyName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        s.user.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        s.user.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+        (s.companyName || '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (s.user?.name || '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (s.user?.email || '').toLowerCase().includes(debouncedSearch.toLowerCase())
       )
     : sellers;
 
@@ -304,20 +309,24 @@ export function AdminSellers() {
                         {seller.logo ? (
                           <img src={seller.logo} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-medium">{seller.companyName.charAt(0)}</div>
+                          <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-medium">
+                            {(seller.companyName || seller.user?.name || 'S').charAt(0).toUpperCase()}
+                          </div>
                         )}
-                        <span className="text-xs font-medium">{seller.companyName}</span>
+                        <span className="text-xs font-medium">{seller.companyName || seller.user?.name || 'Store'}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-xs">{seller.user.name}</td>
-                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{seller.user.email}</td>
-                    <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{seller.user.phone || '—'}</td>
+                    <td className="p-3 text-xs">{seller.user?.name || '—'}</td>
+                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{seller.user?.email || '—'}</td>
+                    <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{seller.user?.phone || '—'}</td>
                     <td className="p-3 hidden xl:table-cell">
-                      <Badge variant="secondary" className="text-[10px]">{seller.user.productCount}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{seller.user?.productCount ?? 0}</Badge>
                     </td>
-                    <td className="p-3 text-xs text-muted-foreground hidden xl:table-cell">${seller.user.totalRevenue.toLocaleString()}</td>
+                    <td className="p-3 text-xs text-muted-foreground hidden xl:table-cell">৳ {(seller.user?.totalRevenue ?? 0).toLocaleString()}</td>
                     <td className="p-3"><SellerStatusBadge seller={seller} /></td>
-                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{new Date(seller.user.createdAt).toLocaleDateString()}</td>
+                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">
+                      {seller.user?.createdAt ? new Date(seller.user.createdAt).toLocaleDateString() : '—'}
+                    </td>
                     <td className="p-3">
                       <div className="flex items-center justify-end gap-1">
                         <Button
@@ -382,7 +391,7 @@ export function AdminSellers() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Seller</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete <span className="font-medium text-foreground">{seller.user.name}</span> ({seller.companyName})? This will permanently delete the seller profile and user account. This action cannot be undone.
+                                Are you sure you want to delete <span className="font-medium text-foreground">{seller.user?.name || 'Seller'}</span> ({seller.companyName || 'Store'})? This will permanently delete the seller profile and user account. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -430,11 +439,13 @@ export function AdminSellers() {
                 {detailTarget.logo ? (
                   <img src={detailTarget.logo} alt="" className="w-14 h-14 rounded-xl object-cover border border-border" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-secondary border border-border flex items-center justify-center text-lg font-bold">{detailTarget.companyName.charAt(0)}</div>
+                  <div className="w-14 h-14 rounded-xl bg-secondary border border-border flex items-center justify-center text-lg font-bold">
+                    {(detailTarget.companyName || detailTarget.user?.name || 'S').charAt(0).toUpperCase()}
+                  </div>
                 )}
                 <div>
-                  <h3 className="text-base font-medium">{detailTarget.companyName}</h3>
-                  <p className="text-xs text-muted-foreground">{detailTarget.user.name} ({detailTarget.user.email})</p>
+                  <h3 className="text-base font-medium">{detailTarget.companyName || detailTarget.user?.name || 'Store'}</h3>
+                  <p className="text-xs text-muted-foreground">{detailTarget.user?.name || '—'} ({detailTarget.user?.email || '—'})</p>
                   {detailTarget.verification?.nidNumber && (
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       NID/Trade: <span className="text-foreground font-mono">{detailTarget.verification.nidNumber}</span> • Type: {detailTarget.verification.businessType}
@@ -447,16 +458,16 @@ export function AdminSellers() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
                   <Package className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                  <p className="text-base font-medium">{detailTarget.user.productCount}</p>
+                  <p className="text-base font-medium">{detailTarget.user?.productCount ?? 0}</p>
                   <p className="text-[10px] text-muted-foreground uppercase">Products</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
                   <ShoppingCart className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                  <p className="text-base font-medium">{detailTarget.totalOrders ?? detailTarget.user._count.orders}</p>
+                  <p className="text-base font-medium">{detailTarget.totalOrders ?? detailTarget.user?._count?.orders ?? 0}</p>
                   <p className="text-[10px] text-muted-foreground uppercase">Orders ({detailTarget.confirmedOrders ?? 0} Confirmed)</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
-                  <p className="text-base font-medium text-green-500">${detailTarget.user.totalRevenue.toLocaleString()}</p>
+                  <p className="text-base font-medium text-green-500">৳ {(detailTarget.user?.totalRevenue ?? 0).toLocaleString()}</p>
                   <p className="text-[10px] text-muted-foreground uppercase">Revenue</p>
                 </div>
                 <div className="bg-secondary/50 rounded-lg p-3 text-center border border-border/50">
