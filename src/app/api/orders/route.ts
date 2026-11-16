@@ -256,8 +256,13 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Clear cart
-      await tx.cartItem.deleteMany({ where: { userId } });
+      // Remove only the checked out products from user's cart (preserving any unselected items)
+      await tx.cartItem.deleteMany({
+        where: {
+          userId,
+          productId: { in: verifiedOrderItems.map((i) => i.productId) },
+        },
+      });
 
       return newOrder;
     });

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product, Category } from '@/lib/store';
 import Image from 'next/image';
@@ -106,7 +106,22 @@ function ProductCard({
       </div>
 
       <div className="mt-3 space-y-1">
-        <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>
+        <div className="flex items-center justify-between gap-1">
+          <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground truncate">{product.category?.name}</p>
+          {product.sellerId && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                useStore.getState().selectSellerStore(product.sellerId);
+              }}
+              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors hover:underline shrink-0"
+              title="View Seller Store"
+            >
+              <Store className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[85px]">{product.seller?.sellerProfile?.companyName || product.seller?.name || 'Store'}</span>
+            </span>
+          )}
+        </div>
         <h3 className="text-sm font-medium tracking-wide group-hover:text-gradient truncate">{product.name}</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm font-light">${product.price.toLocaleString()}</span>

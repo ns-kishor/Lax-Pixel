@@ -6,12 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Heart, ShoppingBag, ArrowLeft, Sparkles, Truck, Shield, RotateCcw, Minus, Plus, Check } from 'lucide-react';
+import { Star, Heart, ShoppingBag, ArrowLeft, Sparkles, Truck, Shield, RotateCcw, Minus, Plus, Check, Store, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export function ProductView() {
-  const { selectedProduct: product, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setCart, goBack } = useStore();
+  const {
+    selectedProduct: product,
+    user,
+    showToast,
+    wishlistIds,
+    toggleWishlist,
+    setJustAddedToCart,
+    setCart,
+    setSelectedCartItemIds,
+    setView,
+    selectSellerStore,
+    goBack,
+  } = useStore();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
 
@@ -33,7 +45,26 @@ export function ProductView() {
     showToast(`${product.name} added to bag`);
   };
 
+  const buyNow = async () => {
+    if (!user) { useStore.getState().setView('auth'); return; }
+    await fetch('/api/cart', { method: 'POST', headers: authHeaders(useStore.getState), body: JSON.stringify({ productId: product.id, quantity: qty }) });
+    const res = await fetch('/api/cart', { headers: authHeaders(useStore.getState) });
+    const updatedCart = await res.json();
+    setCart(updatedCart);
+    const targetItem = Array.isArray(updatedCart)
+      ? updatedCart.find((ci: any) => ci.productId === product.id)
+      : null;
+    if (targetItem) {
+      setSelectedCartItemIds([targetItem.id]);
+    }
+    setView('checkout');
+  };
+
   const isWished = wishlistIds.has(product.id);
+  const sellerName = product.seller?.sellerProfile?.companyName || product.seller?.name || 'Verified Merchant';
+  const sellerLogo = product.seller?.sellerProfile?.logo || product.seller?.avatar || null;
+  const sellerRating = product.seller?.sellerProfile?.rating || product.rating || 4.9;
+  const sellerSales = product.seller?.sellerProfile?.totalSales || product.salesCount || 100;
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -74,22 +105,67 @@ export function ProductView() {
 
             <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
 
-            {/* Quantity & Add to Cart */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-border rounded-lg">
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-none" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="w-4 h-4" /></Button>
-                <span className="w-12 text-center text-sm font-medium">{qty}</span>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-none" onClick={() => setQty(Math.min(product.stock, qty + 1))}><Plus className="w-4 h-4" /></Button>
+            {/* ─── Seller Profile Card (Clickable) ─── */}
+            <div
+              onClick={() => selectSellerStore(product.sellerId)}
+              className="group p-4 rounded-xl border border-border bg-secondary/40 hover:bg-secondary/70 hover:border-foreground/30 transition-all cursor-pointer flex items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="relative w-11 h-11 rounded-xl bg-background border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                  {sellerLogo ? (
+                    <Image src={safeImgSrc(sellerLogo)} alt={sellerName} fill className="object-cover" />
+                  ) : (
+                    <Store className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">Sold By</span>
+                    <Badge variant="secondary" className="text-[9px] py-0 px-1.5 h-4 flex items-center gap-1 bg-foreground/10 text-foreground font-normal">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Verified
+                    </Badge>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground tracking-tight truncate group-hover:underline flex items-center gap-1">
+                    {sellerName}
+                  </h4>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-0.5 font-medium text-foreground">
+                      <Star className="w-3 h-3 fill-foreground text-foreground" /> {Number(sellerRating).toFixed(1)}
+                    </span>
+                    <span>•</span>
+                    <span>{sellerSales.toLocaleString()}+ sales</span>
+                  </div>
+                </div>
               </div>
-              <Button className="flex-1 h-12 bg-foreground text-background text-xs tracking-[0.2em] uppercase rounded-lg hover:bg-foreground/90" onClick={addToCart}>
-                <ShoppingBag className="w-4 h-4 mr-2" /> Add to Bag — ${((product.price * qty) || 0).toLocaleString()}
-              </Button>
-              <Button variant="outline" size="icon" className={`h-12 w-12 rounded-lg border-border ${isWished ? 'bg-foreground text-background' : ''}`} onClick={() => {
-                if (!user) { useStore.getState().setView('auth'); return; }
-                toggleWishlist(product.id);
-                showToast(isWished ? 'Removed from wishlist' : 'Added to wishlist', 'info');
-              }}>
-                <Heart className={`w-4 h-4 ${isWished ? 'fill-current' : ''}`} />
+
+              <div className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-foreground px-3 py-1.5 rounded-lg bg-background/80 border border-border group-hover:bg-foreground group-hover:text-background transition-all">
+                <span>View Store</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Quantity & Add to Cart / Buy Now */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border border-border rounded-lg bg-secondary/30">
+                  <Button variant="ghost" size="icon" className="h-11 w-10 rounded-none" onClick={() => setQty(Math.max(1, qty - 1))}><Minus className="w-4 h-4" /></Button>
+                  <span className="w-10 text-center text-sm font-medium">{qty}</span>
+                  <Button variant="ghost" size="icon" className="h-11 w-10 rounded-none" onClick={() => setQty(Math.min(product.stock, qty + 1))}><Plus className="w-4 h-4" /></Button>
+                </div>
+                <Button className="flex-1 h-11 bg-secondary text-foreground hover:bg-secondary/80 border border-border text-xs tracking-wider uppercase rounded-lg" onClick={addToCart}>
+                  <ShoppingBag className="w-4 h-4 mr-2" /> Add to Bag
+                </Button>
+                <Button variant="outline" size="icon" className={`h-11 w-11 rounded-lg border-border ${isWished ? 'bg-foreground text-background' : ''}`} onClick={() => {
+                  if (!user) { useStore.getState().setView('auth'); return; }
+                  toggleWishlist(product.id);
+                  showToast(isWished ? 'Removed from wishlist' : 'Added to wishlist', 'info');
+                }}>
+                  <Heart className={`w-4 h-4 ${isWished ? 'fill-current' : ''}`} />
+                </Button>
+              </div>
+
+              <Button className="w-full h-12 bg-foreground text-background text-xs tracking-[0.2em] uppercase rounded-lg hover:bg-foreground/90 font-medium" onClick={buyNow}>
+                <Zap className="w-4 h-4 mr-2" /> Buy Now — ${((product.price * qty) || 0).toLocaleString()}
               </Button>
             </div>
 

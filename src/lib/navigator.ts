@@ -23,6 +23,8 @@ export function buildUrl(view: View, params?: Record<string, string>): string {
     }
     case 'content':
       return `/page/${params?.slug || 'about'}`;
+    case 'seller-store':
+      return `/store/${params?.id || ''}`;
     case 'product':
       return `/product/${params?.id || ''}`;
     case 'cart':
@@ -83,6 +85,14 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   if (pageMatch) {
     result.view = 'content';
     result.params.slug = pageMatch[1];
+    return result;
+  }
+
+  // /store/[id] or /seller-store/[id]
+  const storeMatch = pathname.match(/^\/(?:store|seller-store)\/([^/]+)$/);
+  if (storeMatch) {
+    result.view = 'seller-store';
+    result.params.id = storeMatch[1];
     return result;
   }
 

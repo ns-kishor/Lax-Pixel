@@ -18,6 +18,7 @@ import { ContentView } from '@/components/ecommerce/ContentView';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 import { SupportView } from '@/components/ecommerce/SupportView';
+import { SellerStoreView } from '@/components/ecommerce/SellerStoreView';
 import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
 import { Loader2 } from 'lucide-react';
@@ -46,6 +47,7 @@ function ViewRouter() {
         {view === 'admin-login' && <AdminLogin />}
         {view === 'admin' && <AdminPanel />}
         {view === 'support' && <SupportView />}
+        {view === 'seller-store' && <SellerStoreView />}
       </motion.div>
     </AnimatePresence>
   );
@@ -76,6 +78,12 @@ function restoreViewFromUrl() {
       // Products not loaded yet — set view, ProductView will handle missing product
       useStore.setState({ view: 'product' });
     }
+    return;
+  }
+
+  // Seller store view
+  if (view === 'seller-store' && params.id) {
+    useStore.setState({ selectedSellerId: params.id, view: 'seller-store' });
     return;
   }
 

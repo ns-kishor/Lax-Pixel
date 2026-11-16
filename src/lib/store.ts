@@ -3,7 +3,7 @@ import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
-  | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders'
+  | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders' | 'seller-store'
   | 'auth' | 'tracking' | 'search' | 'content' | 'support'
   | 'admin-login' | 'admin';
 
@@ -54,7 +54,27 @@ export interface Product {
   aiTags: string;
   createdAt: string;
   category?: { id: string; name: string; slug: string };
-  seller?: { id: string; name: string };
+  seller?: {
+    id: string;
+    name: string;
+    avatar?: string;
+    sellerProfile?: {
+      id?: string;
+      companyName?: string;
+      logo?: string;
+      banner?: string;
+      description?: string;
+      rating?: number;
+      totalSales?: number;
+      approved?: boolean;
+      whatsapp?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      city?: string;
+      country?: string;
+    } | null;
+  };
 }
 
 export interface CartItem {
@@ -145,6 +165,16 @@ interface AppState {
   setCart: (cart: CartItem[]) => void;
   cartCount: () => number;
   cartTotal: () => number;
+  selectedCartItemIds: string[];
+  setSelectedCartItemIds: (ids: string[]) => void;
+  toggleCartItemSelection: (itemId: string) => void;
+  selectAllCartItems: (select: boolean) => void;
+  getSelectedCartItems: () => CartItem[];
+  getSelectedCartTotal: () => number;
+
+  // Seller Store View for Buyers
+  selectedSellerId: string | null;
+  selectSellerStore: (sellerId: string) => void;
 
   // Orders
   orders: Order[];
@@ -276,9 +306,55 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Cart
   cart: [],
-  setCart: (cart) => set({ cart: Array.isArray(cart) ? cart : [] }),
+  selectedCartItemIds: [],
+  setCart: (cart) => {
+    const list = Array.isArray(cart) ? cart : [];
+    const validIds = new Set(list.map(i => i.id));
+    const prevSelected = get().selectedCartItemIds || [];
+    let nextSelected: string[];
+    if (prevSelected.length === 0) {
+      nextSelected = list.map(i => i.id);
+    } else {
+      const filtered = prevSelected.filter(id => validIds.has(id));
+      nextSelected = filtered.length > 0 ? filtered : list.map(i => i.id);
+    }
+    set({ cart: list, selectedCartItemIds: nextSelected });
+  },
+  setSelectedCartItemIds: (ids) => set({ selectedCartItemIds: ids }),
+  toggleCartItemSelection: (itemId) => {
+    const current = get().selectedCartItemIds;
+    if (current.includes(itemId)) {
+      set({ selectedCartItemIds: current.filter(id => id !== itemId) });
+    } else {
+      set({ selectedCartItemIds: [...current, itemId] });
+    }
+  },
+  selectAllCartItems: (select) => {
+    if (select) {
+      set({ selectedCartItemIds: get().cart.map(i => i.id) });
+    } else {
+      set({ selectedCartItemIds: [] });
+    }
+  },
+  getSelectedCartItems: () => {
+    const { cart, selectedCartItemIds } = get();
+    return (Array.isArray(cart) ? cart : []).filter(i => selectedCartItemIds.includes(i.id));
+  },
+  getSelectedCartTotal: () => {
+    const { cart, selectedCartItemIds } = get();
+    return (Array.isArray(cart) ? cart : [])
+      .filter(i => selectedCartItemIds.includes(i.id))
+      .reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  },
   cartCount: () => (Array.isArray(get().cart) ? get().cart : []).reduce((s, i) => s + i.quantity, 0),
   cartTotal: () => (Array.isArray(get().cart) ? get().cart : []).reduce((s, i) => s + i.product.price * i.quantity, 0),
+
+  // Seller store
+  selectedSellerId: null,
+  selectSellerStore: (sellerId) => {
+    pushNavigation('seller-store', { id: sellerId });
+    set({ selectedSellerId: sellerId, view: 'seller-store' });
+  },
 
   // Orders
   orders: [],

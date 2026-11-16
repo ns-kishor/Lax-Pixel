@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SlidersHorizontal, Grid3X3, List, Search, X, Sparkles, Star, Heart } from 'lucide-react';
+import { SlidersHorizontal, Grid3X3, List, Search, X, Sparkles, Star, Heart, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Product } from '@/lib/store';
 import Image from 'next/image';
 
 export function ShopView() {
-  const { products, categories, setProducts, selectProduct, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setView } = useStore();
+  const { products, categories, setProducts, selectProduct, selectSellerStore, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setView } = useStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
@@ -181,8 +181,23 @@ export function ShopView() {
                   </div>
                 </div>
                 <div className="mt-3 space-y-0.5">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>
-                  <h3 className="text-sm font-medium tracking-wide">{product.name}</h3>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground truncate">{product.category?.name}</p>
+                    {product.sellerId && (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectSellerStore(product.sellerId);
+                        }}
+                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors hover:underline shrink-0"
+                        title="View Seller Store"
+                      >
+                        <Store className="w-2.5 h-2.5" />
+                        <span className="truncate max-w-[90px]">{product.seller?.sellerProfile?.companyName || product.seller?.name || 'Store'}</span>
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium tracking-wide truncate">{product.name}</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-light">${product.price.toLocaleString()}</span>
                     {product.comparePrice && <span className="text-xs text-muted-foreground line-through">${product.comparePrice.toLocaleString()}</span>}
@@ -202,7 +217,22 @@ export function ShopView() {
                   <Image src={safeImgSrc(product.image)} alt={product.name} width={128} height={128} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 py-1">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground">{product.category?.name}</p>
+                    {product.sellerId && (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectSellerStore(product.sellerId);
+                        }}
+                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors hover:underline"
+                        title="View Seller Store"
+                      >
+                        <Store className="w-2.5 h-2.5" />
+                        <span>{product.seller?.sellerProfile?.companyName || product.seller?.name || 'Store'}</span>
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-sm font-medium tracking-wide mt-0.5">{product.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
                   <div className="flex items-center gap-3 mt-2">

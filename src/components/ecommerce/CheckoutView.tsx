@@ -22,7 +22,7 @@ interface PaymentMethod {
 }
 
 export function CheckoutView() {
-  const { cart, user, setView, showToast, setOrders, setCart } = useStore();
+  const { cart, selectedCartItemIds, setSelectedCartItemIds, user, setView, showToast, setOrders, setCart } = useStore();
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
@@ -39,13 +39,17 @@ export function CheckoutView() {
     shippingZip: user?.zipCode || '',
   });
 
-  const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  // Items selected for checkout from the cart
+  const selectedItems = cart.filter((i) => (selectedCartItemIds || []).includes(i.id));
+  const checkoutItems = selectedItems.length > 0 ? selectedItems : cart;
+
+  const subtotal = checkoutItems.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
   const shipping = subtotal > 2000 ? 0 : 50;
   const tax = subtotal * 0.01;
   const total = subtotal + shipping + tax;
 
   useEffect(() => {
-    const productIds = cart.map((i) => i.productId).filter(Boolean);
+    const productIds = checkoutItems.map((i) => i.productId).filter(Boolean);
     const query = productIds.length > 0 ? `?productIds=${encodeURIComponent(productIds.join(','))}` : '';
     fetch(`/api/payment-methods${query}`)
       .then((r) => r.json())
@@ -58,7 +62,7 @@ export function CheckoutView() {
         }
       })
       .catch(() => {});
-  }, [cart]);
+  }, [checkoutItems]);
 
   useEffect(() => {
     if (user) {
@@ -123,11 +127,11 @@ export function CheckoutView() {
     setLoading(true);
     try {
       const body: Record<string, unknown> = {
-        items: cart.map((i) => ({
+        items: checkoutItems.map((i) => ({
           productId: i.productId,
-          productName: i.product.name,
-          productImage: safeImgSrc(i.product.image),
-          price: i.product.price,
+          productName: i.product?.name,
+          productImage: safeImgSrc(i.product?.image),
+          price: i.product?.price,
           quantity: i.quantity,
         })),
         phone: form.phone.trim(),
@@ -155,7 +159,17 @@ export function CheckoutView() {
       if (order.id) {
         setCreatedOrder(order);
         setStep('success');
-        setCart([]);
+        // Remove only the purchased items from store cart
+        const remainingCart = cart.filter((ci) => !checkoutItems.some((item) => item.id === ci.id));
+        setCart(remainingCart);
+        setSelectedCartItemIds([]);
+        // Re-sync cart from DB
+        fetch('/api/cart', { headers: authHeaders(useStore.getState) })
+          .then((r) => r.json())
+          .then((freshCart) => {
+            if (Array.isArray(freshCart)) setCart(freshCart);
+          })
+          .catch(() => {});
         fetch('/api/orders', { headers: authHeaders(useStore.getState) })
           .then((r) => r.json())
           .then(setOrders)
@@ -168,7 +182,7 @@ export function CheckoutView() {
     setLoading(false);
   };
 
-  if (cart.length === 0 && !loading && step !== 'success') {
+  if (checkoutItems.length === 0 && !loading && step !== 'success') {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="text-center">
@@ -516,10 +530,10 @@ export function CheckoutView() {
             <div className="sticky top-24 p-6 rounded-xl bg-secondary border border-border space-y-4">
               <h3 className="text-sm font-medium tracking-wide">Order Summary</h3>
               <div className="space-y-3 max-h-48 overflow-y-auto">
-                {cart.map((item) => (
+                {checkoutItems.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground truncate mr-2">{item.product.name} x{item.quantity}</span>
-                    <span className="shrink-0">৳ {(item.product.price * item.quantity).toLocaleString()}</span>
+                    <span className="text-muted-foreground truncate mr-2">{item.product?.name} x{item.quantity}</span>
+                    <span className="shrink-0">৳ {((item.product?.price || 0) * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
