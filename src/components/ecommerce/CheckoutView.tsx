@@ -45,18 +45,20 @@ export function CheckoutView() {
   const total = subtotal + shipping + tax;
 
   useEffect(() => {
-    fetch('/api/payment-methods')
+    const productIds = cart.map((i) => i.productId).filter(Boolean);
+    const query = productIds.length > 0 ? `?productIds=${encodeURIComponent(productIds.join(','))}` : '';
+    fetch(`/api/payment-methods${query}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.methods && Array.isArray(d.methods)) {
           setPaymentMethods(d.methods);
-          if (d.methods.length > 0 && !selectedMethod) {
+          if (d.methods.length > 0) {
             setSelectedMethod(d.methods[0]);
           }
         }
       })
       .catch(() => {});
-  }, []);
+  }, [cart]);
 
   useEffect(() => {
     if (user) {
@@ -259,8 +261,37 @@ export function CheckoutView() {
               <div>
                 <h3 className="text-base font-medium">{selectedMethod?.name}</h3>
                 {selectedMethod?.description && <p className="text-xs text-muted-foreground">{selectedMethod.description}</p>}
+                {selectedMethod?.sellerName && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    পণ্য বিক্রেতা: <span className="text-foreground font-medium">{selectedMethod.sellerName}</span>
+                  </p>
+                )}
               </div>
             </div>
+
+            {/* Seller Account Number & Type Details */}
+            {selectedMethod?.accountNumber && !isCod && (
+              <div className="p-3.5 rounded-lg bg-background border border-border space-y-2 mb-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">টাকা পাঠানোর অ্যাকাউন্ট নাম্বার:</span>
+                  <span className="font-mono font-bold text-sm text-foreground select-all bg-secondary/80 px-2 py-0.5 rounded">
+                    {selectedMethod.accountNumber}
+                  </span>
+                </div>
+                {selectedMethod.accountType && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">অ্যাকাউন্টের ধরণ:</span>
+                    <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
+                      {selectedMethod.accountType === 'PERSONAL'
+                        ? 'Personal (পার্সোনাল)'
+                        : selectedMethod.accountType === 'AGENT'
+                        ? 'Agent (এজেন্ট)'
+                        : 'Merchant (মার্চেন্ট)'}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
 
             {selectedMethod?.instructions && (
               <div className="p-3.5 rounded-lg bg-background border border-border text-xs text-muted-foreground leading-relaxed">
@@ -465,6 +496,10 @@ export function CheckoutView() {
                         <p className="text-xs font-medium leading-tight">{m.name}</p>
                         {isCodMethod ? (
                           <span className="text-[9px] text-green-600 dark:text-green-400 font-medium">Cash on Delivery</span>
+                        ) : m.accountType ? (
+                          <span className="text-[9px] text-muted-foreground font-mono">
+                            {m.accountType === 'PERSONAL' ? 'Personal' : m.accountType === 'AGENT' ? 'Agent' : 'Merchant'}
+                          </span>
                         ) : (
                           <span className="text-[9px] text-muted-foreground">TrxID Needed</span>
                         )}

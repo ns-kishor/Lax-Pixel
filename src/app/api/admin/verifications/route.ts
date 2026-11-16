@@ -49,15 +49,35 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    // If approved, also update sellerProfile.approved
+    // If approved, also update sellerProfile.approved with all details
     if (action === 'APPROVE') {
       await db.sellerProfile.upsert({
         where: { userId: verification.userId },
-        update: { approved: true },
+        update: {
+          approved: true,
+          companyName: verification.businessName,
+          phone: verification.phone || undefined,
+          whatsapp: verification.whatsapp || undefined,
+          email: verification.email || undefined,
+          address: verification.businessAddress || undefined,
+          city: verification.businessCity || undefined,
+          country: verification.businessCountry || undefined,
+          website: verification.website || undefined,
+          description: verification.description || undefined,
+          ...(verification.paymentMethodsData ? { paymentMethodsConfig: verification.paymentMethodsData } : {}),
+        },
         create: {
           userId: verification.userId,
           companyName: verification.businessName,
+          phone: verification.phone || null,
+          whatsapp: verification.whatsapp || null,
+          email: verification.email || null,
+          address: verification.businessAddress || null,
+          city: verification.businessCity || null,
+          country: verification.businessCountry || 'Bangladesh',
+          website: verification.website || null,
           description: verification.description || '',
+          paymentMethodsConfig: verification.paymentMethodsData || null,
           approved: true,
         },
       });

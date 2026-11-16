@@ -9,13 +9,37 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Store, DollarSign, Package, Clock, Plus, Sparkles, CheckCircle2,
+  Store, DollarSign, Package, Clock, Plus, CheckCircle2,
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
-  AlertCircle, ShieldCheck, Eye, Loader2
+  AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
+  MessageCircle, ExternalLink, HelpCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import type { Product } from '@/lib/store';
+
+export interface SellerPaymentConfigItem {
+  name: string;
+  icon?: string;
+  active: boolean;
+  accountNumber: string;
+  accountType: 'PERSONAL' | 'AGENT' | 'MERCHANT';
+  instructions: string;
+}
+
+const DEFAULT_METHODS: SellerPaymentConfigItem[] = [
+  { name: 'bKash', icon: '/payment-methods/bkash.png', active: true, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Nagad', icon: '/payment-methods/nagad.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Rocket', icon: '/payment-methods/rocket.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Upay', icon: '/payment-methods/upay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'mCash', icon: '/payment-methods/mcash.webp', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'GPay', icon: '/payment-methods/gpay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Cellfin', icon: '/payment-methods/cellfin.jpg', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Mukto-Pay', icon: '/payment-methods/muktopay.webp', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Nexus-Pay', icon: '/payment-methods/nexuspay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'Pathao-Pay', icon: '/payment-methods/pathaopay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
+  { name: 'cash_on_delivery', icon: '/payment-methods/cash_on_delivery.jpg', active: true, accountNumber: '', accountType: 'PERSONAL', instructions: 'ক্যাশ অন ডেলিভারি প্রযোজ্য' },
+];
 
 export function SellerDashboard() {
   const { user, sellerStats, sellerProducts, sellerOrders, setSellerData, categories, setView, selectProduct, showToast } = useStore();
@@ -25,6 +49,7 @@ export function SellerDashboard() {
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [submittingVerification, setSubmittingVerification] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [selectedSellerOrder, setSelectedSellerOrder] = useState<any>(null);
 
   const [newProduct, setNewProduct] = useState({
@@ -46,6 +71,8 @@ export function SellerDashboard() {
     businessCountry: 'Bangladesh',
     nidNumber: '',
     phone: '',
+    whatsapp: '',
+    email: '',
     website: '',
     description: '',
     paymentMethod: 'bKash',
@@ -53,8 +80,21 @@ export function SellerDashboard() {
     senderNumber: '',
   });
 
+  const [storeProfileForm, setStoreProfileForm] = useState({
+    companyName: '',
+    phone: '',
+    whatsapp: '',
+    email: '',
+    address: '',
+    city: '',
+    country: 'Bangladesh',
+    website: '',
+    description: '',
+  });
+
   const [verificationFee, setVerificationFee] = useState<number>(500);
   const [digitalPaymentMethods, setDigitalPaymentMethods] = useState<any[]>([]);
+  const [sellerPaymentMethods, setSellerPaymentMethods] = useState<SellerPaymentConfigItem[]>(DEFAULT_METHODS);
 
   const loadSellerData = async () => {
     if (!user) return;
@@ -72,6 +112,41 @@ export function SellerDashboard() {
         if (data.paymentMethods && Array.isArray(data.paymentMethods)) {
           setDigitalPaymentMethods(data.paymentMethods);
         }
+
+        // Initialize seller payment methods config
+        const platformMethods = (data.allPaymentMethods && data.allPaymentMethods.length > 0)
+          ? data.allPaymentMethods
+          : DEFAULT_METHODS;
+
+        let savedConfig: any[] = [];
+        if (data.profile?.paymentMethodsConfig) {
+          try {
+            savedConfig = JSON.parse(data.profile.paymentMethodsConfig);
+          } catch {}
+        } else if (data.verification?.paymentMethodsData) {
+          try {
+            savedConfig = JSON.parse(data.verification.paymentMethodsData);
+          } catch {}
+        }
+
+        const savedMap = new Map((Array.isArray(savedConfig) ? savedConfig : []).map(m => [String(m.name).toLowerCase(), m]));
+
+        const initializedMethods: SellerPaymentConfigItem[] = platformMethods.map((pm: any) => {
+          const saved = savedMap.get(String(pm.name).toLowerCase());
+          const isCod = ['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(pm.name);
+          return {
+            name: pm.name,
+            icon: pm.icon || `/payment-methods/${pm.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`,
+            active: saved ? Boolean(saved.active) : (pm.name === 'bKash' || isCod),
+            accountNumber: saved?.accountNumber || (isCod ? '' : (data.verification?.phone || user.phone || '')),
+            accountType: (saved?.accountType as any) || 'PERSONAL',
+            instructions: saved?.instructions || (isCod ? 'ক্যাশ অন ডেলিভারি প্রযোজ্য' : ''),
+          };
+        });
+
+        setSellerPaymentMethods(initializedMethods);
+
+        // Verification Form state
         if (data.verification) {
           setVerificationForm({
             businessName: data.verification.businessName || '',
@@ -80,14 +155,35 @@ export function SellerDashboard() {
             businessCity: data.verification.businessCity || '',
             businessCountry: data.verification.businessCountry || 'Bangladesh',
             nidNumber: data.verification.nidNumber || '',
-            phone: data.verification.phone || '',
+            phone: data.verification.phone || user.phone || '',
+            whatsapp: data.verification.whatsapp || '',
+            email: data.verification.email || user.email || '',
             website: data.verification.website || '',
             description: data.verification.description || '',
             paymentMethod: data.verification.paymentMethod || (data.paymentMethods?.[0]?.name ?? 'bKash'),
             transactionId: data.verification.transactionId || '',
             senderNumber: data.verification.senderNumber || '',
           });
+        } else {
+          setVerificationForm(prev => ({
+            ...prev,
+            phone: prev.phone || user.phone || '',
+            email: prev.email || user.email || '',
+          }));
         }
+
+        // Store profile state
+        setStoreProfileForm({
+          companyName: data.profile?.companyName || data.verification?.businessName || '',
+          phone: data.profile?.phone || data.verification?.phone || user.phone || '',
+          whatsapp: data.profile?.whatsapp || data.verification?.whatsapp || '',
+          email: data.profile?.email || data.verification?.email || user.email || '',
+          address: data.profile?.address || data.verification?.businessAddress || '',
+          city: data.profile?.city || data.verification?.businessCity || '',
+          country: data.profile?.country || data.verification?.businessCountry || 'Bangladesh',
+          website: data.profile?.website || data.verification?.website || '',
+          description: data.profile?.description || data.verification?.description || '',
+        });
       }
     } catch (e) {
       console.error('Failed to load seller info:', e);
@@ -113,6 +209,14 @@ export function SellerDashboard() {
       </div>
     );
   }
+
+  const updateSellerMethod = (index: number, patch: Partial<SellerPaymentConfigItem>) => {
+    setSellerPaymentMethods(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], ...patch };
+      return copy;
+    });
+  };
 
   // Handle image upload for product
   const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,6 +253,32 @@ export function SellerDashboard() {
       return;
     }
 
+    if (!verificationForm.whatsapp.trim()) {
+      showToast('Please enter your WhatsApp number for communication', 'error');
+      return;
+    }
+
+    if (!verificationForm.email.trim()) {
+      showToast('Please enter your contact email address', 'error');
+      return;
+    }
+
+    // Check that at least one product payment method is active
+    const activeMethods = sellerPaymentMethods.filter(m => m.active);
+    if (activeMethods.length === 0) {
+      showToast('Please select at least one payment method for your products', 'error');
+      return;
+    }
+
+    // Validate account numbers for active digital methods
+    for (const m of activeMethods) {
+      const isCod = ['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name);
+      if (!isCod && !m.accountNumber.trim()) {
+        showToast(`Please enter the account number for ${m.name}`, 'error');
+        return;
+      }
+    }
+
     if (!verificationForm.paymentMethod || !verificationForm.transactionId.trim() || !verificationForm.senderNumber.trim()) {
       showToast('Please select payment method and provide Transaction ID (TrxID) and Sender Phone Number for verification fee', 'error');
       return;
@@ -159,11 +289,14 @@ export function SellerDashboard() {
       const res = await fetch('/api/seller/verification', {
         method: 'POST',
         headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
-        body: JSON.stringify(verificationForm),
+        body: JSON.stringify({
+          ...verificationForm,
+          paymentMethodsData: sellerPaymentMethods,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Verification and fee details submitted! Admin will review your account.');
+        showToast('Verification and profile details submitted! Admin will review your account.');
         loadSellerData();
       } else {
         showToast(data.error || 'Submission failed', 'error');
@@ -172,6 +305,52 @@ export function SellerDashboard() {
       showToast('Failed to submit verification', 'error');
     } finally {
       setSubmittingVerification(false);
+    }
+  };
+
+  // Save profile and payment methods (for approved sellers)
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeProfileForm.companyName.trim()) {
+      showToast('Store name is required', 'error');
+      return;
+    }
+
+    const activeMethods = sellerPaymentMethods.filter(m => m.active);
+    if (activeMethods.length === 0) {
+      showToast('Please enable at least one payment method for your products', 'error');
+      return;
+    }
+
+    for (const m of activeMethods) {
+      const isCod = ['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name);
+      if (!isCod && !m.accountNumber.trim()) {
+        showToast(`Please enter the account number for ${m.name}`, 'error');
+        return;
+      }
+    }
+
+    setSavingProfile(true);
+    try {
+      const res = await fetch('/api/seller', {
+        method: 'PUT',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...storeProfileForm,
+          paymentMethodsConfig: sellerPaymentMethods,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Store profile & payment methods saved successfully!');
+        loadSellerData();
+      } else {
+        showToast(data.error || 'Failed to update profile', 'error');
+      }
+    } catch {
+      showToast('Failed to update profile', 'error');
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -234,6 +413,127 @@ export function SellerDashboard() {
     CANCELLED: 'bg-red-500/10 text-red-500 border-red-500/20',
   };
 
+  // Reusable Component: Payment Methods Config List
+  const renderPaymentMethodsManager = () => {
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+          <div>
+            <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+              <CreditCard className="w-4 h-4" /> আপনার প্রোডাক্টের পেমেন্ট মেথড নির্ধারণ করুন
+            </h4>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+              আপনার আপলোড করা প্রডাক্টের ক্ষেত্রে ক্রেতা কোন কোন মাধ্যমে টাকা পাঠাবে তা নির্ধারণ করুন। নির্বাচিত মেথডের নাম্বার ও ধরণ (Personal / Agent) সঠিকভাবে দিন।
+            </p>
+          </div>
+          <Badge variant="secondary" className="self-start sm:self-auto text-[10px] font-mono">
+            {sellerPaymentMethods.filter(m => m.active).length}টি মেথড সক্রিয়
+          </Badge>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3 pt-1">
+          {sellerPaymentMethods.map((m, idx) => {
+            const isCod = ['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name);
+            return (
+              <div
+                key={m.name}
+                className={`p-3.5 rounded-xl border transition-all ${
+                  m.active
+                    ? 'border-foreground/40 bg-background shadow-sm ring-1 ring-foreground/10'
+                    : 'border-border bg-secondary/30 opacity-75 hover:opacity-100'
+                }`}
+              >
+                {/* Header row: Icon, Name, and Toggle */}
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {m.icon ? (
+                      <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-secondary/60 border border-border">
+                        <img src={m.icon} alt={m.name} className="w-6 h-6 object-contain" />
+                      </div>
+                    ) : null}
+                    <div>
+                      <span className="font-semibold text-xs tracking-tight block truncate text-foreground">{m.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {isCod ? 'Cash on Delivery' : 'Mobile / Digital Payment'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={m.active}
+                      onChange={e => updateSellerMethod(idx, { active: e.target.checked })}
+                      className="w-4 h-4 rounded text-foreground accent-foreground cursor-pointer"
+                    />
+                    <span className="text-[11px] font-medium text-foreground">
+                      {m.active ? 'সক্রিয়' : 'বন্ধ'}
+                    </span>
+                  </label>
+                </div>
+
+                {/* Sub-inputs when active */}
+                {m.active && (
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    {isCod ? (
+                      <p className="text-[11px] text-green-600 dark:text-green-400 font-medium">
+                        ✓ ক্যাশ অন ডেলিভারি সক্রিয় (ক্রেতা সরাসরি হোম ডেলিভারির সময় মূল্য পরিশোধ করবেন)
+                      </p>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                              অ্যাকাউন্ট নাম্বার *
+                            </Label>
+                            <Input
+                              required={m.active}
+                              value={m.accountNumber}
+                              onChange={e => updateSellerMethod(idx, { accountNumber: e.target.value })}
+                              placeholder="e.g. 017XXXXXXXX"
+                              className="mt-1 h-8 bg-secondary/60 border-border text-xs font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                              অ্যাকাউন্টের ধরণ *
+                            </Label>
+                            <select
+                              value={m.accountType}
+                              onChange={e => updateSellerMethod(idx, { accountType: e.target.value as any })}
+                              className="mt-1 h-8 w-full px-2 bg-secondary/60 border border-border rounded-md text-xs font-medium"
+                            >
+                              <option value="PERSONAL">Personal (পার্সোনাল)</option>
+                              <option value="AGENT">Agent (এজেন্ট)</option>
+                              <option value="MERCHANT">Merchant (মার্চেন্ট)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                            বিশেষ নির্দেশনা (ঐচ্ছিক)
+                          </Label>
+                          <Input
+                            value={m.instructions}
+                            onChange={e => updateSellerMethod(idx, { instructions: e.target.value })}
+                            placeholder={`e.g. ${m.name} নাম্বারে সেন্ড মানি করুন...`}
+                            className="mt-1 h-8 bg-secondary/60 border-border text-xs"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
@@ -257,7 +557,7 @@ export function SellerDashboard() {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Store: <span className="text-foreground font-medium">{verificationForm.businessName || user.name}</span> • Manage your exclusive catalog and customer orders
+              Store: <span className="text-foreground font-medium">{storeProfileForm.companyName || verificationForm.businessName || user.name}</span> • Manage your exclusive catalog, payment methods, and customer orders
             </p>
           </div>
 
@@ -295,7 +595,7 @@ export function SellerDashboard() {
                       ভেরিফিকেশন রিকোয়েস্ট সফলভাবে জমা হয়েছে (Under Review)
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      আপনার ব্যবসায়ের তথ্যাদি অ্যাডমিনের কাছে পৌঁছানো হয়েছে। অ্যাডমিন তথ্যগুলো যাচাই করে এপ্রুভ করলেই আপনি সরাসরি প্রোডাক্ট আপলোড ও সেল শুরু করতে পারবেন।
+                      আপনার ব্যবসায়ের তথ্যাদি ও নির্বাচিত প্রোডাক্ট পেমেন্ট মেথড অ্যাডমিনের কাছে পৌঁছানো হয়েছে। অ্যাডমিন তথ্যগুলো যাচাই করে এপ্রুভ করলেই আপনি সরাসরি প্রোডাক্ট আপলোড ও সেল শুরু করতে পারবেন।
                     </p>
 
                     <div className="mt-4 p-4 rounded-xl bg-secondary/50 border border-border grid sm:grid-cols-3 gap-3 text-xs">
@@ -308,17 +608,38 @@ export function SellerDashboard() {
                         <span className="font-medium">{verification.businessType}</span>
                       </div>
                       <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase">Phone / Mobile</span>
+                        <span className="font-mono">{verification.phone}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase">WhatsApp</span>
+                        <span className="font-mono text-green-600 dark:text-green-400 font-medium">{verification.whatsapp || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase">Email</span>
+                        <span>{verification.email || user.email}</span>
+                      </div>
+                      <div>
                         <span className="text-muted-foreground block text-[10px] uppercase">NID / Trade License</span>
                         <span className="font-mono font-medium">{verification.nidNumber}</span>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground block text-[10px] uppercase">Phone</span>
-                        <span>{verification.phone}</span>
-                      </div>
-                      <div className="sm:col-span-2">
+                      <div className="sm:col-span-3">
                         <span className="text-muted-foreground block text-[10px] uppercase">Address</span>
                         <span>{verification.businessAddress}, {verification.businessCity}, {verification.businessCountry}</span>
                       </div>
+
+                      {/* Display summary of chosen seller payment methods */}
+                      <div className="sm:col-span-3 pt-2 border-t border-border/60">
+                        <span className="text-muted-foreground block text-[10px] uppercase mb-1.5">আপনার প্রোডাক্টের জন্য নির্বাচিত পেমেন্ট মেথড</span>
+                        <div className="flex flex-wrap gap-2">
+                          {sellerPaymentMethods.filter(m => m.active).map(m => (
+                            <Badge key={m.name} variant="secondary" className="text-[10px] px-2 py-0.5">
+                              {m.name} {m.accountType ? `(${m.accountType})` : ''}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
                       {verification.paymentMethod && (
                         <div className="sm:col-span-3 p-3 rounded-lg bg-background/60 border border-border mt-1 grid sm:grid-cols-3 gap-2">
                           <div>
@@ -341,13 +662,13 @@ export function SellerDashboard() {
               </div>
             ) : (
               <div className="p-6 sm:p-8 rounded-2xl bg-secondary/60 border border-border shadow-sm">
-                <div className="max-w-2xl">
+                <div className="max-w-4xl">
                   <div className="flex items-center gap-2 mb-2">
                     <ShieldCheck className="w-5 h-5 text-foreground" />
-                    <h2 className="text-lg font-medium">সেলার অ্যাকাউন্ট ভেরিফিকেশন ফর্ম (Seller Verification)</h2>
+                    <h2 className="text-lg font-medium">সেলার অ্যাকাউন্ট ভেরিফিকেশন ও প্রোফাইল ফর্ম (Seller Verification & Profile)</h2>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                    ল্যাক্স পিক্সেলে প্রোডাক্ট বিক্রি শুরু করতে আপনার ব্যবসায়ের সঠিক বিবরণ প্রদান করে নিচের ফর্মটি পূরণ করুন। তথ্যগুলো সরাসরি অ্যাডমিনের কাছে পৌঁছে যাবে এবং যাচাই শেষে অ্যাকাউন্ট সক্রিয় করা হবে।
+                    ল্যাক্স পিক্সেলে সফলভাবে বিক্রেতা হতে আপনার যোগাযোগের তথ্য, ব্যবসার সঠিক বিবরণ এবং আপনার প্রোডাক্ট বিক্রির টাকা গ্রহণের জন্য পছন্দসই পেমেন্ট মেথডগুলো সেট করুন।
                   </p>
 
                   {verification?.status === 'REJECTED' && (
@@ -357,197 +678,242 @@ export function SellerDashboard() {
                     </div>
                   )}
 
-                  <form onSubmit={handleVerificationSubmit} className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business / Store Name *</Label>
-                        <Input
-                          required
-                          value={verificationForm.businessName}
-                          onChange={e => setVerificationForm({ ...verificationForm, businessName: e.target.value })}
-                          placeholder="e.g. Royal Fashion Boutique"
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
+                  <form onSubmit={handleVerificationSubmit} className="space-y-6">
+                    {/* 1. Contact Information Section */}
+                    <div className="p-5 rounded-xl bg-background border border-border space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b border-border">
+                        <Phone className="w-4 h-4 text-foreground" />
+                        <h3 className="text-sm font-medium">১. বিক্রেতা যোগাযোগের তথ্য (Seller Contact Information)</h3>
                       </div>
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business Type *</Label>
-                        <select
-                          value={verificationForm.businessType}
-                          onChange={e => setVerificationForm({ ...verificationForm, businessType: e.target.value })}
-                          className="mt-1.5 h-10 w-full px-3 bg-background border border-border rounded-md text-xs"
-                        >
-                          <option value="Retailer">Retailer (খুচরা বিক্রেতা)</option>
-                          <option value="Wholesaler">Wholesaler (পাইকারি বিক্রেতা)</option>
-                          <option value="Brand / Manufacturer">Brand / Manufacturer (ব্র্যান্ড বা প্রস্তুতকারক)</option>
-                          <option value="Artisan / Designer">Artisan / Designer (শিল্পী বা ডিজাইনার)</option>
-                          <option value="Individual Seller">Individual Seller (ব্যক্তিগত বিক্রেতা)</option>
-                        </select>
-                      </div>
+                      <div className="grid sm:grid-cols-3 gap-4">
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Mobile Phone Number *</Label>
+                          <Input
+                            required
+                            value={verificationForm.phone}
+                            onChange={e => setVerificationForm({ ...verificationForm, phone: e.target.value })}
+                            placeholder="e.g. 017XXXXXXXX"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">সরাসরি কল যোগাযোগের জন্য ফোন নাম্বার</p>
+                        </div>
 
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Phone Number *</Label>
-                        <Input
-                          required
-                          value={verificationForm.phone}
-                          onChange={e => setVerificationForm({ ...verificationForm, phone: e.target.value })}
-                          placeholder="+880 1XXXXXXXXX"
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+                            <MessageCircle className="w-3 h-3 text-green-500" /> WhatsApp Number *
+                          </Label>
+                          <Input
+                            required
+                            value={verificationForm.whatsapp}
+                            onChange={e => setVerificationForm({ ...verificationForm, whatsapp: e.target.value })}
+                            placeholder="e.g. 017XXXXXXXX"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">গ্রাহক ও অ্যাডমিনের সাথে হোয়াটসঅ্যাপ চ্যাটের জন্য</p>
+                        </div>
 
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">NID / Trade License / Tax ID *</Label>
-                        <Input
-                          required
-                          value={verificationForm.nidNumber}
-                          onChange={e => setVerificationForm({ ...verificationForm, nidNumber: e.target.value })}
-                          placeholder="National ID or Trade License #"
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Full Business Address *</Label>
-                        <Input
-                          required
-                          value={verificationForm.businessAddress}
-                          onChange={e => setVerificationForm({ ...verificationForm, businessAddress: e.target.value })}
-                          placeholder="Shop/Office number, Street, Area"
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City *</Label>
-                        <Input
-                          required
-                          value={verificationForm.businessCity}
-                          onChange={e => setVerificationForm({ ...verificationForm, businessCity: e.target.value })}
-                          placeholder="Dhaka, Chittagong, etc."
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label>
-                        <Input
-                          required
-                          value={verificationForm.businessCountry}
-                          onChange={e => setVerificationForm({ ...verificationForm, businessCountry: e.target.value })}
-                          placeholder="Bangladesh"
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Website / Facebook Page (Optional)</Label>
-                        <Input
-                          value={verificationForm.website}
-                          onChange={e => setVerificationForm({ ...verificationForm, website: e.target.value })}
-                          placeholder="https://..."
-                          className="mt-1.5 h-10 bg-background border-border text-xs"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business Description / Details</Label>
-                        <textarea
-                          rows={3}
-                          value={verificationForm.description}
-                          onChange={e => setVerificationForm({ ...verificationForm, description: e.target.value })}
-                          placeholder="Tell us about the products you intend to sell, your business background, etc."
-                          className="mt-1.5 w-full p-3 bg-background border border-border rounded-md text-xs resize-none"
-                        />
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> Email Address *
+                          </Label>
+                          <Input
+                            required
+                            type="email"
+                            value={verificationForm.email}
+                            onChange={e => setVerificationForm({ ...verificationForm, email: e.target.value })}
+                            placeholder="seller@example.com"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">অর্ডার নোটিফিকেশন ও যোগাযোগ ইমেইল</p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* ─── Verification & Approval Fee Payment Section ─── */}
-                    <div className="pt-4 border-t border-border space-y-4">
-                      <div className="p-4 rounded-xl bg-background border border-border">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                          <div>
-                            <h3 className="text-sm font-medium text-foreground">অ্যাকাউন্ট ভেরিফিকেশন ও অনুমোদন ফি (Approval Fee)</h3>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              সেলার অ্যাকাউন্ট ভেরিফিকেশনের জন্য নির্ধারিত ফি প্রদান করে নিচে ট্রানজেকশন আইডি ও আপনার সেন্ডার নাম্বার দিন।
-                            </p>
-                          </div>
-                          <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
-                            ফি: ৳ {verificationFee}
-                          </div>
+                    {/* 2. Business Details Section */}
+                    <div className="p-5 rounded-xl bg-background border border-border space-y-4">
+                      <div className="flex items-center gap-2 pb-2 border-b border-border">
+                        <Store className="w-4 h-4 text-foreground" />
+                        <h3 className="text-sm font-medium">২. ব্যবসায় ও স্টোর সংক্রান্ত তথ্য (Store Details)</h3>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business / Store Name *</Label>
+                          <Input
+                            required
+                            value={verificationForm.businessName}
+                            onChange={e => setVerificationForm({ ...verificationForm, businessName: e.target.value })}
+                            placeholder="e.g. Royal Fashion Boutique"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business Type *</Label>
+                          <select
+                            value={verificationForm.businessType}
+                            onChange={e => setVerificationForm({ ...verificationForm, businessType: e.target.value })}
+                            className="mt-1.5 h-10 w-full px-3 bg-secondary/50 border border-border rounded-md text-xs font-medium"
+                          >
+                            <option value="Retailer">Retailer (খুচরা বিক্রেতা)</option>
+                            <option value="Wholesaler">Wholesaler (পাইকারি বিক্রেতা)</option>
+                            <option value="Brand / Manufacturer">Brand / Manufacturer (ব্র্যান্ড বা প্রস্তুতকারক)</option>
+                            <option value="Artisan / Designer">Artisan / Designer (শিল্পী বা ডিজাইনার)</option>
+                            <option value="Individual Seller">Individual Seller (ব্যক্তিগত বিক্রেতা)</option>
+                          </select>
                         </div>
 
-                        {/* Payment Method Selector Grid */}
-                        <div className="space-y-2 mb-4">
-                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">পেমেন্ট মেথড সিলেক্ট করুন *</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                            {digitalPaymentMethods.map((m) => {
-                              const isSelected = verificationForm.paymentMethod === m.name;
-                              return (
-                                <button
-                                  key={m.id || m.name}
-                                  type="button"
-                                  onClick={() => setVerificationForm({ ...verificationForm, paymentMethod: m.name })}
-                                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
-                                    isSelected
-                                      ? 'border-foreground bg-secondary ring-1 ring-foreground'
-                                      : 'border-border bg-card hover:border-muted-foreground/40'
-                                  }`}
-                                >
-                                  {m.icon && (
-                                    <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-                                      {m.icon.startsWith('/') || m.icon.startsWith('http') ? (
-                                        <img src={m.icon} alt={m.name} className="w-full h-full object-contain" />
-                                      ) : (
-                                        <span className="text-xl">{m.icon}</span>
-                                      )}
-                                    </div>
-                                  )}
-                                  <span className="text-[11px] font-medium leading-tight">{m.name}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">NID / Trade License / Tax ID *</Label>
+                          <Input
+                            required
+                            value={verificationForm.nidNumber}
+                            onChange={e => setVerificationForm({ ...verificationForm, nidNumber: e.target.value })}
+                            placeholder="National ID or Trade License #"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
+                          />
                         </div>
 
-                        {/* Selected Method Instructions */}
-                        {(() => {
-                          const activeMethod = digitalPaymentMethods.find(m => m.name === verificationForm.paymentMethod);
-                          return activeMethod?.instructions ? (
-                            <div className="p-3 rounded-lg bg-secondary/80 border border-border text-xs text-muted-foreground mb-4">
-                              <p className="font-medium text-foreground mb-1">{activeMethod.name} পেমেন্ট নির্দেশনা:</p>
-                              <p className="leading-relaxed">{activeMethod.instructions}</p>
-                            </div>
-                          ) : null;
-                        })()}
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Website / Facebook Page (Optional)</Label>
+                          <Input
+                            value={verificationForm.website}
+                            onChange={e => setVerificationForm({ ...verificationForm, website: e.target.value })}
+                            placeholder="https://..."
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                        </div>
 
-                        {/* TrxID & Sender Phone Number inputs */}
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                              Transaction ID (TrxID) *
-                            </Label>
-                            <Input
-                              required
-                              value={verificationForm.transactionId}
-                              onChange={e => setVerificationForm({ ...verificationForm, transactionId: e.target.value })}
-                              placeholder="e.g. 9J8B7C6D5E"
-                              className="mt-1.5 h-10 bg-secondary border-border font-mono text-xs uppercase"
-                            />
-                            <p className="text-[10px] text-muted-foreground mt-1">পেমেন্ট সফল হওয়ার পর প্রাপ্ত ট্রানজেকশন আইডি দিন</p>
+                        <div className="sm:col-span-2">
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Full Business / Pickup Address *</Label>
+                          <Input
+                            required
+                            value={verificationForm.businessAddress}
+                            onChange={e => setVerificationForm({ ...verificationForm, businessAddress: e.target.value })}
+                            placeholder="Shop/Office number, Street, Area"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City / District *</Label>
+                          <Input
+                            required
+                            value={verificationForm.businessCity}
+                            onChange={e => setVerificationForm({ ...verificationForm, businessCity: e.target.value })}
+                            placeholder="Dhaka, Chittagong, Sylhet, etc."
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country *</Label>
+                          <Input
+                            required
+                            value={verificationForm.businessCountry}
+                            onChange={e => setVerificationForm({ ...verificationForm, businessCountry: e.target.value })}
+                            placeholder="Bangladesh"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business Description / Bio</Label>
+                          <textarea
+                            rows={3}
+                            value={verificationForm.description}
+                            onChange={e => setVerificationForm({ ...verificationForm, description: e.target.value })}
+                            placeholder="Tell us about the products you intend to sell, your business background, etc."
+                            className="mt-1.5 w-full p-3 bg-secondary/50 border border-border rounded-md text-xs resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Product Payment Methods Section */}
+                    <div className="p-5 rounded-xl bg-background border border-border">
+                      {renderPaymentMethodsManager()}
+                    </div>
+
+                    {/* 4. Verification & Approval Fee Payment Section */}
+                    <div className="p-5 rounded-xl bg-background border border-border space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                        <div>
+                          <h3 className="text-sm font-medium text-foreground">৪. প্ল্যাটফর্ম ভেরিফিকেশন ও অনুমোদন ফি (Approval Fee)</h3>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            সেলার অ্যাকাউন্ট ভেরিফিকেশনের জন্য নির্ধারিত ফি প্রদান করে নিচে ট্রানজেকশন আইডি ও আপনার সেন্ডার নাম্বার দিন।
+                          </p>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
+                          ফি: ৳ {verificationFee}
+                        </div>
+                      </div>
+
+                      {/* Payment Method Selector Grid */}
+                      <div className="space-y-2 mb-4">
+                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">অ্যাডমিন ফি পেমেন্ট মেথড সিলেক্ট করুন *</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          {digitalPaymentMethods.map((m) => {
+                            const isSelected = verificationForm.paymentMethod === m.name;
+                            return (
+                              <button
+                                key={m.id || m.name}
+                                type="button"
+                                onClick={() => setVerificationForm({ ...verificationForm, paymentMethod: m.name })}
+                                className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
+                                  isSelected
+                                    ? 'border-foreground bg-secondary ring-1 ring-foreground'
+                                    : 'border-border bg-card hover:border-muted-foreground/40'
+                                }`}
+                              >
+                                {m.icon && (
+                                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+                                    <img src={m.icon} alt={m.name} className="w-full h-full object-contain" />
+                                  </div>
+                                )}
+                                <span className="text-[11px] font-medium leading-tight">{m.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Selected Method Instructions */}
+                      {(() => {
+                        const activeMethod = digitalPaymentMethods.find(m => m.name === verificationForm.paymentMethod);
+                        return activeMethod?.instructions ? (
+                          <div className="p-3 rounded-lg bg-secondary/80 border border-border text-xs text-muted-foreground mb-4">
+                            <p className="font-medium text-foreground mb-1">{activeMethod.name} পেমেন্ট নির্দেশনা:</p>
+                            <p className="leading-relaxed">{activeMethod.instructions}</p>
                           </div>
-                          <div>
-                            <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                              Sender Phone Number * (প্রেরকের নাম্বার)
-                            </Label>
-                            <Input
-                              required
-                              value={verificationForm.senderNumber}
-                              onChange={e => setVerificationForm({ ...verificationForm, senderNumber: e.target.value })}
-                              placeholder="e.g. 017XXXXXXXX"
-                              className="mt-1.5 h-10 bg-secondary border-border font-mono text-xs"
-                            />
-                            <p className="text-[10px] text-muted-foreground mt-1">যে মোবাইল নাম্বার থেকে টাকা পাঠিয়েছেন</p>
-                          </div>
+                        ) : null;
+                      })()}
+
+                      {/* TrxID & Sender Phone Number inputs */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                            Transaction ID (TrxID) *
+                          </Label>
+                          <Input
+                            required
+                            value={verificationForm.transactionId}
+                            onChange={e => setVerificationForm({ ...verificationForm, transactionId: e.target.value })}
+                            placeholder="e.g. 9J8B7C6D5E"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border font-mono text-xs uppercase"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">পেমেন্ট সফল হওয়ার পর প্রাপ্ত ট্রানজেকশন আইডি দিন</p>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                            Sender Phone Number * (প্রেরকের নাম্বার)
+                          </Label>
+                          <Input
+                            required
+                            value={verificationForm.senderNumber}
+                            onChange={e => setVerificationForm({ ...verificationForm, senderNumber: e.target.value })}
+                            placeholder="e.g. 017XXXXXXXX"
+                            className="mt-1.5 h-10 bg-secondary/50 border-border font-mono text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">যে মোবাইল নাম্বার থেকে ফি পাঠিয়েছেন</p>
                         </div>
                       </div>
                     </div>
@@ -562,7 +928,7 @@ export function SellerDashboard() {
                           <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
                         </span>
                       ) : (
-                        'Submit Verification to Admin'
+                        'Submit Verification & Profile to Admin'
                       )}
                     </Button>
                   </form>
@@ -709,7 +1075,7 @@ export function SellerDashboard() {
           </motion.div>
         )}
 
-        {/* ─── Products & Orders Tabs ──────────────────────────────────────── */}
+        {/* ─── Main Tabs ────────────────────────────────────────────────────── */}
         <Tabs defaultValue="products">
           <TabsList className="bg-secondary h-11 p-1 rounded-xl">
             <TabsTrigger value="products" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
@@ -718,9 +1084,12 @@ export function SellerDashboard() {
             <TabsTrigger value="orders" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
               Customer Orders ({sellerOrders.length})
             </TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
+              Store Profile & Payments
+            </TabsTrigger>
           </TabsList>
 
-          {/* Products Content */}
+          {/* Tab 1: Products Content */}
           <TabsContent value="products" className="mt-6">
             {sellerProducts.length === 0 ? (
               <div className="text-center py-16 border border-dashed border-border rounded-2xl">
@@ -749,23 +1118,21 @@ export function SellerDashboard() {
 
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h4 className="text-sm font-medium truncate">{p.name}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {p.category?.name} • {p.stock} in stock
-                        </p>
+                        <p className="text-[10px] tracking-wider uppercase text-muted-foreground">{p.category?.name}</p>
+                        <h4 className="text-sm font-medium tracking-wide truncate mt-0.5">{p.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm font-semibold">${p.price.toLocaleString()}</span>
+                          {p.comparePrice && <span className="text-xs text-muted-foreground line-through">${p.comparePrice.toLocaleString()}</span>}
+                        </div>
                       </div>
-                      <span className="text-sm font-medium shrink-0">${p.price.toLocaleString()}</span>
+                      <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
+                        Stock: {p.stock}
+                      </Badge>
                     </div>
 
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] bg-foreground/5 font-medium">
-                          {p.salesCount || 0} Sold
-                        </Badge>
-                      </div>
-                      <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
-                        View Product →
-                      </span>
+                    <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{p.salesCount || 0} sold</span>
+                      <span>Rating: {p.rating} ★</span>
                     </div>
                   </motion.div>
                 ))}
@@ -773,80 +1140,254 @@ export function SellerDashboard() {
             )}
           </TabsContent>
 
-          {/* Orders Content */}
+          {/* Tab 2: Orders Content */}
           <TabsContent value="orders" className="mt-6">
             {sellerOrders.length === 0 ? (
               <div className="text-center py-16 border border-dashed border-border rounded-2xl">
-                <Store className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-50" />
+                <Clock className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-50" />
                 <p className="text-sm font-medium">No customer orders yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Orders placed for your products will appear here with customer details and items.
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                  When customers purchase your listed products, their orders and items will appear right here.
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {sellerOrders.map(o => (
-                  <div
-                    key={o.id}
-                    className="p-5 rounded-2xl bg-secondary/60 border border-border hover:border-foreground/30 transition-all cursor-pointer"
-                    onClick={() => setSelectedSellerOrder(o)}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-sm font-medium font-mono">{o.orderNumber}</p>
-                          <Badge variant="outline" className={`text-[10px] ${statusColors[o.status] || ''}`}>
-                            {o.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
-                          <User className="w-3.5 h-3.5" />
-                          <span>Buyer: <strong className="text-foreground">{o.user?.name || 'Customer'}</strong> ({o.user?.email})</span>
-                          <span>•</span>
-                          <span>{new Date(o.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-6">
-                        <div className="text-right">
-                          <p className="text-base font-medium text-green-500">
-                            ${(o.sellerTotal || o.totalAmount).toLocaleString()}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {o.items?.length || 1} item{((o.items?.length || 1) > 1) ? 's' : ''} from your store
-                          </p>
-                        </div>
-                        <Button size="sm" variant="outline" className="h-8 text-xs rounded-lg">
-                          <Eye className="w-3.5 h-3.5 mr-1.5" /> Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="border border-border rounded-2xl overflow-hidden bg-secondary/40 shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-secondary/80 text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="p-3 text-left font-medium">Order Number</th>
+                        <th className="p-3 text-left font-medium">Customer</th>
+                        <th className="p-3 text-left font-medium">Your Items</th>
+                        <th className="p-3 text-right font-medium">Your Total</th>
+                        <th className="p-3 text-center font-medium">Status</th>
+                        <th className="p-3 text-center font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {sellerOrders.map((order: any) => (
+                        <tr key={order.id} className="hover:bg-secondary/60 transition-colors">
+                          <td className="p-3 font-mono font-medium">
+                            {order.orderNumber}
+                            <span className="block text-[10px] text-muted-foreground font-normal">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-medium text-foreground">{order.user?.name || 'Customer'}</span>
+                            <span className="block text-[10px] text-muted-foreground">{order.shippingCity}, {order.shippingCountry}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-medium">{order.items?.length || 0} item(s)</span>
+                            <span className="block text-[10px] text-muted-foreground truncate max-w-[200px]">
+                              {order.items?.map((i: any) => i.productName).join(', ')}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right font-semibold text-green-500">
+                            ${(order.sellerTotal || 0).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-center">
+                            <Badge variant="outline" className={`text-[10px] ${statusColors[order.status] || ''}`}>
+                              {order.status}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-center">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 text-xs hover:bg-secondary gap-1"
+                              onClick={() => setSelectedSellerOrder(order)}
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </TabsContent>
+
+          {/* Tab 3: Store Profile & Payment Methods Settings */}
+          <TabsContent value="profile" className="mt-6">
+            <div className="p-6 sm:p-8 rounded-2xl bg-secondary/40 border border-border space-y-8">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Settings className="w-5 h-5 text-foreground" />
+                  <h3 className="text-lg font-medium text-foreground">স্টোর প্রোফাইল ও পেমেন্ট মেথড সেটিংস</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  আপনার যোগাযোগের নাম্বারসমূহ, স্টোরের তথ্যাদি এবং আপনার প্রোডাক্ট চেকআউটে প্রদর্শিত পেমেন্ট মেথডগুলো এখান থেকে যেকোনো সময় আপডেট করতে পারবেন।
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-6">
+                {/* Contact info */}
+                <div className="p-5 rounded-xl bg-background border border-border space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border">
+                    <Phone className="w-4 h-4 text-foreground" />
+                    <h4 className="text-sm font-medium">যোগাযোগের তথ্য (Contact Information)</h4>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Mobile Phone Number *</Label>
+                      <Input
+                        required
+                        value={storeProfileForm.phone}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, phone: e.target.value })}
+                        placeholder="e.g. 017XXXXXXXX"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+                        <MessageCircle className="w-3.5 h-3.5 text-green-500" /> WhatsApp Number *
+                      </Label>
+                      <Input
+                        required
+                        value={storeProfileForm.whatsapp}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, whatsapp: e.target.value })}
+                        placeholder="e.g. 017XXXXXXXX"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5" /> Email Address *
+                      </Label>
+                      <Input
+                        required
+                        type="email"
+                        value={storeProfileForm.email}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, email: e.target.value })}
+                        placeholder="seller@example.com"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Store info */}
+                <div className="p-5 rounded-xl bg-background border border-border space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border">
+                    <Store className="w-4 h-4 text-foreground" />
+                    <h4 className="text-sm font-medium">স্টোর তথ্য (Store Details)</h4>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Store / Company Name *</Label>
+                      <Input
+                        required
+                        value={storeProfileForm.companyName}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, companyName: e.target.value })}
+                        placeholder="e.g. Royal Fashion Boutique"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Website / Social Page (Optional)</Label>
+                      <Input
+                        value={storeProfileForm.website}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, website: e.target.value })}
+                        placeholder="https://..."
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Business / Pickup Address</Label>
+                      <Input
+                        value={storeProfileForm.address}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, address: e.target.value })}
+                        placeholder="Shop/Office number, Street, Area"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City / District</Label>
+                      <Input
+                        value={storeProfileForm.city}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, city: e.target.value })}
+                        placeholder="Dhaka, Chittagong, etc."
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label>
+                      <Input
+                        value={storeProfileForm.country}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, country: e.target.value })}
+                        placeholder="Bangladesh"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Store Bio / Description</Label>
+                      <textarea
+                        rows={3}
+                        value={storeProfileForm.description}
+                        onChange={e => setStoreProfileForm({ ...storeProfileForm, description: e.target.value })}
+                        placeholder="Describe your brand, craftsmanship, customer guarantee..."
+                        className="mt-1.5 w-full p-3 bg-secondary/50 border border-border rounded-md text-xs resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Methods Config */}
+                <div className="p-5 rounded-xl bg-background border border-border">
+                  {renderPaymentMethodsManager()}
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="bg-foreground text-background text-xs tracking-wider h-11 px-8 rounded-lg gap-2"
+                  >
+                    {savingProfile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Save Profile & Payment Methods
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </TabsContent>
         </Tabs>
 
-        {/* ─── Customer Order Details Modal ─────────────────────────────────── */}
-        <Dialog open={!!selectedSellerOrder} onOpenChange={open => !open && setSelectedSellerOrder(null)}>
-          <DialogContent className="sm:max-w-lg">
+        {/* ─── Order Detail Modal for Seller ───────────────────────────────── */}
+        <Dialog open={Boolean(selectedSellerOrder)} onOpenChange={() => setSelectedSellerOrder(null)}>
+          <DialogContent className="max-w-lg bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="text-base flex items-center justify-between">
+              <DialogTitle className="text-base font-medium flex items-center justify-between">
                 <span>Order #{selectedSellerOrder?.orderNumber}</span>
-                {selectedSellerOrder && (
-                  <Badge variant="outline" className={`text-[10px] ${statusColors[selectedSellerOrder.status] || ''}`}>
-                    {selectedSellerOrder.status}
-                  </Badge>
-                )}
+                <Badge variant="outline" className={`text-xs ${selectedSellerOrder ? statusColors[selectedSellerOrder.status] : ''}`}>
+                  {selectedSellerOrder?.status}
+                </Badge>
               </DialogTitle>
             </DialogHeader>
 
             {selectedSellerOrder && (
-              <div className="space-y-4 pt-2">
-                {/* Customer Information */}
-                <div className="p-4 rounded-xl bg-secondary/50 border border-border text-xs space-y-2">
-                  <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold">Customer / Buyer Details</h4>
+              <div className="space-y-4 text-xs mt-2">
+                {/* Customer Details */}
+                <div className="p-3.5 bg-secondary/50 rounded-xl space-y-1.5 border border-border">
+                  <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold mb-1">
+                    Customer Delivery Information
+                  </h4>
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="font-medium text-foreground">{selectedSellerOrder.user?.name}</span>

@@ -6,16 +6,16 @@ export async function GET(req: NextRequest) {
     const sellerId = req.headers.get('x-user-id');
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const [profile, verification, products, feeSetting, paymentMethods] = await Promise.all([
+    const [profile, verification, products, feeSetting, allPaymentMethods] = await Promise.all([
       db.sellerProfile.findUnique({ where: { userId: sellerId } }),
       db.sellerVerification.findUnique({
         where: { userId: sellerId },
         select: {
           id: true, businessName: true, businessType: true, businessAddress: true,
           businessCity: true, businessCountry: true, nidNumber: true, phone: true,
-          website: true, description: true, status: true, rejectReason: true,
-          feeAmount: true, paymentMethod: true, transactionId: true, senderNumber: true,
-          createdAt: true, reviewedAt: true,
+          whatsapp: true, email: true, website: true, description: true, status: true,
+          rejectReason: true, feeAmount: true, paymentMethod: true, transactionId: true,
+          senderNumber: true, paymentMethodsData: true, createdAt: true, reviewedAt: true,
         },
       }),
       db.product.findMany({
@@ -25,13 +25,15 @@ export async function GET(req: NextRequest) {
       }),
       db.siteSetting.findUnique({ where: { key: 'seller_verification_fee' } }),
       db.paymentMethod.findMany({
-        where: {
-          active: true,
-          name: { notIn: ['cash_on_delivery', 'Cash on Delivery', 'COD'] },
-        },
+        where: { active: true },
         orderBy: { sortOrder: 'asc' },
       }),
     ]);
+
+    // Digital methods only (for fee payment)
+    const paymentMethods = allPaymentMethods.filter(
+      m => !['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name)
+    );
 
     // Fetch order items belonging exclusively to this seller's products
     const sellerOrderItems = await db.orderItem.findMany({
@@ -51,7 +53,6 @@ export async function GET(req: NextRequest) {
     // Compute seller-specific metrics
     const totalSales = sellerOrderItems.reduce((sum, item) => sum + item.quantity, 0);
     const totalRevenue = sellerOrderItems.reduce((sum, item) => {
-      // Exclude cancelled if marked, otherwise include
       if (item.order.status === 'CANCELLED') return sum;
       return sum + (item.price * item.quantity);
     }, 0);
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest) {
       approved: isApproved,
       feeAmount: feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500,
       paymentMethods,
+      allPaymentMethods,
       stats: {
         productCount,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
@@ -132,14 +134,73 @@ export async function PUT(req: NextRequest) {
     const sellerId = req.headers.get('x-user-id');
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const { companyName, description, website } = await req.json();
+    const body = await req.json();
+    const {
+      companyName,
+      description,
+      website,
+      phone,
+      whatsapp,
+      email,
+      address,
+      city,
+      country,
+      logo,
+      banner,
+      paymentMethodsConfig,
+    } = body;
+
+    const pmConfigStr = paymentMethodsConfig !== undefined
+      ? (typeof paymentMethodsConfig === 'string' ? paymentMethodsConfig : JSON.stringify(paymentMethodsConfig))
+      : undefined;
+
     const profile = await db.sellerProfile.upsert({
       where: { userId: sellerId },
-      update: { companyName, description, website },
-      create: { userId: sellerId, companyName: companyName || '', description: description || '', website, approved: false },
+      update: {
+        ...(companyName !== undefined && { companyName }),
+        ...(description !== undefined && { description }),
+        ...(website !== undefined && { website }),
+        ...(phone !== undefined && { phone }),
+        ...(whatsapp !== undefined && { whatsapp }),
+        ...(email !== undefined && { email }),
+        ...(address !== undefined && { address }),
+        ...(city !== undefined && { city }),
+        ...(country !== undefined && { country }),
+        ...(logo !== undefined && { logo }),
+        ...(banner !== undefined && { banner }),
+        ...(pmConfigStr !== undefined && { paymentMethodsConfig: pmConfigStr }),
+      },
+      create: {
+        userId: sellerId,
+        companyName: companyName || '',
+        description: description || '',
+        website: website || null,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
+        email: email || null,
+        address: address || null,
+        city: city || null,
+        country: country || 'Bangladesh',
+        logo: logo || null,
+        banner: banner || null,
+        paymentMethodsConfig: pmConfigStr || null,
+        approved: false,
+      },
     });
-    return NextResponse.json(profile);
-  } catch {
+
+    // Also sync user phone/address if supplied
+    await db.user.update({
+      where: { id: sellerId },
+      data: {
+        ...(phone && { phone }),
+        ...(address && { address }),
+        ...(city && { city }),
+      },
+    }).catch(() => {});
+
+    return NextResponse.json({ profile, message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error('Failed to update seller profile:', err);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, Ban, Trash2, Store, ShieldOff, Eye, Mail, Phone, MapPin, Globe, Star, Package, ShoppingCart } from 'lucide-react';
+import { CheckCircle, Ban, Trash2, Store, ShieldOff, Eye, Mail, Phone, MapPin, Globe, Star, Package, ShoppingCart, MessageCircle, CreditCard, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
 
@@ -53,7 +53,10 @@ interface SellerVerificationData {
   businessCountry: string;
   nidNumber: string;
   phone: string;
+  whatsapp?: string | null;
+  email?: string | null;
   website: string | null;
+  paymentMethodsData?: string | null;
   status: string;
   createdAt: string;
 }
@@ -63,7 +66,15 @@ interface Seller {
   companyName: string;
   description: string | null;
   logo: string | null;
+  banner?: string | null;
   website: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  email?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  paymentMethodsConfig?: string | null;
   approved: boolean;
   rating: number;
   totalSales: number;
@@ -540,24 +551,87 @@ export function AdminSellers() {
                 <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 shrink-0" />
-                    <span>{detailTarget.user.email}</span>
+                    <span>{detailTarget.verification?.email || detailTarget.email || detailTarget.user.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span>{detailTarget.verification?.phone || detailTarget.user.phone || 'Not provided'}</span>
+                    <span>{detailTarget.verification?.phone || detailTarget.phone || detailTarget.user.phone || 'Not provided'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-3.5 h-3.5 shrink-0 text-green-500" />
+                    {(detailTarget.verification?.whatsapp || detailTarget.whatsapp) ? (
+                      <a
+                        href={`https://wa.me/${(detailTarget.verification?.whatsapp || detailTarget.whatsapp || '').replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-mono text-green-600 dark:text-green-400 font-medium hover:underline inline-flex items-center gap-1"
+                      >
+                        {detailTarget.verification?.whatsapp || detailTarget.whatsapp} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span>WhatsApp: Not provided</span>
+                    )}
                   </div>
                   <div className="flex items-start gap-2">
                     <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>{[detailTarget.verification?.businessAddress || detailTarget.user.address, detailTarget.verification?.businessCity || detailTarget.user.city, detailTarget.verification?.businessCountry || detailTarget.user.country].filter(Boolean).join(', ') || 'Not provided'}</span>
+                    <span>{[detailTarget.verification?.businessAddress || detailTarget.address || detailTarget.user.address, detailTarget.verification?.businessCity || detailTarget.city || detailTarget.user.city, detailTarget.verification?.businessCountry || detailTarget.country || detailTarget.user.country].filter(Boolean).join(', ') || 'Not provided'}</span>
                   </div>
                   {detailTarget.website && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 sm:col-span-2">
                       <Globe className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{detailTarget.website}</span>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Seller's Configured Payment Methods for Products */}
+              {(() => {
+                const configRaw = detailTarget.paymentMethodsConfig || detailTarget.verification?.paymentMethodsData;
+                if (!configRaw) return null;
+                try {
+                  const methods = JSON.parse(configRaw);
+                  const active = Array.isArray(methods) ? methods.filter((m: any) => m && m.active) : [];
+                  if (active.length === 0) return null;
+                  return (
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-medium flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-foreground" />
+                        বিক্রেতার প্রোডাক্ট পেমেন্ট মেথড ({active.length}টি সক্রিয়)
+                      </h4>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {active.map((m: any, idx: number) => {
+                          const isCod = m.name === 'cash_on_delivery' || m.name === 'Cash on Delivery' || m.name === 'COD';
+                          return (
+                            <div key={idx} className="p-2.5 rounded-lg bg-secondary/50 border border-border flex items-start gap-2.5 text-xs">
+                              {m.icon ? (
+                                <img src={m.icon} alt="" className="w-6 h-6 object-contain shrink-0 mt-0.5" />
+                              ) : null}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 mb-0.5">
+                                  <span className="font-semibold text-foreground">{m.name}</span>
+                                  <Badge variant="outline" className="text-[8px] uppercase px-1 py-0">
+                                    {isCod ? 'COD' : (m.accountType || 'Personal')}
+                                  </Badge>
+                                </div>
+                                {!isCod && m.accountNumber ? (
+                                  <p className="font-mono text-[11px] text-foreground font-medium">
+                                    {m.accountNumber}
+                                  </p>
+                                ) : isCod ? (
+                                  <p className="text-[10px] text-green-600 dark:text-green-400">Cash on Delivery</p>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-3 border-t border-border">

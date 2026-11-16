@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, XCircle, Clock, Shield, User, Building2, MapPin, Phone, Globe, FileText, Eye, X, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Shield, User, Building2, MapPin, Phone, Globe, FileText, Eye, X, Loader2, CreditCard, MessageCircle, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { adminHeaders } from '@/lib/admin-utils';
 import { cn } from '@/lib/utils';
@@ -19,12 +19,15 @@ interface Verification {
   businessCountry: string;
   nidNumber: string;
   phone: string;
+  whatsapp: string | null;
+  email: string | null;
   website: string | null;
   description: string | null;
   feeAmount: number | null;
   paymentMethod: string | null;
   transactionId: string | null;
   senderNumber: string | null;
+  paymentMethodsData: string | null;
   status: string;
   rejectReason: string | null;
   createdAt: string;
@@ -164,14 +167,85 @@ export function AdminVerifications() {
               )}
 
               <div className="p-4 rounded-xl bg-secondary border border-border space-y-3">
-                <h4 className="text-xs tracking-wider uppercase text-muted-foreground flex items-center gap-2"><User className="w-3.5 h-3.5" /> Seller Information</h4>
+                <h4 className="text-xs tracking-wider uppercase text-muted-foreground flex items-center gap-2"><User className="w-3.5 h-3.5" /> Seller Information & Contact</h4>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Name:</span> {selected.user.name}</div>
-                  <div><span className="text-muted-foreground">Email:</span> {selected.user.email}</div>
-                  <div><span className="text-muted-foreground">Phone:</span> {selected.user.phone || 'N/A'}</div>
+                  <div><span className="text-muted-foreground">Email:</span> {selected.email || selected.user.email}</div>
+                  <div><span className="text-muted-foreground">Mobile Phone:</span> {selected.phone || selected.user.phone || 'N/A'}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <MessageCircle className="w-3.5 h-3.5 text-green-500" /> WhatsApp:
+                    </span>
+                    {selected.whatsapp ? (
+                      <a
+                        href={`https://wa.me/${selected.whatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-mono text-green-600 dark:text-green-400 font-medium hover:underline inline-flex items-center gap-1"
+                      >
+                        {selected.whatsapp} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">N/A</span>
+                    )}
+                  </div>
                   <div><span className="text-muted-foreground">Joined:</span> {new Date(selected.user.createdAt).toLocaleDateString()}</div>
                 </div>
               </div>
+
+              {/* Seller's Configured Payment Methods for Products */}
+              {selected.paymentMethodsData && (() => {
+                try {
+                  const methods = JSON.parse(selected.paymentMethodsData);
+                  const active = Array.isArray(methods) ? methods.filter((m: any) => m && m.active) : [];
+                  if (active.length === 0) return null;
+                  return (
+                    <div className="p-4 rounded-xl bg-secondary border border-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs tracking-wider uppercase text-muted-foreground flex items-center gap-2">
+                          <CreditCard className="w-3.5 h-3.5 text-foreground" />
+                          সেলার প্রোডাক্ট পেমেন্ট মেথড ({active.length}টি সক্রিয়)
+                        </h4>
+                        <span className="text-[10px] text-muted-foreground">প্রোডাক্ট চেকআউটে প্রদর্শিত হবে</span>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-2.5">
+                        {active.map((m: any, idx: number) => {
+                          const isCod = m.name === 'cash_on_delivery' || m.name === 'Cash on Delivery' || m.name === 'COD';
+                          return (
+                            <div key={idx} className="p-3 rounded-xl bg-background border border-border flex items-start gap-3">
+                              {m.icon ? (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-secondary/50">
+                                  <img src={m.icon} alt="" className="w-6 h-6 object-contain" />
+                                </div>
+                              ) : null}
+                              <div className="flex-1 min-w-0 text-xs">
+                                <div className="flex items-center justify-between gap-1 mb-1">
+                                  <span className="font-semibold text-foreground">{m.name}</span>
+                                  <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0">
+                                    {isCod ? 'Cash on Delivery' : (m.accountType || 'Personal')}
+                                  </Badge>
+                                </div>
+                                {!isCod && m.accountNumber ? (
+                                  <p className="font-mono text-muted-foreground text-[11px]">
+                                    No: <span className="text-foreground font-semibold">{m.accountNumber}</span>
+                                  </p>
+                                ) : isCod ? (
+                                  <p className="text-[10px] text-green-600 dark:text-green-400">ক্যাশ অন ডেলিভারি প্রযোজ্য</p>
+                                ) : null}
+                                {m.instructions && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{m.instructions}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
 
               <div className="p-4 rounded-xl bg-secondary border border-border space-y-3">
                 <h4 className="text-xs tracking-wider uppercase text-muted-foreground flex items-center gap-2"><Building2 className="w-3.5 h-3.5" /> Business Information</h4>

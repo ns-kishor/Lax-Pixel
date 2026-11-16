@@ -12,15 +12,14 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, businessName: true, businessType: true, businessAddress: true,
         businessCity: true, businessCountry: true, nidNumber: true, phone: true,
-        website: true, description: true, status: true, rejectReason: true,
-        feeAmount: true, paymentMethod: true, transactionId: true, senderNumber: true,
-        createdAt: true, reviewedAt: true,
+        whatsapp: true, email: true, website: true, description: true, status: true,
+        rejectReason: true, feeAmount: true, paymentMethod: true, transactionId: true,
+        senderNumber: true, paymentMethodsData: true, createdAt: true, reviewedAt: true,
       },
     });
 
     const sellerProfile = await db.sellerProfile.findUnique({
       where: { userId },
-      select: { approved: true },
     });
 
     const feeSetting = await db.siteSetting.findUnique({
@@ -28,26 +27,31 @@ export async function GET(req: NextRequest) {
     });
     const feeAmount = feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500;
 
-    const paymentMethods = await db.paymentMethod.findMany({
-      where: {
-        active: true,
-        name: { notIn: ['cash_on_delivery', 'Cash on Delivery', 'COD'] },
-      },
+    // All available platform payment methods
+    const allPaymentMethods = await db.paymentMethod.findMany({
+      where: { active: true },
       orderBy: { sortOrder: 'asc' },
     });
 
+    // Digital methods only (for paying platform verification fee)
+    const digitalPaymentMethods = allPaymentMethods.filter(
+      m => !['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name)
+    );
+
     return NextResponse.json({
       verification,
+      profile: sellerProfile,
       approved: sellerProfile?.approved ?? false,
       feeAmount,
-      paymentMethods,
+      paymentMethods: digitalPaymentMethods,
+      allPaymentMethods,
     });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch verification' }, { status: 500 });
   }
 }
 
-// POST — submit verification form with fee payment details
+// POST — submit verification form with profile & fee payment details
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -62,11 +66,14 @@ export async function POST(req: NextRequest) {
       businessCountry,
       nidNumber,
       phone,
+      whatsapp,
+      email,
       website,
       description,
       paymentMethod,
       transactionId,
       senderNumber,
+      paymentMethodsData,
     } = body;
 
     if (!businessName || !businessType || !businessAddress || !businessCity || !businessCountry || !nidNumber || !phone) {
@@ -93,6 +100,8 @@ export async function POST(req: NextRequest) {
     });
     const currentFee = feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500;
 
+    const pmDataStr = paymentMethodsData ? (typeof paymentMethodsData === 'string' ? paymentMethodsData : JSON.stringify(paymentMethodsData)) : null;
+
     const verification = await db.sellerVerification.upsert({
       where: { userId },
       update: {
@@ -103,12 +112,15 @@ export async function POST(req: NextRequest) {
         businessCountry,
         nidNumber,
         phone,
+        whatsapp: whatsapp || null,
+        email: email || null,
         website: website || null,
         description: description || null,
         feeAmount: currentFee,
         paymentMethod: String(paymentMethod).trim(),
         transactionId: String(transactionId).trim(),
         senderNumber: String(senderNumber).trim(),
+        paymentMethodsData: pmDataStr,
         status: 'PENDING',
         reviewedBy: null,
         reviewedAt: null,
@@ -123,24 +135,57 @@ export async function POST(req: NextRequest) {
         businessCountry,
         nidNumber,
         phone,
+        whatsapp: whatsapp || null,
+        email: email || null,
         website: website || null,
         description: description || null,
         feeAmount: currentFee,
         paymentMethod: String(paymentMethod).trim(),
         transactionId: String(transactionId).trim(),
         senderNumber: String(senderNumber).trim(),
+        paymentMethodsData: pmDataStr,
       },
     });
 
-    // Ensure sellerProfile exists in pending state & update role
+    // Ensure sellerProfile exists in pending state & save initial contact & payment method config
     await db.sellerProfile.upsert({
       where: { userId },
-      update: { companyName: businessName, description: description || '', website: website || null },
-      create: { userId, companyName: businessName, description: description || '', website: website || null, approved: false },
+      update: {
+        companyName: businessName,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
+        email: email || null,
+        address: businessAddress || null,
+        city: businessCity || null,
+        country: businessCountry || 'Bangladesh',
+        description: description || '',
+        website: website || null,
+        paymentMethodsConfig: pmDataStr || undefined,
+      },
+      create: {
+        userId,
+        companyName: businessName,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
+        email: email || null,
+        address: businessAddress || null,
+        city: businessCity || null,
+        country: businessCountry || 'Bangladesh',
+        description: description || '',
+        website: website || null,
+        paymentMethodsConfig: pmDataStr || null,
+        approved: false,
+      },
     });
+
     await db.user.update({
       where: { id: userId },
-      data: { role: 'SELLER' },
+      data: {
+        role: 'SELLER',
+        phone: phone || undefined,
+        address: businessAddress || undefined,
+        city: businessCity || undefined,
+      },
     }).catch(() => {});
 
     return NextResponse.json({ verification, message: 'Verification submitted successfully' });
