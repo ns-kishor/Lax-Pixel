@@ -12,7 +12,7 @@ import {
   Store, DollarSign, Package, Clock, Plus, CheckCircle2,
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
   AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
-  MessageCircle, ExternalLink, HelpCircle
+  MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -51,6 +51,19 @@ export function SellerDashboard() {
   const [submittingVerification, setSubmittingVerification] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [selectedSellerOrder, setSelectedSellerOrder] = useState<any>(null);
+
+  // Order status & payment proof management state
+  const [sellerPaymentProofs, setSellerPaymentProofs] = useState<any[]>([]);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [processingProofId, setProcessingProofId] = useState<string | null>(null);
+  const [proofFilter, setProofFilter] = useState<'ALL' | 'PENDING' | 'VERIFIED' | 'REJECTED'>('ALL');
+  const [rejectingProofId, setRejectingProofId] = useState<string | null>(null);
+  const [rejectNotes, setRejectNotes] = useState('');
+  const [statusChangeState, setStatusChangeState] = useState<{ status: string; trackingNumber: string; notes: string }>({
+    status: 'PENDING',
+    trackingNumber: '',
+    notes: '',
+  });
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -111,6 +124,9 @@ export function SellerDashboard() {
         }
         if (data.paymentMethods && Array.isArray(data.paymentMethods)) {
           setDigitalPaymentMethods(data.paymentMethods);
+        }
+        if (data.paymentProofs && Array.isArray(data.paymentProofs)) {
+          setSellerPaymentProofs(data.paymentProofs);
         }
 
         // Initialize seller payment methods config
@@ -218,6 +234,70 @@ export function SellerDashboard() {
     });
   };
 
+  // Handle Order Status Change by Seller
+  const handleUpdateOrderStatus = async (orderId: string, status: string, trackingNumber?: string, notes?: string) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch('/api/seller/orders', {
+        method: 'PATCH',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status, trackingNumber, notes }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || `Order status updated to ${status}`);
+        loadSellerData();
+        if (selectedSellerOrder && selectedSellerOrder.id === orderId) {
+          setSelectedSellerOrder((prev: any) => ({
+            ...prev,
+            status,
+            trackingNumber: trackingNumber || prev.trackingNumber,
+          }));
+        }
+      } else {
+        showToast(data.error || 'Failed to update order status', 'error');
+      }
+    } catch {
+      showToast('Failed to update order status', 'error');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  // Handle Payment Proof Approve or Reject by Seller
+  const handlePaymentProofAction = async (proofId: string, action: 'APPROVE' | 'REJECT', notes?: string) => {
+    setProcessingProofId(proofId);
+    try {
+      const res = await fetch('/api/seller/payment-proofs', {
+        method: 'PATCH',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: proofId, action, notes }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || `Payment proof ${action === 'APPROVE' ? 'approved' : 'rejected'}`);
+        setRejectingProofId(null);
+        setRejectNotes('');
+        loadSellerData();
+        if (selectedSellerOrder) {
+          setSelectedSellerOrder((prev: any) => ({
+            ...prev,
+            paymentStatus: action === 'APPROVE' ? 'PAID' : 'FAILED',
+            paymentProofs: (prev.paymentProofs || []).map((p: any) =>
+              p.id === proofId ? { ...p, status: action === 'APPROVE' ? 'VERIFIED' : 'REJECTED' } : p
+            ),
+          }));
+        }
+      } else {
+        showToast(data.error || 'Failed to update payment proof', 'error');
+      }
+    } catch {
+      showToast('Failed to update payment proof', 'error');
+    } finally {
+      setProcessingProofId(null);
+    }
+  };
+
   // Handle image upload for product
   const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -263,14 +343,12 @@ export function SellerDashboard() {
       return;
     }
 
-    // Check that at least one product payment method is active
     const activeMethods = sellerPaymentMethods.filter(m => m.active);
     if (activeMethods.length === 0) {
       showToast('Please select at least one payment method for your products', 'error');
       return;
     }
 
-    // Validate account numbers for active digital methods
     for (const m of activeMethods) {
       const isCod = ['cash_on_delivery', 'Cash on Delivery', 'COD'].includes(m.name);
       if (!isCod && !m.accountNumber.trim()) {
@@ -412,6 +490,18 @@ export function SellerDashboard() {
     DELIVERED: 'bg-green-500/10 text-green-500 border-green-500/20',
     CANCELLED: 'bg-red-500/10 text-red-500 border-red-500/20',
   };
+
+  const proofStatusColors: Record<string, string> = {
+    PENDING: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+    VERIFIED: 'bg-green-500/10 text-green-500 border-green-500/20',
+    REJECTED: 'bg-red-500/10 text-red-500 border-red-500/20',
+  };
+
+  const pendingProofsCount = sellerPaymentProofs.filter(p => p.status === 'PENDING').length;
+
+  const filteredProofs = proofFilter === 'ALL'
+    ? sellerPaymentProofs
+    : sellerPaymentProofs.filter(p => p.status === proofFilter);
 
   // Reusable Component: Payment Methods Config List
   const renderPaymentMethodsManager = () => {
@@ -557,7 +647,7 @@ export function SellerDashboard() {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Store: <span className="text-foreground font-medium">{storeProfileForm.companyName || verificationForm.businessName || user.name}</span> • Manage your exclusive catalog, payment methods, and customer orders
+              Store: <span className="text-foreground font-medium">{storeProfileForm.companyName || verificationForm.businessName || user.name}</span> • Manage your exclusive catalog, payment proofs, and customer orders
             </p>
           </div>
 
@@ -1084,6 +1174,14 @@ export function SellerDashboard() {
             <TabsTrigger value="orders" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
               Customer Orders ({sellerOrders.length})
             </TabsTrigger>
+            <TabsTrigger value="proofs" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg flex items-center gap-1.5">
+              Payment Proofs
+              {pendingProofsCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold">
+                  {pendingProofsCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="profile" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
               Store Profile & Payments
             </TabsTrigger>
@@ -1160,49 +1258,92 @@ export function SellerDashboard() {
                         <th className="p-3 text-left font-medium">Customer</th>
                         <th className="p-3 text-left font-medium">Your Items</th>
                         <th className="p-3 text-right font-medium">Your Total</th>
-                        <th className="p-3 text-center font-medium">Status</th>
-                        <th className="p-3 text-center font-medium">Action</th>
+                        <th className="p-3 text-center font-medium">Payment Proof</th>
+                        <th className="p-3 text-center font-medium">Status / Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {sellerOrders.map((order: any) => (
-                        <tr key={order.id} className="hover:bg-secondary/60 transition-colors">
-                          <td className="p-3 font-mono font-medium">
-                            {order.orderNumber}
-                            <span className="block text-[10px] text-muted-foreground font-normal">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <span className="font-medium text-foreground">{order.user?.name || 'Customer'}</span>
-                            <span className="block text-[10px] text-muted-foreground">{order.shippingCity}, {order.shippingCountry}</span>
-                          </td>
-                          <td className="p-3">
-                            <span className="font-medium">{order.items?.length || 0} item(s)</span>
-                            <span className="block text-[10px] text-muted-foreground truncate max-w-[200px]">
-                              {order.items?.map((i: any) => i.productName).join(', ')}
-                            </span>
-                          </td>
-                          <td className="p-3 text-right font-semibold text-green-500">
-                            ${(order.sellerTotal || 0).toLocaleString()}
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge variant="outline" className={`text-[10px] ${statusColors[order.status] || ''}`}>
-                              {order.status}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 text-xs hover:bg-secondary gap-1"
-                              onClick={() => setSelectedSellerOrder(order)}
-                            >
-                              <Eye className="w-3.5 h-3.5" /> View
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                      {sellerOrders.map((order: any) => {
+                        const proof = order.paymentProofs?.[0];
+                        return (
+                          <tr key={order.id} className="hover:bg-secondary/60 transition-colors">
+                            <td className="p-3 font-mono font-medium">
+                              {order.orderNumber}
+                              <span className="block text-[10px] text-muted-foreground font-normal">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className="font-medium text-foreground">{order.user?.name || 'Customer'}</span>
+                              <span className="block text-[10px] text-muted-foreground">{order.shippingCity}, {order.shippingCountry}</span>
+                              {order.user?.phone && (
+                                <span className="block text-[10px] font-mono text-muted-foreground">{order.user.phone}</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <span className="font-medium">{order.items?.length || 0} item(s)</span>
+                              <span className="block text-[10px] text-muted-foreground truncate max-w-[200px]">
+                                {order.items?.map((i: any) => i.productName).join(', ')}
+                              </span>
+                            </td>
+                            <td className="p-3 text-right font-semibold text-green-500">
+                              ${(order.sellerTotal || 0).toLocaleString()}
+                            </td>
+                            <td className="p-3 text-center">
+                              {proof ? (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[9px] uppercase px-2 py-0.5 cursor-pointer ${
+                                    proofStatusColors[proof.status] || ''
+                                  }`}
+                                  onClick={() => setSelectedSellerOrder(order)}
+                                >
+                                  {proof.status === 'PENDING' ? 'Proof: Pending' : proof.status === 'VERIFIED' ? 'Proof: Approved' : 'Proof: Rejected'}
+                                </Badge>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">COD / No Proof</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                {/* Quick status select */}
+                                <select
+                                  disabled={updatingOrderId === order.id}
+                                  value={order.status}
+                                  onChange={e => handleUpdateOrderStatus(order.id, e.target.value)}
+                                  className={`h-7 px-2 text-[11px] rounded-lg border bg-background font-medium ${
+                                    statusColors[order.status] || ''
+                                  }`}
+                                >
+                                  <option value="PENDING">PENDING</option>
+                                  <option value="CONFIRMED">CONFIRMED</option>
+                                  <option value="PROCESSING">PROCESSING</option>
+                                  <option value="SHIPPED">SHIPPED</option>
+                                  <option value="DELIVERED">DELIVERED</option>
+                                  <option value="CANCELLED">CANCELLED</option>
+                                </select>
+
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 hover:bg-secondary"
+                                  onClick={() => {
+                                    setSelectedSellerOrder(order);
+                                    setStatusChangeState({
+                                      status: order.status,
+                                      trackingNumber: order.trackingNumber || '',
+                                      notes: '',
+                                    });
+                                  }}
+                                  title="View order details"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1210,7 +1351,193 @@ export function SellerDashboard() {
             )}
           </TabsContent>
 
-          {/* Tab 3: Store Profile & Payment Methods Settings */}
+          {/* Tab 3: Dedicated Payment Proofs Content */}
+          <TabsContent value="proofs" className="mt-6">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
+                <div>
+                  <h3 className="text-base font-medium text-foreground flex items-center gap-2">
+                    <FileCheck className="w-5 h-5 text-foreground" />
+                    ক্রেতাদের পেমেন্ট প্রুফ ভেরিফিকেশন (Payment Proofs)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    আপনার প্রোডাক্ট কেনার সময় ক্রেতাদের দেওয়া Transaction ID ও প্রেরক নাম্বার যাচাই করে এপ্রুভ বা রিজেক্ট করুন।
+                  </p>
+                </div>
+
+                {/* Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {(['ALL', 'PENDING', 'VERIFIED', 'REJECTED'] as const).map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setProofFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        proofFilter === f
+                          ? 'bg-foreground text-background shadow-sm'
+                          : 'bg-secondary/70 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {f === 'ALL' ? 'All' : f === 'PENDING' ? `Pending (${pendingProofsCount})` : f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredProofs.length === 0 ? (
+                <div className="text-center py-16 border border-dashed border-border rounded-2xl bg-secondary/20">
+                  <FileCheck className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-40" />
+                  <p className="text-sm font-medium">No payment proofs found</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {proofFilter === 'PENDING'
+                      ? 'No pending payment proofs right now. All proofs are up to date!'
+                      : 'When buyers submit payment transaction IDs, they will appear here.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredProofs.map((p) => {
+                    const isPending = p.status === 'PENDING';
+                    const isRejecting = rejectingProofId === p.id;
+                    const isProcessing = processingProofId === p.id;
+
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-4 rounded-2xl bg-secondary/50 border border-border shadow-sm flex flex-col justify-between space-y-3"
+                      >
+                        <div className="space-y-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              {p.paymentMethod?.icon ? (
+                                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-background border border-border">
+                                  <img src={p.paymentMethod.icon} alt="" className="w-6 h-6 object-contain" />
+                                </div>
+                              ) : null}
+                              <div>
+                                <h4 className="font-semibold text-xs text-foreground">{p.paymentMethod?.name || 'Digital Payment'}</h4>
+                                <span className="font-mono text-[10px] text-muted-foreground">Order: {p.orderNumber || p.order?.orderNumber}</span>
+                              </div>
+                            </div>
+
+                            <Badge variant="outline" className={`text-[10px] uppercase font-semibold ${proofStatusColors[p.status] || ''}`}>
+                              {p.status}
+                            </Badge>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-background border border-border/80 space-y-1.5 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Buyer:</span>
+                              <span className="font-medium text-foreground">{p.buyer?.name || p.user?.name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Total:</span>
+                              <span className="font-semibold text-green-500">${(p.amount || p.orderTotal || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Date:</span>
+                              <span className="text-[11px] text-muted-foreground">{new Date(p.createdAt).toLocaleString()}</span>
+                            </div>
+                            <div className="pt-1.5 mt-1 border-t border-border/60">
+                              <span className="text-muted-foreground block text-[10px] uppercase font-semibold mb-0.5">TrxID & Sender Details:</span>
+                              <p className="font-mono text-xs text-foreground bg-secondary/70 p-1.5 rounded select-all break-all">
+                                {p.notes || 'No TrxID details attached'}
+                              </p>
+                            </div>
+
+                            {p.proofImage && (
+                              <div className="pt-1">
+                                <a href={p.proofImage} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline inline-flex items-center gap-1">
+                                  View Screenshot Image <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="pt-2 border-t border-border/60">
+                          {isPending ? (
+                            isRejecting ? (
+                              <div className="space-y-2">
+                                <Input
+                                  value={rejectNotes}
+                                  onChange={e => setRejectNotes(e.target.value)}
+                                  placeholder="রিজেক্ট করার কারণ (যেমন: ফেক TrxID / টাকা আসেনি)..."
+                                  className="h-8 text-xs bg-background"
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    disabled={isProcessing}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+                                    onClick={() => handlePaymentProofAction(p.id, 'REJECT', rejectNotes)}
+                                  >
+                                    {isProcessing ? 'Rejecting...' : 'Confirm Reject'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-8"
+                                    onClick={() => { setRejectingProofId(null); setRejectNotes(''); }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  disabled={isProcessing}
+                                  className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8 gap-1.5"
+                                  onClick={() => handlePaymentProofAction(p.id, 'APPROVE')}
+                                >
+                                  {isProcessing ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <CheckCheck className="w-3.5 h-3.5" />
+                                  )}
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isProcessing}
+                                  className="flex-1 text-destructive hover:bg-destructive/10 text-xs h-8 border-destructive/30 gap-1"
+                                  onClick={() => setRejectingProofId(p.id)}
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> Reject
+                                </Button>
+                              </div>
+                            )
+                          ) : (
+                            <div className="text-center py-1">
+                              <span className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
+                                {p.status === 'VERIFIED' ? (
+                                  <>
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                    পেমেন্ট ভেরিফাইড ও এপ্রুভড
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="w-3.5 h-3.5 text-red-500" />
+                                    পেমেন্ট রিজেক্টেড
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Tab 4: Store Profile & Payment Methods Settings */}
           <TabsContent value="profile" className="mt-6">
             <div className="p-6 sm:p-8 rounded-2xl bg-secondary/40 border border-border space-y-8">
               <div>
@@ -1371,7 +1698,7 @@ export function SellerDashboard() {
 
         {/* ─── Order Detail Modal for Seller ───────────────────────────────── */}
         <Dialog open={Boolean(selectedSellerOrder)} onOpenChange={() => setSelectedSellerOrder(null)}>
-          <DialogContent className="max-w-lg bg-card border-border">
+          <DialogContent className="max-w-xl bg-card border-border max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-base font-medium flex items-center justify-between">
                 <span>Order #{selectedSellerOrder?.orderNumber}</span>
@@ -1383,7 +1710,74 @@ export function SellerDashboard() {
 
             {selectedSellerOrder && (
               <div className="space-y-4 text-xs mt-2">
-                {/* Customer Details */}
+                {/* 1. Update Order Status Controls */}
+                <div className="p-3.5 bg-background border border-border rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] tracking-wider uppercase text-foreground font-semibold flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" /> অর্ডারের স্ট্যাটাস পরিবর্তন করুন (Update Status)
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      Current: <span className="font-semibold text-foreground">{selectedSellerOrder.status}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Select New Status</Label>
+                      <select
+                        value={statusChangeState.status || selectedSellerOrder.status}
+                        onChange={e => setStatusChangeState({ ...statusChangeState, status: e.target.value })}
+                        className="mt-1 h-9 w-full px-2.5 bg-secondary border border-border rounded-lg text-xs font-medium"
+                      >
+                        <option value="PENDING">PENDING (অপেক্ষমাণ)</option>
+                        <option value="CONFIRMED">CONFIRMED (কনফার্মড)</option>
+                        <option value="PROCESSING">PROCESSING (প্রসেসিং)</option>
+                        <option value="SHIPPED">SHIPPED (শিপড / কুরিয়ারে প্রেরিত)</option>
+                        <option value="DELIVERED">DELIVERED (ডেলিভার্ড সম্পন্ন)</option>
+                        <option value="CANCELLED">CANCELLED (বাতিল)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Tracking Number (Courier)</Label>
+                      <Input
+                        value={statusChangeState.trackingNumber}
+                        onChange={e => setStatusChangeState({ ...statusChangeState, trackingNumber: e.target.value })}
+                        placeholder="e.g. STEADFAST-12345"
+                        className="mt-1 h-9 bg-secondary border-border text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-[10px] text-muted-foreground">
+                      স্ট্যাটাস পরিবর্তন করলে ক্রেতা সরাসরি তার ট্র্যাকিং পেজে আপডেট দেখতে পাবেন।
+                    </p>
+                    <Button
+                      size="sm"
+                      disabled={updatingOrderId === selectedSellerOrder.id}
+                      className="bg-foreground text-background text-xs h-8 px-4 shrink-0 gap-1.5"
+                      onClick={() => handleUpdateOrderStatus(
+                        selectedSellerOrder.id,
+                        statusChangeState.status || selectedSellerOrder.status,
+                        statusChangeState.trackingNumber,
+                        statusChangeState.notes
+                      )}
+                    >
+                      {updatingOrderId === selectedSellerOrder.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5" /> Save Status
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 2. Customer Delivery Information */}
                 <div className="p-3.5 bg-secondary/50 rounded-xl space-y-1.5 border border-border">
                   <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold mb-1">
                     Customer Delivery Information
@@ -1399,7 +1793,7 @@ export function SellerDashboard() {
                   {selectedSellerOrder.user?.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>{selectedSellerOrder.user.phone}</span>
+                      <span className="font-mono">{selectedSellerOrder.user.phone}</span>
                     </div>
                   )}
                   <div className="flex items-start gap-2 pt-1 border-t border-border/50">
@@ -1410,7 +1804,97 @@ export function SellerDashboard() {
                   </div>
                 </div>
 
-                {/* Items from this Seller */}
+                {/* 3. Payment Proof Verification & Actions inside Modal */}
+                <div className="p-3.5 bg-secondary/50 rounded-xl space-y-2 border border-border">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5" /> পেমেন্ট ভেরিফিকেশন (Payment Proof)
+                    </h4>
+                    <span className="font-medium text-foreground">
+                      Method: <span className="font-semibold">{selectedSellerOrder.paymentMethod}</span>
+                    </span>
+                  </div>
+
+                  {selectedSellerOrder.paymentProofs && selectedSellerOrder.paymentProofs.length > 0 ? (
+                    selectedSellerOrder.paymentProofs.map((p: any) => {
+                      const isPending = p.status === 'PENDING';
+                      const isProcessing = processingProofId === p.id;
+
+                      return (
+                        <div key={p.id} className="p-3 rounded-lg bg-background border border-border space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-xs text-foreground">{p.paymentMethod?.name || selectedSellerOrder.paymentMethod}</span>
+                            <Badge variant="outline" className={`text-[9px] uppercase font-semibold ${proofStatusColors[p.status] || ''}`}>
+                              {p.status}
+                            </Badge>
+                          </div>
+
+                          <div className="p-2 rounded bg-secondary/50 border border-border/50">
+                            <span className="text-[10px] text-muted-foreground block uppercase font-medium">TrxID & Sender Details:</span>
+                            <p className="font-mono text-xs font-semibold select-all mt-0.5">{p.notes || 'No TrxID provided'}</p>
+                          </div>
+
+                          {p.proofImage && (
+                            <div>
+                              <a href={p.proofImage} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline inline-flex items-center gap-1">
+                                View Proof Screenshot <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          )}
+
+                          {isPending ? (
+                            <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                              <Button
+                                size="sm"
+                                disabled={isProcessing}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8 gap-1.5"
+                                onClick={() => handlePaymentProofAction(p.id, 'APPROVE')}
+                              >
+                                {isProcessing ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <CheckCheck className="w-3.5 h-3.5" />
+                                )}
+                                Approve Payment (এপ্রুভ করুন)
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isProcessing}
+                                className="text-destructive hover:bg-destructive/10 text-xs h-8 border-destructive/30"
+                                onClick={() => {
+                                  const reason = prompt('পেমেন্ট রিজেক্ট করার কারণ লিখুন:');
+                                  if (reason !== null) {
+                                    handlePaymentProofAction(p.id, 'REJECT', reason);
+                                  }
+                                }}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                              Status: <span className="font-medium text-foreground">{p.status === 'VERIFIED' ? 'Approved by you' : 'Rejected'}</span>
+                              {p.verifiedAt && ` on ${new Date(p.verifiedAt).toLocaleDateString()}`}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-3 bg-background rounded-lg border border-border text-muted-foreground">
+                      {selectedSellerOrder.paymentMethod?.toLowerCase().includes('cash') || selectedSellerOrder.paymentMethod?.toLowerCase().includes('cod') ? (
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          ক্যাশ অন ডেলিভারি অর্ডার — অগ্রিম পেমেন্ট প্রুফের প্রয়োজন নেই। পণ্য ডেলিভারির পর স্ট্যাটাস DELIVERED করে দিন।
+                        </p>
+                      ) : (
+                        <p>এই অর্ডারের জন্য এখনও কোনো পেমেন্ট প্রুফ জমা পড়েনি।</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Items from this Seller */}
                 <div>
                   <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold mb-2">
                     Your Products in this Order

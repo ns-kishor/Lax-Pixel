@@ -43,6 +43,10 @@ export async function GET(req: NextRequest) {
           include: {
             user: { select: { id: true, name: true, email: true, phone: true } },
             tracking: { orderBy: { timestamp: 'asc' } },
+            paymentProofs: {
+              include: { paymentMethod: true },
+              orderBy: { createdAt: 'desc' },
+            },
           },
         },
         product: { select: { id: true, name: true, price: true, image: true, salesCount: true } },
@@ -75,6 +79,7 @@ export async function GET(req: NextRequest) {
           shippingZip: o.shippingZip,
           createdAt: o.createdAt,
           user: o.user,
+          paymentProofs: o.paymentProofs || [],
           items: [],
           sellerTotal: 0,
         });
@@ -95,6 +100,18 @@ export async function GET(req: NextRequest) {
     const totalOrders = sellerOrders.length;
     const pendingOrders = sellerOrders.filter(o => o.status === 'PENDING').length;
     const confirmedOrders = sellerOrders.filter(o => ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)).length;
+
+    // Flatten all payment proofs for seller's orders
+    const allSellerProofs = sellerOrders.flatMap((o) =>
+      (o.paymentProofs || []).map((p: any) => ({
+        ...p,
+        orderId: o.id,
+        orderNumber: o.orderNumber,
+        orderStatus: o.status,
+        orderTotal: o.sellerTotal,
+        buyer: o.user,
+      }))
+    );
 
     // Conversion rate estimation
     const productCount = products.length;
@@ -122,6 +139,7 @@ export async function GET(req: NextRequest) {
       },
       products,
       orders: sellerOrders,
+      paymentProofs: allSellerProofs,
     });
   } catch (error) {
     console.error('Failed to fetch seller data:', error);
