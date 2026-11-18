@@ -20,8 +20,16 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (mobileSearchOpen && mobileSearchRef.current) {
+      mobileSearchRef.current.focus();
+    }
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -150,6 +158,17 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Mobile Search Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className="md:hidden text-foreground hover:bg-secondary"
+              aria-label="Toggle search"
+            >
+              {mobileSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </Button>
+
             <Button variant="ghost" size="icon" onClick={() => setView('tracking')} className="text-foreground hover:bg-secondary relative" title="Track Order">
               <Package className="w-4.5 h-4.5" />
             </Button>
@@ -206,6 +225,37 @@ export function Header() {
             )}
           </div>
         </div>
+
+        {/* Mobile Search Input Drawer */}
+        {mobileSearchOpen && (
+          <div className="md:hidden pb-3 pt-1 border-t border-border/40 animate-in slide-in-from-top-2 duration-200">
+            <form
+              onSubmit={(e) => {
+                handleSearch(e);
+                setMobileSearchOpen(false);
+              }}
+              className="relative w-full"
+            >
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                ref={mobileSearchRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search luxury products, watches, bags..."
+                className="pl-10 pr-10 h-10 bg-secondary/80 border-border rounded-xl text-xs tracking-wide focus:bg-background"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </form>
+          </div>
+        )}
       </div>
     </header>
   );

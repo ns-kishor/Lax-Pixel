@@ -228,8 +228,8 @@ export function SellerStoreView() {
   const cleanWaNumber = (seller.whatsapp || '').replace(/[^0-9]/g, '');
 
   return (
-    <div className="min-h-screen pt-24 pb-20">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 space-y-8">
+    <div className="min-h-screen pt-24 pb-28 lg:pb-20">
+      <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 space-y-8">
         {/* Navigation Back button */}
         <button
           onClick={goBack}

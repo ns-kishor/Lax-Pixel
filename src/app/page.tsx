@@ -19,6 +19,7 @@ import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 import { SupportView } from '@/components/ecommerce/SupportView';
 import { SellerStoreView } from '@/components/ecommerce/SellerStoreView';
+import { MobileBottomNav } from '@/components/ecommerce/MobileBottomNav';
 import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
 import { Loader2 } from 'lucide-react';
@@ -172,7 +173,7 @@ export default function Page() {
   }, [user?.id]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
       {!isAdmin && <Header />}
       <main className="flex-1">
         {globalLoading && !isAdmin && (
@@ -183,6 +184,7 @@ export default function Page() {
         <ViewRouter />
       </main>
       {!isAdmin && <Footer />}
+      {!isAdmin && <MobileBottomNav />}
       <Toast />
     </div>
   );

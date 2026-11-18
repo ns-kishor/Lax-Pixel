@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,9 +14,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "Lax Pixel — Luxury Redefined",
-  description: "Premium AI-powered luxury ecommerce. Curated collections, intelligent shopping, and timeless elegance.",
+  description: "Exclusive curated luxury ecommerce. Timeless elegance, authentic collections, and seamless shopping experience across Bangladesh.",
   icons: {
     icon: [
       { url: "/favicon.png", type: "image/png" },

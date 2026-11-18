@@ -122,8 +122,8 @@ export function CartView() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
+    <div className="min-h-screen pt-24 pb-28 lg:pb-16">
+      <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
@@ -372,6 +372,30 @@ export function CartView() {
             </div>
           </div>
         </div>
+
+        {/* Mobile App-like Sticky Checkout Bar (Always accessible on phone) */}
+        {cart.length > 0 && (
+          <div className="lg:hidden fixed bottom-16 left-0 right-0 z-30 bg-background/95 backdrop-blur-xl border-t border-border px-4 py-3 shadow-lg">
+            <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {selectedCount} item{selectedCount === 1 ? '' : 's'} selected
+                </p>
+                <p className="text-base font-medium text-foreground">
+                  ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              <Button
+                disabled={selectedCount === 0}
+                onClick={handleProceedToCheckout}
+                className="h-11 px-5 bg-foreground text-background text-xs tracking-wider uppercase rounded-xl hover:bg-foreground/90 font-medium shrink-0 disabled:opacity-50 shadow-sm"
+              >
+                Checkout ({selectedCount}) <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

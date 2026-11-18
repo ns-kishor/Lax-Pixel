@@ -67,8 +67,8 @@ export function ProductView() {
   const sellerSales = product.seller?.sellerProfile?.totalSales || product.salesCount || 100;
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
+    <div className="min-h-screen pt-24 pb-28 lg:pb-16">
+      <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16">
         <button onClick={goBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </button>
@@ -219,6 +219,35 @@ export function ProductView() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Mobile Sticky Action Bar (App-like 1-tap checkout) */}
+        <div className="lg:hidden fixed bottom-16 left-0 right-0 z-30 bg-background/95 backdrop-blur-xl border-t border-border px-4 py-3 shadow-lg">
+          <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+            <div className="min-w-0">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Price</span>
+              <span className="text-base font-semibold text-foreground">
+                ${((product.price * qty) || 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addToCart}
+                className="h-10 px-3.5 border-border rounded-xl text-xs font-medium tracking-wide uppercase shrink-0"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 mr-1" /> Add
+              </Button>
+              <Button
+                size="sm"
+                onClick={buyNow}
+                className="h-10 px-4 bg-foreground text-background rounded-xl text-xs font-semibold tracking-wider uppercase shrink-0 shadow-sm"
+              >
+                <Zap className="w-3.5 h-3.5 mr-1" /> Buy Now
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

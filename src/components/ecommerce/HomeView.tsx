@@ -51,20 +51,30 @@ function ProductCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
-      className="group cursor-pointer"
+      className="group cursor-pointer flex flex-col justify-between"
       onClick={() => selectProduct(product)}
     >
-      <div className="relative img-zoom rounded-lg overflow-hidden bg-secondary aspect-square">
+      <div className="relative img-zoom rounded-2xl overflow-hidden bg-secondary aspect-square border border-border/40 shadow-xs group-hover:shadow-md group-hover:border-foreground/30 transition-all duration-300">
         {!imgError ? (
-          <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" onError={() => setImgError(true)} />
+          <Image
+            src={safeImgSrc(product.image)}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-light">{product.name.charAt(0)}</div>
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-4xl font-light">
+            {product.name.charAt(0)}
+          </div>
         )}
 
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+        {/* Badges on top-left */}
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 pointer-events-none">
           {badgeText && (
             <Badge
-              className={`text-[9px] tracking-wider font-semibold uppercase px-2.5 py-0.5 border shadow-sm ${
+              className={`text-[9px] tracking-wider font-semibold uppercase px-2 py-0.5 border shadow-xs ${
                 badgeVariant === 'new'
                   ? 'bg-blue-600/90 text-white border-blue-400/30'
                   : badgeVariant === 'popular'
@@ -77,61 +87,102 @@ function ProductCard({
             </Badge>
           )}
           {discount > 0 && (
-            <Badge className="bg-red-500/90 text-white border border-red-400/30 text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-sm">
+            <Badge className="bg-foreground text-background text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-xs">
               -{discount}%
             </Badge>
           )}
         </div>
 
-        {product.salesCount > 0 && (
-          <Badge variant="secondary" className="absolute top-3 right-3 text-[9px] tracking-wider gap-1 bg-background/85 backdrop-blur-sm border border-border/60">
-            <TrendingUp className="w-2.5 h-2.5 text-emerald-500" /> {product.salesCount} sold
-          </Badge>
-        )}
+        {/* Wishlist button top-right (Accessible on all devices) */}
+        <button
+          onClick={toggleWish}
+          aria-label="Wishlist"
+          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center z-10 transition-all duration-200 shadow-sm ${
+            isWished
+              ? 'bg-foreground text-background'
+              : 'bg-background/80 backdrop-blur-md text-foreground hover:bg-background'
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isWished ? 'fill-current' : ''}`} />
+        </button>
 
+        {/* Just added to bag banner */}
         {useStore.getState().justAddedToCart === product.id && (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center animate-fade-in z-20">
-            <span className="text-xs tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full font-medium">Added</span>
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-xs flex items-center justify-center animate-fade-in z-20">
+            <span className="text-[10px] tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full font-semibold shadow-md">
+              Added to Bag
+            </span>
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2 z-10">
-          <Button size="sm" className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider hover:bg-foreground/90 rounded-lg font-medium" onClick={addToCart}>
-            Add to Bag
-          </Button>
-          <Button size="icon" variant="secondary" className={`h-9 w-9 rounded-lg ${isWished ? 'bg-foreground text-background' : ''}`} onClick={toggleWish}>
-            <Heart className="w-3.5 h-3.5" />
+        {/* Mobile Quick Add Button (Bottom Right - Tap-friendly) */}
+        <button
+          onClick={addToCart}
+          aria-label="Add to Bag"
+          className="lg:hidden absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-background/90 backdrop-blur-md border border-border/80 flex items-center justify-center text-foreground active:scale-90 shadow-md z-10"
+        >
+          <ShoppingBag className="w-4 h-4" />
+        </button>
+
+        {/* Desktop Hover Action Bar */}
+        <div className="hidden lg:flex absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-2 z-10 bg-gradient-to-t from-background/90 via-background/60 to-transparent">
+          <Button
+            size="sm"
+            className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider hover:bg-foreground/90 rounded-lg font-medium shadow-sm"
+            onClick={addToCart}
+          >
+            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" /> Add to Bag
           </Button>
         </div>
       </div>
 
-      <div className="mt-3 space-y-1">
+      {/* Product Information */}
+      <div className="mt-2.5 space-y-1">
         <div className="flex items-center justify-between gap-1">
-          <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground truncate">{product.category?.name}</p>
+          <p className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground truncate">
+            {product.category?.name || 'Exclusive'}
+          </p>
           {product.sellerId && (
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 useStore.getState().selectSellerStore(product.sellerId);
               }}
-              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors hover:underline shrink-0"
+              className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors hover:underline shrink-0 max-w-[100px]"
               title="View Seller Store"
             >
-              <Store className="w-2.5 h-2.5" />
-              <span className="truncate max-w-[85px]">{product.seller?.sellerProfile?.companyName || product.seller?.name || 'Store'}</span>
+              <Store className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate">{product.seller?.sellerProfile?.companyName || product.seller?.name || 'Store'}</span>
             </span>
           )}
         </div>
-        <h3 className="text-sm font-medium tracking-wide group-hover:text-gradient truncate">{product.name}</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-light">${product.price.toLocaleString()}</span>
+
+        <h3 className="text-xs sm:text-sm font-medium tracking-wide text-foreground truncate group-hover:text-muted-foreground transition-colors">
+          {product.name}
+        </h3>
+
+        <div className="flex items-baseline gap-2 pt-0.5">
+          <span className="text-xs sm:text-sm font-light text-foreground">
+            ${product.price.toLocaleString()}
+          </span>
           {product.comparePrice && (
-            <span className="text-xs text-muted-foreground line-through">${product.comparePrice.toLocaleString()}</span>
+            <span className="text-[11px] text-muted-foreground line-through">
+              ${product.comparePrice.toLocaleString()}
+            </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <Star className="w-3 h-3 fill-foreground text-foreground" />
-          <span className="text-xs text-muted-foreground">{product.rating} ({product.reviewCount})</span>
+
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <div className="flex items-center gap-0.5">
+            <Star className="w-3 h-3 fill-foreground text-foreground" />
+            <span className="text-[11px] font-medium text-foreground">{product.rating}</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground">({product.reviewCount || 0})</span>
+          {product.salesCount > 0 && (
+            <span className="text-[10px] text-muted-foreground ml-auto">
+              {product.salesCount} sold
+            </span>
+          )}
         </div>
       </div>
     </motion.div>
@@ -374,86 +425,101 @@ export function HomeView() {
       {/* Hero */}
       <section className="relative pt-[104px] sm:pt-[120px] pb-12 lg:pb-16 overflow-hidden bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
-        <div className="relative max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
+        <div className="relative max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-            {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
+            {/* Left - Luxury Brand Eyebrow + Guarantee/Feature Cards + CTA buttons */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5"
+              className="lg:col-span-5 flex flex-col justify-between h-full gap-5 sm:gap-6 order-2 lg:order-1"
             >
-              {/* Card 1: Delivery All Over Bangladesh */}
-              <div className="flex-1 group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 lg:p-6 shadow-sm hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
-                <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-sm">
-                    <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
-                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                      <h3 className="text-base sm:text-lg lg:text-xl font-medium tracking-tight text-foreground">
-                        Delivery All Over Bangladesh
-                      </h3>
-                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                        64 Districts
-                      </Badge>
+              {/* Luxury Editorial Header */}
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/70 text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-medium">
+                  <Sparkles className="w-3 h-3 text-foreground" /> Curated Luxury & Timeless Craft
+                </div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-foreground leading-[1.15]">
+                  Authentic Luxury, <br className="hidden sm:inline" />
+                  <span className="font-normal italic">Curated for Distinction.</span>
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed max-w-xl">
+                  Explore mastercrafted fine horology, designer leathercraft, and premier artisan accessories from verified luxury merchants across Bangladesh.
+                </p>
+              </div>
+
+              {/* 2 Guarantee/Feature Cards (Responsive 1-col on phone / 2-col on tablet / 1-col on desktop) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4 flex-1">
+                {/* Card 1: Delivery All Over Bangladesh */}
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center">
+                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
+                    <div className="relative shrink-0 w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                      <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
-                      Fast, dependable doorstep express delivery across every district in Bangladesh with live tracking and secure handling.
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-0.5">
+                        <h3 className="text-sm sm:text-base font-medium tracking-tight text-foreground">
+                          Delivery All Over Bangladesh
+                        </h3>
+                        <Badge variant="secondary" className="text-[9px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2 py-0.5">
+                          64 Districts
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-light leading-relaxed">
+                        Fast, dependable doorstep express delivery across every district with live tracking and secure handling.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 pt-2.5 border-t border-border/60 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground font-light">
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Nationwide Coverage</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Express Dispatch</span>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Nationwide Coverage</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Express Dispatch</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Live Tracking</span>
+                {/* Card 2: Easy Exchange Available */}
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center">
+                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
+                    <div className="relative shrink-0 w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                      <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-0.5">
+                        <h3 className="text-sm sm:text-base font-medium tracking-tight text-foreground">
+                          Easy Exchange Available
+                        </h3>
+                        <Badge variant="secondary" className="text-[9px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2 py-0.5">
+                          7-Day Policy
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-light leading-relaxed">
+                        Hassle-free 7-day exchange and replacement guarantee. Shop with 100% confidence and complete peace of mind.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 pt-2.5 border-t border-border/60 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground font-light">
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Seamless Replacement</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Zero Hassle</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Card 2: Easy Exchange Available */}
-              <div className="flex-1 group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 lg:p-6 shadow-sm hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center min-h-[160px]">
-                <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-                  <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-sm">
-                    <ArrowLeftRight className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
-                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                      <h3 className="text-base sm:text-lg lg:text-xl font-medium tracking-tight text-foreground">
-                        Easy Exchange Available
-                      </h3>
-                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                        7-Day Policy
-                      </Badge>
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
-                      Hassle-free 7-day exchange and replacement guarantee. Shop with 100% confidence and complete peace of mind.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Seamless Replacement</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Quick Processing</span>
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Zero Hassle</span>
-                </div>
-              </div>
-
-              {/* CTA Buttons - Matched and perfectly aligned */}
-              <div className="shrink-0 flex flex-wrap sm:flex-nowrap items-center gap-3.5">
+              {/* CTA Buttons */}
+              <div className="shrink-0 flex flex-row items-center gap-3">
                 <Button
                   size="lg"
-                  className="flex-1 h-13 px-7 bg-foreground text-background text-xs tracking-[0.18em] uppercase hover:bg-foreground/90 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+                  className="flex-1 h-12 px-6 bg-foreground text-background text-xs tracking-[0.16em] uppercase hover:bg-foreground/90 rounded-xl font-medium shadow-sm hover:shadow-md transition-all"
                   onClick={() => setView('shop')}
                 >
-                  Explore Collection <ArrowRight className="w-4 h-4 ml-2" />
+                  Explore Collection <ArrowRight className="w-3.5 h-3.5 ml-2" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="flex-1 h-13 px-7 text-xs tracking-[0.18em] uppercase border-border/80 hover:bg-secondary rounded-xl font-medium transition-all"
+                  className="flex-1 h-12 px-6 text-xs tracking-[0.16em] uppercase border-border hover:bg-secondary rounded-xl font-medium transition-all"
                   onClick={() => setView('shop')}
                 >
                   Start Shopping
@@ -462,7 +528,7 @@ export function HomeView() {
             </motion.div>
 
             {/* Right - Product Card Slider */}
-            <div className="lg:col-span-7 flex justify-center lg:justify-end w-full h-full">
+            <div className="lg:col-span-7 flex justify-center lg:justify-end w-full h-full order-1 lg:order-2">
               <HeroSlider
                 featuredProducts={
                   heroProducts.length > 0
@@ -478,16 +544,16 @@ export function HomeView() {
       </section>
 
       {/* Features */}
-      <section className="border-y border-border">
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-8 sm:py-10 grid grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8">
+      <section className="border-y border-border/80 bg-secondary/20">
+        <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 xl:gap-8">
           {features.map((f, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <f.icon className="w-4 h-4 text-muted-foreground" />
+            <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-secondary/40 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0 shadow-xs">
+                <f.icon className="w-4 h-4 text-foreground" />
               </div>
-              <div>
-                <p className="text-xs font-medium tracking-wide">{f.title}</p>
-                <p className="text-[10px] text-muted-foreground">{f.desc}</p>
+              <div className="min-w-0">
+                <p className="text-xs font-medium tracking-tight text-foreground truncate">{f.title}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{f.desc}</p>
               </div>
             </div>
           ))}
@@ -495,32 +561,57 @@ export function HomeView() {
       </section>
 
       {/* Categories */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-12 sm:py-16">
-        <div className="flex items-end justify-between mb-8">
+      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-10 sm:py-14">
+        <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-light tracking-tight">Categories</h2>
-            <p className="text-xs text-muted-foreground mt-1 tracking-wide">Explore our curated collections</p>
+            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Curated Categories</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">Swipe to explore collections by category</p>
           </div>
+          <button
+            onClick={() => setView('shop')}
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
+          >
+            All Collections <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-          <button onClick={() => setView('shop')} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">All</button>
-          {(categories || []).map(c => (
-            <button key={c.id} onClick={() => { useStore.getState().setSearchQuery(''); useStore.getState().setShopCategory(c.slug); setView('shop', { category: c.slug }); }} className="shrink-0 px-5 py-2.5 rounded-full border border-border text-xs tracking-[0.15em] uppercase hover:bg-secondary transition-colors">{c.name}</button>
+        <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <button
+            onClick={() => {
+              useStore.getState().setSearchQuery('');
+              useStore.getState().setShopCategory('');
+              setView('shop');
+            }}
+            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-foreground/30 bg-foreground text-background text-xs tracking-wider uppercase font-medium shadow-xs transition-all active:scale-95"
+          >
+            All Products
+          </button>
+          {(categories || []).map((c) => (
+            <button
+              key={c.id}
+              onClick={() => {
+                useStore.getState().setSearchQuery('');
+                useStore.getState().setShopCategory(c.slug);
+                setView('shop', { category: c.slug });
+              }}
+              className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-border bg-secondary/50 hover:bg-secondary hover:border-foreground/30 text-foreground text-xs tracking-wider uppercase font-medium transition-all active:scale-95"
+            >
+              {c.name}
+            </button>
           ))}
         </div>
       </section>
 
       {/* Section 1: Recently Added Products */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="flex items-end justify-between mb-8">
+      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
+        <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-blue-500 bg-blue-500/10 border-blue-500/25">
                 Fresh Arrivals
               </Badge>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Recently Added Products</h2>
-            <p className="text-xs text-muted-foreground mt-1 tracking-wide">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Recently Added Products</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">
               Discover the latest products and newly listed collections
             </p>
           </div>
@@ -531,12 +622,12 @@ export function HomeView() {
               useStore.getState().setShopSort('createdAt');
               setView('shop', { sort: 'createdAt' });
             }}
-            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors font-medium shrink-0"
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
           >
             View All <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6 xl:gap-7 2xl:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3.5 sm:gap-6 xl:gap-7 2xl:gap-8">
           {recentProducts.slice(0, 12).map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} badgeText="NEW" badgeVariant="new" />
           ))}
@@ -544,17 +635,17 @@ export function HomeView() {
       </section>
 
       {/* Section 2: Best Selling Products */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="flex items-end justify-between mb-8">
+      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
+        <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-amber-500 bg-amber-500/10 border-amber-500/25">
                 <Flame className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" /> Top Trending
               </Badge>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Best Selling Products</h2>
-            <p className="text-xs text-muted-foreground mt-1 tracking-wide">
-              Customer favorites with the highest orders and glowing ratings
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Best Selling Products</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">
+              Customer favorites with highest orders and verified ratings
             </p>
           </div>
           <button
@@ -564,12 +655,12 @@ export function HomeView() {
               useStore.getState().setShopSort('popular');
               setView('shop', { sort: 'popular' });
             }}
-            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors font-medium shrink-0"
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
           >
             View All <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 sm:gap-6 xl:gap-7 2xl:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3.5 sm:gap-6 xl:gap-7 2xl:gap-8">
           {bestSellingProducts.slice(0, 12).map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} badgeText="HOT" badgeVariant="popular" />
           ))}
@@ -577,7 +668,7 @@ export function HomeView() {
       </section>
 
       {/* CTA Banner */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
+      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="relative rounded-2xl border border-border bg-secondary p-8 sm:p-12 overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative max-w-lg">
