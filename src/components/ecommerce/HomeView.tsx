@@ -427,82 +427,69 @@ export function HomeView() {
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-            {/* Left - Luxury Brand Eyebrow + Guarantee/Feature Cards + CTA buttons */}
+            {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-5 flex flex-col justify-between h-full gap-5 sm:gap-6 order-2 lg:order-1"
+              className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5 order-2 lg:order-1"
             >
-              {/* Luxury Editorial Header */}
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/70 text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-medium">
-                  <Sparkles className="w-3 h-3 text-foreground" /> Curated Luxury & Timeless Craft
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-foreground leading-[1.15]">
-                  Authentic Luxury, <br className="hidden sm:inline" />
-                  <span className="font-normal italic">Curated for Distinction.</span>
-                </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed max-w-xl">
-                  Explore mastercrafted fine horology, designer leathercraft, and premier artisan accessories from verified luxury merchants across Bangladesh.
-                </p>
-              </div>
 
               {/* 2 Guarantee/Feature Cards (Responsive 1-col on phone / 2-col on tablet / 1-col on desktop) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4 flex-1">
                 {/* Card 1: Delivery All Over Bangladesh */}
-                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1">
                   <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
-                    <div className="relative shrink-0 w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
-                      <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                      <Truck className="w-6 h-6 text-foreground" />
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-0.5">
-                        <h3 className="text-sm sm:text-base font-medium tracking-tight text-foreground">
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-1">
+                        <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
                           Delivery All Over Bangladesh
                         </h3>
-                        <Badge variant="secondary" className="text-[9px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2 py-0.5">
+                        <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
                           64 Districts
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground font-light leading-relaxed">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
                         Fast, dependable doorstep express delivery across every district with live tracking and secure handling.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-2.5 pt-2.5 border-t border-border/60 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground font-light">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Nationwide Coverage</span>
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Express Dispatch</span>
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Nationwide Coverage</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Express Dispatch</span>
                   </div>
                 </div>
 
                 {/* Card 2: Easy Exchange Available */}
-                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-center">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1">
                   <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
-                    <div className="relative shrink-0 w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
-                      <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                      <ArrowLeftRight className="w-6 h-6 text-foreground" />
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-0.5">
-                        <h3 className="text-sm sm:text-base font-medium tracking-tight text-foreground">
+                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-1">
+                        <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
                           Easy Exchange Available
                         </h3>
-                        <Badge variant="secondary" className="text-[9px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2 py-0.5">
+                        <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
                           7-Day Policy
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground font-light leading-relaxed">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
                         Hassle-free 7-day exchange and replacement guarantee. Shop with 100% confidence and complete peace of mind.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-2.5 pt-2.5 border-t border-border/60 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground font-light">
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Seamless Replacement</span>
-                    <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-foreground/70" /> Zero Hassle</span>
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Seamless Replacement</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Zero Hassle</span>
                   </div>
                 </div>
               </div>
