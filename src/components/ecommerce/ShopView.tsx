@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SlidersHorizontal, Grid3X3, List, Search, X, Sparkles, Star, Heart, Store } from 'lucide-react';
+import { SlidersHorizontal, Grid3X3, List, Search, X, Sparkles, Star, Heart, Store, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Product } from '@/lib/store';
 import Image from 'next/image';

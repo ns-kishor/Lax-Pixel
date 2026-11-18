@@ -19,6 +19,9 @@ interface PaymentMethod {
   instructions: string | null;
   active: boolean;
   sortOrder: number;
+  sellerName?: string | null;
+  accountNumber?: string | null;
+  accountType?: string | null;
 }
 
 export function CheckoutView() {
