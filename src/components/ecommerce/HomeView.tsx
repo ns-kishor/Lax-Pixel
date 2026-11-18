@@ -438,56 +438,50 @@ export function HomeView() {
               {/* 2 Guarantee/Feature Cards (Responsive 1-col on phone / 2-col on tablet / 1-col on desktop) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4 flex-1">
                 {/* Card 1: Delivery All Over Bangladesh */}
-                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1">
-                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
-                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
+                  <div className="flex flex-col items-center text-center gap-3 w-full">
+                    {/* Top Middle Icon */}
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs mx-auto">
                       <Truck className="w-6 h-6 text-foreground" />
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-1">
-                        <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
-                          Delivery All Over Bangladesh
-                        </h3>
-                        <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                          64 Districts
-                        </Badge>
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
-                        Fast, dependable doorstep express delivery across every district with live tracking and secure handling.
-                      </p>
+                    {/* Headline Below Icon */}
+                    <div className="flex flex-col items-center justify-center gap-1.5">
+                      <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
+                        Delivery All Over Bangladesh
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
+                        64 Districts
+                      </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
                     <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Nationwide Coverage</span>
                     <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Express Dispatch</span>
                   </div>
                 </div>
 
                 {/* Card 2: Easy Exchange Available */}
-                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1">
-                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
-                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
+                  <div className="flex flex-col items-center text-center gap-3 w-full">
+                    {/* Top Middle Icon */}
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs mx-auto">
                       <ArrowLeftRight className="w-6 h-6 text-foreground" />
                       <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap mb-1">
-                        <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
-                          Easy Exchange Available
-                        </h3>
-                        <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                          7-Day Policy
-                        </Badge>
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground font-light leading-relaxed">
-                        Hassle-free 7-day exchange and replacement guarantee. Shop with 100% confidence and complete peace of mind.
-                      </p>
+                    {/* Headline Below Icon */}
+                    <div className="flex flex-col items-center justify-center gap-1.5">
+                      <h3 className="text-base sm:text-lg font-medium tracking-tight text-foreground">
+                        Easy Exchange Available
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
+                        7-Day Policy
+                      </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light">
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
                     <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Seamless Replacement</span>
                     <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Zero Hassle</span>
                   </div>
@@ -551,8 +545,7 @@ export function HomeView() {
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-10 sm:py-14">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Curated Categories</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">Swipe to explore collections by category</p>
+            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Categories</h2>
           </div>
           <button
             onClick={() => setView('shop')}
@@ -592,15 +585,7 @@ export function HomeView() {
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-blue-500 bg-blue-500/10 border-blue-500/25">
-                Fresh Arrivals
-              </Badge>
-            </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Recently Added Products</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">
-              Discover the latest products and newly listed collections
-            </p>
           </div>
           <button
             onClick={() => {
@@ -631,9 +616,6 @@ export function HomeView() {
               </Badge>
             </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Best Selling Products</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">
-              Customer favorites with highest orders and verified ratings
-            </p>
           </div>
           <button
             onClick={() => {
