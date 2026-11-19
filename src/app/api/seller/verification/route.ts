@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       transactionId,
       senderNumber,
       paymentMethodsData,
+      couponCode: inputCouponCode,
     } = body;
 
     if (!businessName || !businessType || !businessAddress || !businessCity || !businessCountry || !nidNumber || !phone) {
@@ -100,6 +101,33 @@ export async function POST(req: NextRequest) {
     });
     const currentFee = feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500;
 
+    // Validate seller verification coupon if provided
+    let appliedCouponCode: string | null = null;
+    let couponDiscount = 0;
+    const cleanCouponCode = typeof inputCouponCode === 'string' ? inputCouponCode.trim().toUpperCase() : '';
+
+    if (cleanCouponCode) {
+      const c = await db.coupon.findUnique({ where: { code: cleanCouponCode } });
+      if (c && c.active && !c.banned && c.type === 'SELLER_VERIFICATION') {
+        const now = new Date();
+        const dateOk = (!c.startDate || now >= new Date(c.startDate)) && (!c.endDate || now <= new Date(c.endDate));
+        const usesOk = c.maxUses === null || c.usedCount < c.maxUses;
+        if (dateOk && usesOk) {
+          if (c.discountType === 'PERCENTAGE') {
+            couponDiscount = Math.round(((currentFee * c.discountValue) / 100) * 100) / 100;
+          } else {
+            couponDiscount = Math.min(c.discountValue, currentFee);
+          }
+          appliedCouponCode = c.code;
+          await db.coupon.update({
+            where: { id: c.id },
+            data: { usedCount: { increment: 1 } },
+          });
+        }
+      }
+    }
+
+    const finalFee = Math.max(0, currentFee - couponDiscount);
     const pmDataStr = paymentMethodsData ? (typeof paymentMethodsData === 'string' ? paymentMethodsData : JSON.stringify(paymentMethodsData)) : null;
 
     const verification = await db.sellerVerification.upsert({
@@ -116,7 +144,9 @@ export async function POST(req: NextRequest) {
         email: email || null,
         website: website || null,
         description: description || null,
-        feeAmount: currentFee,
+        feeAmount: finalFee,
+        couponCode: appliedCouponCode,
+        couponDiscount,
         paymentMethod: String(paymentMethod).trim(),
         transactionId: String(transactionId).trim(),
         senderNumber: String(senderNumber).trim(),
@@ -139,7 +169,9 @@ export async function POST(req: NextRequest) {
         email: email || null,
         website: website || null,
         description: description || null,
-        feeAmount: currentFee,
+        feeAmount: finalFee,
+        couponCode: appliedCouponCode,
+        couponDiscount,
         paymentMethod: String(paymentMethod).trim(),
         transactionId: String(transactionId).trim(),
         senderNumber: String(senderNumber).trim(),

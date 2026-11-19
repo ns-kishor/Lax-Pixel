@@ -24,6 +24,9 @@ export function buildUrl(view: View, params?: Record<string, string>): string {
     case 'content':
       return `/page/${params?.slug || 'about'}`;
     case 'seller-store':
+      if (params?.shopSlug && params?.sellerCode) {
+        return `/${params.shopSlug}/${params.sellerCode}`;
+      }
       return `/store/${params?.id || ''}`;
     case 'product':
       return `/product/${params?.id || ''}`;
@@ -93,6 +96,16 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   if (storeMatch) {
     result.view = 'seller-store';
     result.params.id = storeMatch[1];
+    return result;
+  }
+
+  // /[shop-name]/[9-digit-code] custom seller profile link
+  const customSellerMatch = pathname.match(/^\/([a-zA-Z0-9_-]+)\/(\d{9})$/);
+  if (customSellerMatch) {
+    result.view = 'seller-store';
+    result.params.id = customSellerMatch[2];
+    result.params.sellerCode = customSellerMatch[2];
+    result.params.shopSlug = customSellerMatch[1];
     return result;
   }
 

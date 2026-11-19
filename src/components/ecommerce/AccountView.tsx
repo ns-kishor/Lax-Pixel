@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, MapPin, Save, Heart, Package, ArrowRight, Camera, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Heart, Package, ArrowRight, Camera, Lock, Eye, EyeOff, Share2, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export function AccountView() {
-  const { user, setUser, goBack, setView, showToast, wishlistIds, logout } = useStore();
+  const { user, setUser, goBack, setView, showToast, wishlistIds, logout, sellerProfile } = useStore();
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [form, setForm] = useState({ name: user?.name || '', phone: user?.phone || '', address: user?.address || '', city: user?.city || '', country: user?.country || '', zipCode: user?.zipCode || '' });
   const [passwordForm, setPasswordForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -56,6 +56,20 @@ export function AccountView() {
     showToast('Password changed');
     setPasswordForm({ current: '', newPw: '', confirm: '' });
     setShowPwForm(false);
+  };
+
+  const shareSellerProfile = () => {
+    const rawName = sellerProfile?.companyName || user?.name || 'store';
+    const shopSlug = rawName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const code = sellerProfile?.sellerCode || '123456789';
+    const link = `${window.location.origin}/${shopSlug}/${code}`;
+    navigator.clipboard.writeText(link);
+    showToast('প্রোফাইল লিংক কপি করা হয়েছে! (Profile link copied)');
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +133,10 @@ export function AccountView() {
               <div className="space-y-2">
                 <button onClick={() => setView('orders')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><Package className="w-4 h-4" /> My Orders</span><ArrowRight className="w-3.5 h-3.5" /></button>
                 {user.role === 'SELLER' && (
-                  <button onClick={() => setView('seller-dashboard')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Seller Dashboard</span><ArrowRight className="w-3.5 h-3.5" /></button>
+                  <>
+                    <button onClick={() => setView('seller-dashboard')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Seller Dashboard</span><ArrowRight className="w-3.5 h-3.5" /></button>
+                    <button onClick={shareSellerProfile} className="w-full flex items-center justify-between p-2.5 rounded-lg bg-foreground/5 hover:bg-secondary text-sm text-foreground transition-colors font-medium"><span className="flex items-center gap-2"><Share2 className="w-4 h-4 text-primary" /> শেয়ার প্রোফাইল (Share Profile)</span><ArrowRight className="w-3.5 h-3.5" /></button>
+                  </>
                 )}
               </div>
               <Separator className="bg-secondary my-4" />

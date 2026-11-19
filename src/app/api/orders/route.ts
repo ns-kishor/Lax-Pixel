@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       transactionId,
       senderNumber,
       paymentProofImage,
+      couponCode: inputCouponCode,
     } = body;
 
     const buyerPhone = phone ? String(phone).trim() : (user.phone ? String(user.phone).trim() : '');
@@ -154,7 +155,59 @@ export async function POST(req: NextRequest) {
     const subtotal = verifiedOrderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const shippingCost = subtotal > 2000 ? 0 : 50;
     const tax = subtotal * 0.01;
-    const totalAmount = subtotal + shippingCost + tax;
+
+    // Validate and calculate coupon discount
+    let appliedCouponRecord: any = null;
+    let validatedCouponDiscount = 0;
+    const cleanCouponCode = typeof inputCouponCode === 'string' ? inputCouponCode.trim().toUpperCase() : '';
+
+    if (cleanCouponCode) {
+      const c = await db.coupon.findUnique({ where: { code: cleanCouponCode } });
+      if (c && c.active && !c.banned && c.type === 'PRODUCT') {
+        const now = new Date();
+        const dateOk = (!c.startDate || now >= new Date(c.startDate)) && (!c.endDate || now <= new Date(c.endDate));
+        const usesOk = c.maxUses === null || c.usedCount < c.maxUses;
+        if (dateOk && usesOk) {
+          let eligibleSubtotal = subtotal;
+          let isEligible = true;
+
+          if (c.sellerId) {
+            const sellerDbProducts = dbProducts.filter((p) => p.sellerId === c.sellerId);
+            const sellerProductIds = new Set(sellerDbProducts.map((p) => p.id));
+            const sellerItems = verifiedOrderItems.filter((i) => sellerProductIds.has(i.productId));
+            if (sellerItems.length === 0) {
+              isEligible = false;
+            } else {
+              eligibleSubtotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            }
+          } else if (c.appliesTo === 'SPECIFIC' && c.productIds) {
+            let targetIds: string[] = [];
+            try {
+              targetIds = c.productIds.startsWith('[') ? JSON.parse(c.productIds) : c.productIds.split(',').map((s) => s.trim());
+            } catch {
+              targetIds = c.productIds.split(',').map((s) => s.trim());
+            }
+            const specificItems = verifiedOrderItems.filter((i) => targetIds.includes(i.productId));
+            if (specificItems.length === 0) {
+              isEligible = false;
+            } else {
+              eligibleSubtotal = specificItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            }
+          }
+
+          if (isEligible && (c.minOrderAmount <= 0 || eligibleSubtotal >= c.minOrderAmount)) {
+            if (c.discountType === 'PERCENTAGE') {
+              validatedCouponDiscount = Math.round(((eligibleSubtotal * c.discountValue) / 100) * 100) / 100;
+            } else {
+              validatedCouponDiscount = Math.min(c.discountValue, eligibleSubtotal);
+            }
+            appliedCouponRecord = c;
+          }
+        }
+      }
+    }
+
+    const totalAmount = Math.max(0, subtotal - validatedCouponDiscount + shippingCost + tax);
     const orderNumber = `NOR-${Date.now().toString(36).toUpperCase()}`;
     const trackingCode = generateTrackingCode();
 
@@ -211,6 +264,14 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // If coupon used, increment coupon usedCount
+      if (appliedCouponRecord) {
+        await tx.coupon.update({
+          where: { id: appliedCouponRecord.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
       // Create order
       const newOrder = await tx.order.create({
         data: {
@@ -222,6 +283,8 @@ export async function POST(req: NextRequest) {
           subtotal,
           shippingCost,
           tax,
+          couponCode: appliedCouponRecord ? appliedCouponRecord.code : null,
+          couponDiscount: validatedCouponDiscount,
           shippingAddress: shippingAddress || '',
           shippingCity: shippingCity || '',
           shippingCountry: shippingCountry || '',

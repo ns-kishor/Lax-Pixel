@@ -11,12 +11,13 @@ export async function GET(
       return NextResponse.json({ error: 'Seller ID is required' }, { status: 400 });
     }
 
-    // Try finding the user by User ID or SellerProfile ID
+    // Try finding the user by User ID, SellerProfile ID, or 9-digit sellerCode
     const user = await db.user.findFirst({
       where: {
         OR: [
           { id },
           { sellerProfile: { id } },
+          { sellerProfile: { sellerCode: id } },
         ],
       },
       select: {

@@ -53,6 +53,7 @@ model SellerProfile {
   rating               Float    @default(0)
   totalSales           Int      @default(0)
   paymentMethodsConfig String?
+  sellerCode           String?  @unique
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -140,6 +141,8 @@ model Order {
   subtotal        Float
   shippingCost    Float    @default(0)
   tax             Float    @default(0)
+  couponCode      String?
+  couponDiscount  Float?   @default(0)
   shippingAddress String
   shippingCity    String
   shippingCountry String
@@ -223,6 +226,10 @@ model Wishlist {
 model Coupon {
   id            String   @id @default(cuid())
   code          String   @unique
+  type          String   @default("PRODUCT") // "PRODUCT" | "SELLER_VERIFICATION"
+  appliesTo     String   @default("ALL") // "ALL" | "SPECIFIC"
+  productIds    String?  // Comma-separated or JSON array of product IDs
+  sellerId      String?  // If created by seller, stores seller's userId; null if admin
   discountType  String   @default("PERCENTAGE")
   discountValue Float
   minOrderAmount Float   @default(0)
@@ -231,6 +238,7 @@ model Coupon {
   startDate     DateTime?
   endDate       DateTime?
   active        Boolean  @default(true)
+  banned        Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -303,6 +311,8 @@ model SellerVerification {
   website            String?
   description        String?
   feeAmount          Float?    @default(0)
+  couponCode         String?
+  couponDiscount     Float?    @default(0)
   paymentMethod      String?
   transactionId      String?
   senderNumber       String?

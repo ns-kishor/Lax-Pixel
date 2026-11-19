@@ -31,6 +31,7 @@ export interface SellerProfile {
   approved: boolean;
   rating: number;
   totalSales: number;
+  sellerCode?: string;
 }
 
 export interface Product {

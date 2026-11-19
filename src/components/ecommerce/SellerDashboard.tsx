@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   Store, DollarSign, Package, Clock, Plus, CheckCircle2,
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
   AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
-  MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter
+  MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter,
+  Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -108,6 +109,218 @@ export function SellerDashboard() {
   const [verificationFee, setVerificationFee] = useState<number>(500);
   const [digitalPaymentMethods, setDigitalPaymentMethods] = useState<any[]>([]);
   const [sellerPaymentMethods, setSellerPaymentMethods] = useState<SellerPaymentConfigItem[]>(DEFAULT_METHODS);
+  const [sellerProfileData, setSellerProfileData] = useState<any>(null);
+
+  // Verification fee coupon state
+  const [verificationCouponInput, setVerificationCouponInput] = useState('');
+  const [checkingVerificationCoupon, setCheckingVerificationCoupon] = useState(false);
+  const [appliedVerificationCoupon, setAppliedVerificationCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+  } | null>(null);
+
+  // Seller store product coupons
+  const [sellerCoupons, setSellerCoupons] = useState<any[]>([]);
+  const [loadingSellerCoupons, setLoadingSellerCoupons] = useState(false);
+  const [couponDialogOpen, setCouponDialogOpen] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<any>(null);
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    discountType: 'PERCENTAGE',
+    discountValue: '',
+    minOrderAmount: '',
+    maxUses: '',
+    startDate: '',
+    endDate: '',
+    active: true,
+  });
+  const [savingCoupon, setSavingCoupon] = useState(false);
+
+  const shareProfileUrl = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const rawName = sellerProfileData?.companyName || storeProfileForm.companyName || verificationForm.businessName || user?.name || 'store';
+    const shopSlug = rawName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'store';
+    const code = sellerProfileData?.sellerCode || '123456789';
+    return `${window.location.origin}/${shopSlug}/${code}`;
+  }, [sellerProfileData, storeProfileForm.companyName, verificationForm.businessName, user?.name]);
+
+  const copyShareProfileLink = () => {
+    if (!shareProfileUrl) return;
+    navigator.clipboard.writeText(shareProfileUrl);
+    showToast('প্রোফাইল লিংক কপি করা হয়েছে! (Profile link copied)');
+  };
+
+  const loadSellerCoupons = async () => {
+    try {
+      setLoadingSellerCoupons(true);
+      const res = await fetch('/api/seller/coupons', { headers: authHeaders(useStore.getState) });
+      if (res.ok) {
+        const d = await res.json();
+        setSellerCoupons(d.coupons || []);
+      }
+    } catch {
+      showToast('Failed to load store coupons', 'error');
+    } finally {
+      setLoadingSellerCoupons(false);
+    }
+  };
+
+  const applyVerificationCoupon = async () => {
+    if (!verificationCouponInput.trim()) return;
+    setCheckingVerificationCoupon(true);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: verificationCouponInput.trim(),
+          type: 'SELLER_VERIFICATION',
+          subtotal: verificationFee,
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        showToast(d.error || 'Invalid verification coupon', 'error');
+        return;
+      }
+      setAppliedVerificationCoupon({
+        code: d.coupon.code,
+        discountAmount: d.coupon.discountAmount,
+      });
+      showToast(`Verification coupon '${d.coupon.code}' applied! Saved ৳${d.coupon.discountAmount}`);
+    } catch {
+      showToast('Failed to validate coupon', 'error');
+    } finally {
+      setCheckingVerificationCoupon(false);
+    }
+  };
+
+  const removeVerificationCoupon = () => {
+    setAppliedVerificationCoupon(null);
+    setVerificationCouponInput('');
+    showToast('Coupon removed');
+  };
+
+  const openAddCouponDialog = () => {
+    setEditingCoupon(null);
+    setCouponForm({
+      code: '',
+      discountType: 'PERCENTAGE',
+      discountValue: '',
+      minOrderAmount: '',
+      maxUses: '',
+      startDate: '',
+      endDate: '',
+      active: true,
+    });
+    setCouponDialogOpen(true);
+  };
+
+  const openEditCouponDialog = (c: any) => {
+    setEditingCoupon(c);
+    setCouponForm({
+      code: c.code,
+      discountType: c.discountType,
+      discountValue: String(c.discountValue),
+      minOrderAmount: String(c.minOrderAmount),
+      maxUses: c.maxUses !== null ? String(c.maxUses) : '',
+      startDate: c.startDate ? c.startDate.slice(0, 10) : '',
+      endDate: c.endDate ? c.endDate.slice(0, 10) : '',
+      active: c.active,
+    });
+    setCouponDialogOpen(true);
+  };
+
+  const handleSaveSellerCoupon = async () => {
+    if (!couponForm.code.trim()) {
+      showToast('Coupon code is required', 'error');
+      return;
+    }
+    const val = parseFloat(couponForm.discountValue);
+    if (isNaN(val) || val <= 0) {
+      showToast('Please enter a valid positive discount value', 'error');
+      return;
+    }
+    if (couponForm.discountType === 'PERCENTAGE' && val > 100) {
+      showToast('Percentage cannot exceed 100', 'error');
+      return;
+    }
+
+    setSavingCoupon(true);
+    try {
+      const url = editingCoupon ? `/api/seller/coupons?id=${editingCoupon.id}` : '/api/seller/coupons';
+      const method = editingCoupon ? 'PATCH' : 'POST';
+      const payload: Record<string, unknown> = {
+        code: couponForm.code.trim().toUpperCase(),
+        discountType: couponForm.discountType,
+        discountValue: val,
+        minOrderAmount: parseFloat(couponForm.minOrderAmount) || 0,
+        maxUses: couponForm.maxUses ? parseInt(couponForm.maxUses, 10) : null,
+        startDate: couponForm.startDate ? new Date(couponForm.startDate).toISOString() : null,
+        endDate: couponForm.endDate ? new Date(couponForm.endDate).toISOString() : null,
+        active: couponForm.active,
+      };
+
+      const res = await fetch(url, {
+        method,
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const d = await res.json();
+      if (!res.ok) {
+        showToast(d.error || 'Failed to save coupon', 'error');
+        return;
+      }
+
+      showToast(editingCoupon ? 'Coupon updated!' : 'Store coupon created!');
+      setCouponDialogOpen(false);
+      loadSellerCoupons();
+    } catch {
+      showToast('Failed to save coupon', 'error');
+    } finally {
+      setSavingCoupon(false);
+    }
+  };
+
+  const handleDeleteSellerCoupon = async (id: string) => {
+    try {
+      const res = await fetch(`/api/seller/coupons?id=${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(useStore.getState),
+      });
+      if (res.ok) {
+        showToast('Coupon deleted');
+        loadSellerCoupons();
+      } else {
+        const d = await res.json();
+        showToast(d.error || 'Delete failed', 'error');
+      }
+    } catch {
+      showToast('Failed to delete coupon', 'error');
+    }
+  };
+
+  const handleToggleSellerCouponActive = async (c: any) => {
+    try {
+      const res = await fetch(`/api/seller/coupons?id=${c.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !c.active }),
+      });
+      if (res.ok) {
+        showToast(c.active ? 'Coupon deactivated' : 'Coupon activated');
+        loadSellerCoupons();
+      }
+    } catch {
+      showToast('Failed to toggle coupon status', 'error');
+    }
+  };
 
   const loadSellerData = async () => {
     if (!user) return;
@@ -117,6 +330,7 @@ export function SellerDashboard() {
       if (res.ok) {
         const data = await res.json();
         setSellerData(data);
+        setSellerProfileData(data.profile || null);
         setApproved(Boolean(data.approved));
         setVerification(data.verification || null);
         if (data.feeAmount !== undefined) {
@@ -210,6 +424,7 @@ export function SellerDashboard() {
 
   useEffect(() => {
     loadSellerData();
+    loadSellerCoupons();
   }, [user?.id]);
 
   if (!user) {
@@ -369,6 +584,7 @@ export function SellerDashboard() {
         headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...verificationForm,
+          couponCode: appliedVerificationCoupon?.code || undefined,
           paymentMethodsData: sellerPaymentMethods,
         }),
       });
@@ -651,7 +867,18 @@ export function SellerDashboard() {
             </p>
           </div>
 
-          <div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {shareProfileUrl && (
+              <Button
+                variant="outline"
+                className="text-xs tracking-wider h-10 px-4 border-foreground/30 hover:border-foreground"
+                onClick={copyShareProfileLink}
+                title="শেয়ার প্রোফাইল লিংক কপি করুন"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                শেয়ার প্রোফাইল
+              </Button>
+            )}
             {approved ? (
               <Button
                 className="bg-foreground text-background text-xs tracking-wider h-10 px-5"
@@ -932,9 +1159,61 @@ export function SellerDashboard() {
                             সেলার অ্যাকাউন্ট ভেরিফিকেশনের জন্য নির্ধারিত ফি প্রদান করে নিচে ট্রানজেকশন আইডি ও আপনার সেন্ডার নাম্বার দিন।
                           </p>
                         </div>
-                        <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
-                          ফি: ৳ {verificationFee}
+                        <div className="flex items-center gap-2">
+                          {appliedVerificationCoupon ? (
+                            <div className="text-right">
+                              <span className="text-xs text-muted-foreground line-through mr-1.5">৳ {verificationFee}</span>
+                              <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-sm font-bold">
+                                ৳ {Math.max(0, verificationFee - appliedVerificationCoupon.discountAmount)}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
+                              ফি: ৳ {verificationFee}
+                            </div>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Coupon input for verification fee */}
+                      <div className="p-3 rounded-lg bg-secondary/50 border border-border space-y-2">
+                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1.5">
+                          <Ticket className="w-3.5 h-3.5" /> ভেরিফিকেশন ফি কুপন (Coupon Code)
+                        </Label>
+                        {appliedVerificationCoupon ? (
+                          <div className="flex items-center justify-between p-2 rounded-md bg-green-500/10 border border-green-500/30">
+                            <span className="text-xs font-mono font-medium text-green-700 dark:text-green-300">
+                              ✓ {appliedVerificationCoupon.code} (-৳{appliedVerificationCoupon.discountAmount})
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={removeVerificationCoupon}
+                              className="text-xs h-7 px-2 text-destructive hover:bg-destructive/10"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Input
+                              value={verificationCouponInput}
+                              onChange={e => setVerificationCouponInput(e.target.value.toUpperCase())}
+                              placeholder="কুপন কোড লিখুন..."
+                              className="h-9 bg-background border-border text-xs font-mono uppercase"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={checkingVerificationCoupon || !verificationCouponInput.trim()}
+                              onClick={applyVerificationCoupon}
+                              className="h-9 px-4 text-xs shrink-0"
+                            >
+                              {checkingVerificationCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Apply'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Payment Method Selector Grid */}
@@ -1181,6 +1460,10 @@ export function SellerDashboard() {
                   {pendingProofsCount}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="coupons" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg flex items-center gap-1.5">
+              <Ticket className="w-3.5 h-3.5" />
+              Store Coupons ({sellerCoupons.length})
             </TabsTrigger>
             <TabsTrigger value="profile" className="text-xs tracking-wider h-9 data-[state=active]:bg-foreground data-[state=active]:text-background rounded-lg">
               Store Profile & Payments
@@ -1537,7 +1820,146 @@ export function SellerDashboard() {
             </div>
           </TabsContent>
 
-          {/* Tab 4: Store Profile & Payment Methods Settings */}
+          {/* Tab 4: Seller Store Coupons */}
+          <TabsContent value="coupons" className="mt-6">
+            <div className="p-6 sm:p-8 rounded-2xl bg-secondary/40 border border-border space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-foreground" />
+                    আপনার স্টোরের প্রডাক্ট কুপনসমূহ (Store Coupons)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    এই কুপনগুলো ক্রেতারা শুধুমাত্র আপনার স্টোরের পণ্যসমূহ ক্রয়ের সময় চেকআউটে ব্যবহার করতে পারবেন।
+                  </p>
+                </div>
+                <Button
+                  onClick={openAddCouponDialog}
+                  disabled={!approved}
+                  className="bg-foreground text-background text-xs tracking-wider h-10 px-5 shrink-0"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> নতুন কুপন তৈরি করুন
+                </Button>
+              </div>
+
+              {!approved && (
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+                  সেলার অ্যাকাউন্ট অনুমোদনের পর আপনি আপনার প্রোডাক্টের জন্য ডিসকাউন্ট কুপন তৈরি করতে পারবেন।
+                </div>
+              )}
+
+              {loadingSellerCoupons ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                  <p className="text-xs">কুপন লোড হচ্ছে...</p>
+                </div>
+              ) : sellerCoupons.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-border rounded-xl">
+                  <Ticket className="w-8 h-8 mx-auto text-muted-foreground mb-2 opacity-50" />
+                  <p className="text-sm font-medium">কোনো কুপন তৈরি করা হয়নি</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    আপনার ক্রেতাদের বিশেষ ছাড় দিতে &quot;নতুন কুপন তৈরি করুন&quot; বাটনে ক্লিক করুন।
+                  </p>
+                </div>
+              ) : (
+                <div className="border border-border rounded-xl overflow-hidden bg-background">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
+                        <tr>
+                          <th className="p-3 text-left">কুপন কোড</th>
+                          <th className="p-3 text-left">ডিসকাউন্ট</th>
+                          <th className="p-3 text-left">মিনিমাম অর্ডার</th>
+                          <th className="p-3 text-left">ব্যবহার</th>
+                          <th className="p-3 text-left">মেয়াদ</th>
+                          <th className="p-3 text-left">স্ট্যাটাস</th>
+                          <th className="p-3 text-right">অ্যাকশন</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {sellerCoupons.map((c) => (
+                          <tr key={c.id} className="hover:bg-secondary/30 transition-colors">
+                            <td className="p-3 font-mono font-bold text-foreground">
+                              {c.code}
+                            </td>
+                            <td className="p-3 font-semibold text-green-600 dark:text-green-400">
+                              {c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `$${c.discountValue} OFF`}
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {c.minOrderAmount ? `$${c.minOrderAmount}` : 'কোনো শর্ত নেই'}
+                            </td>
+                            <td className="p-3 text-muted-foreground font-mono">
+                              {c.usedCount || 0} {c.maxUses ? `/ ${c.maxUses}` : 'বার'}
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {c.startDate || c.endDate ? (
+                                <span className="text-[11px]">
+                                  {c.startDate ? new Date(c.startDate).toLocaleDateString() : '—'} হতে{' '}
+                                  {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'সীমাহীন'}
+                                </span>
+                              ) : (
+                                'আজীবন'
+                              )}
+                            </td>
+                            <td className="p-3">
+                              {c.banned ? (
+                                <Badge variant="destructive" className="text-[10px]">
+                                  Banned by Admin
+                                </Badge>
+                              ) : c.active ? (
+                                <Badge className="bg-green-500/10 text-green-600 border border-green-500/20 text-[10px]">
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  Inactive
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={c.banned}
+                                  onClick={() => handleToggleSellerCouponActive(c)}
+                                  className="h-8 w-8 p-0"
+                                  title={c.active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
+                                >
+                                  {c.active ? <Power className="w-3.5 h-3.5 text-amber-500" /> : <PowerOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={c.banned}
+                                  onClick={() => openEditCouponDialog(c)}
+                                  className="h-8 w-8 p-0"
+                                  title="এডিট করুন"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteSellerCoupon(c.id)}
+                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                  title="মুছে ফেলুন"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Tab 5: Store Profile & Payment Methods Settings */}
           <TabsContent value="profile" className="mt-6">
             <div className="p-6 sm:p-8 rounded-2xl bg-secondary/40 border border-border space-y-8">
               <div>
@@ -1549,6 +1971,28 @@ export function SellerDashboard() {
                   আপনার যোগাযোগের নাম্বারসমূহ, স্টোরের তথ্যাদি এবং আপনার প্রোডাক্ট চেকআউটে প্রদর্শিত পেমেন্ট মেথডগুলো এখান থেকে যেকোনো সময় আপডেট করতে পারবেন।
                 </p>
               </div>
+
+              {/* Public Store Link Card */}
+              {shareProfileUrl && (
+                <div className="p-4 rounded-xl bg-background border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Share2 className="w-4 h-4 text-foreground" />
+                      <span className="text-xs font-semibold uppercase tracking-wider">আপনার পাবলিক স্টোর লিংক (Share Profile Link)</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1 font-mono break-all">{shareProfileUrl}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={copyShareProfileLink}
+                    className="shrink-0 text-xs h-9 gap-1.5"
+                  >
+                    <Copy className="w-3.5 h-3.5" /> লিংক কপি করুন
+                  </Button>
+                </div>
+              )}
 
               <form onSubmit={handleSaveProfile} className="space-y-6">
                 {/* Contact info */}
@@ -1929,6 +2373,130 @@ export function SellerDashboard() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+        {/* Coupon Create/Edit Dialog */}
+        <Dialog open={couponDialogOpen} onOpenChange={setCouponDialogOpen}>
+          <DialogContent className="max-w-md bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-base font-medium flex items-center gap-2">
+                <Ticket className="w-4 h-4" />
+                {editingCoupon ? 'কুপন এডিট করুন' : 'নতুন স্টোর কুপন তৈরি করুন'}
+              </DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveSellerCoupon();
+              }}
+              className="space-y-4 text-xs mt-2"
+            >
+              <div>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">কুপন কোড (Coupon Code) *</Label>
+                <Input
+                  required
+                  value={couponForm.code}
+                  onChange={e => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
+                  placeholder="e.g. SUMMER10, NOIR20"
+                  className="mt-1.5 h-10 font-mono uppercase bg-secondary/50 border-border text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ডিসকাউন্টের ধরণ *</Label>
+                  <select
+                    value={couponForm.discountType}
+                    onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}
+                    className="mt-1.5 h-10 w-full px-2.5 bg-secondary/50 border border-border rounded-md text-xs font-medium"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED">Fixed Amount ($)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                    পরিমাণ {couponForm.discountType === 'PERCENTAGE' ? '(%)' : '($)'} *
+                  </Label>
+                  <Input
+                    required
+                    type="number"
+                    min="1"
+                    step="any"
+                    value={couponForm.discountValue}
+                    onChange={e => setCouponForm({ ...couponForm, discountValue: e.target.value })}
+                    placeholder={couponForm.discountType === 'PERCENTAGE' ? '10' : '20'}
+                    className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মিনিমাম অর্ডার ($)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={couponForm.minOrderAmount}
+                    onChange={e => setCouponForm({ ...couponForm, minOrderAmount: e.target.value })}
+                    placeholder="e.g. 50"
+                    className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">সর্বোচ্চ ব্যবহার (Uses)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={couponForm.maxUses}
+                    onChange={e => setCouponForm({ ...couponForm, maxUses: e.target.value })}
+                    placeholder="Unlimited"
+                    className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">শুরুর তারিখ</Label>
+                  <Input
+                    type="date"
+                    value={couponForm.startDate}
+                    onChange={e => setCouponForm({ ...couponForm, startDate: e.target.value })}
+                    className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মেয়াদ শেষের তারিখ</Label>
+                  <Input
+                    type="date"
+                    value={couponForm.endDate}
+                    onChange={e => setCouponForm({ ...couponForm, endDate: e.target.value })}
+                    className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCouponDialogOpen(false)}
+                  className="text-xs h-9"
+                >
+                  বাতিল
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={savingCoupon}
+                  className="bg-foreground text-background text-xs h-9 px-5"
+                >
+                  {savingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  {editingCoupon ? 'আপডেট করুন' : 'কুপন তৈরি করুন'}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

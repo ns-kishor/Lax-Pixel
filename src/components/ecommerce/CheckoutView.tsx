@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Lock, CreditCard, Truck, Info, CheckCircle2, Loader2, LogIn, Phone, ArrowLeft } from 'lucide-react';
+import { Lock, CreditCard, Truck, Info, CheckCircle2, Loader2, LogIn, Phone, ArrowLeft, Ticket } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PaymentMethod {
@@ -46,26 +46,88 @@ export function CheckoutView() {
   const selectedItems = cart.filter((i) => (selectedCartItemIds || []).includes(i.id));
   const checkoutItems = selectedItems.length > 0 ? selectedItems : cart;
 
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+    discountAmount: number;
+  } | null>(null);
+
   const subtotal = checkoutItems.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const shipping = subtotal > 2000 ? 0 : 50;
-  const tax = subtotal * 0.01;
-  const total = subtotal + shipping + tax;
+  const tax = Math.max(0, (subtotal - couponDiscount) * 0.01);
+  const total = Math.max(0, subtotal - couponDiscount + shipping + tax);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    try {
+      const itemsPayload = checkoutItems.map((i) => ({
+        productId: i.productId,
+        sellerId: i.product?.sellerId,
+        price: i.product?.price || 0,
+        quantity: i.quantity,
+      }));
+
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          type: 'PRODUCT',
+          subtotal,
+          items: itemsPayload,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Invalid coupon code', 'error');
+        return;
+      }
+
+      setAppliedCoupon(data.coupon);
+      showToast(`Coupon '${data.coupon.code}' applied! Saved ৳${data.coupon.discountAmount}`);
+    } catch {
+      showToast('Failed to validate coupon', 'error');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    showToast('Coupon removed');
+  };
+
+  // Stable key for product IDs to prevent unwanted re-fetching on user input
+  const productIdsKey = useMemo(() => {
+    return checkoutItems.map((i) => i.productId).filter(Boolean).sort().join(',');
+  }, [checkoutItems]);
 
   useEffect(() => {
-    const productIds = checkoutItems.map((i) => i.productId).filter(Boolean);
-    const query = productIds.length > 0 ? `?productIds=${encodeURIComponent(productIds.join(','))}` : '';
+    const query = productIdsKey ? `?productIds=${encodeURIComponent(productIdsKey)}` : '';
     fetch(`/api/payment-methods${query}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.methods && Array.isArray(d.methods)) {
           setPaymentMethods(d.methods);
-          if (d.methods.length > 0) {
-            setSelectedMethod(d.methods[0]);
-          }
+          // Preserve user-selected method if it exists in the fetched methods
+          setSelectedMethod((current) => {
+            if (current && d.methods.some((m: PaymentMethod) => m.id === current.id)) {
+              return current;
+            }
+            return d.methods[0] || null;
+          });
         }
       })
       .catch(() => {});
-  }, [checkoutItems]);
+  }, [productIdsKey]);
 
   useEffect(() => {
     if (user) {
@@ -146,6 +208,8 @@ export function CheckoutView() {
         paymentMethod: selectedMethod?.name,
         transactionId: isCod ? undefined : transactionId.trim(),
         senderNumber: isCod ? undefined : senderNumber.trim(),
+        couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+        couponDiscount: appliedCoupon ? appliedCoupon.discountAmount : undefined,
       };
 
       const res = await fetch('/api/orders', {
@@ -372,6 +436,12 @@ export function CheckoutView() {
           {/* Order summary on payment page */}
           <div className="p-4 rounded-xl bg-secondary border border-border mb-6 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>৳ {subtotal.toLocaleString()}</span></div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                <span>Coupon Discount ({appliedCoupon.code})</span>
+                <span>-৳ {appliedCoupon.discountAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? 'Free' : `৳ ${shipping}`}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>৳ {tax.toFixed(2)}</span></div>
             <Separator className="bg-border" />
@@ -541,8 +611,61 @@ export function CheckoutView() {
                 ))}
               </div>
               <Separator className="bg-border" />
+
+              {/* Coupon Code Input */}
+              <div className="space-y-2">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
+                  <Ticket className="w-3 h-3" /> Apply Coupon (কুপন কোড)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter Coupon Code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    disabled={!!appliedCoupon}
+                    className="h-9 bg-background border-border text-xs uppercase font-mono tracking-wider"
+                  />
+                  {appliedCoupon ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={removeCoupon}
+                      className="h-9 px-3 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 shrink-0"
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="h-9 px-4 text-xs bg-foreground text-background hover:bg-foreground/90 shrink-0"
+                    >
+                      {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                    </Button>
+                  )}
+                </div>
+                {appliedCoupon && (
+                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> '{appliedCoupon.code}' Applied
+                    </span>
+                    <span className="font-bold">-৳ {appliedCoupon.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              <Separator className="bg-border" />
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>৳ {subtotal.toLocaleString()}</span></div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span>Coupon Discount</span>
+                    <span>-৳ {appliedCoupon.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? 'Free' : `৳ ${shipping}`}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>৳ {tax.toFixed(2)}</span></div>
               </div>

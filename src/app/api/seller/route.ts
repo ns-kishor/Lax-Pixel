@@ -121,8 +121,17 @@ export async function GET(req: NextRequest) {
 
     const isApproved = Boolean(profile?.approved);
 
+    let activeProfile = profile;
+    if (activeProfile && !activeProfile.sellerCode) {
+      const code = String(Math.floor(100000000 + Math.random() * 900000000));
+      activeProfile = await db.sellerProfile.update({
+        where: { id: activeProfile.id },
+        data: { sellerCode: code },
+      }).catch(() => profile);
+    }
+
     return NextResponse.json({
-      profile,
+      profile: activeProfile,
       verification,
       approved: isApproved,
       feeAmount: feeSetting?.value ? parseFloat(feeSetting.value) || 500 : 500,
