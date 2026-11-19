@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc, buildSellerShareUrl } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ const DEFAULT_METHODS: SellerPaymentConfigItem[] = [
 ];
 
 export function SellerDashboard() {
-  const { user, sellerStats, sellerProducts, sellerOrders, setSellerData, categories, setView, selectProduct, showToast } = useStore();
+  const { user, sellerStats, sellerProducts, sellerOrders, setSellerData, categories, setView, selectProduct, showToast, sellerProfile } = useStore();
   const [approved, setApproved] = useState(false);
   const [verification, setVerification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -137,17 +137,9 @@ export function SellerDashboard() {
   const [savingCoupon, setSavingCoupon] = useState(false);
 
   const shareProfileUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const rawName = sellerProfileData?.companyName || storeProfileForm.companyName || verificationForm.businessName || user?.name || 'store';
-    const shopSlug = rawName
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'store';
-    const code = sellerProfileData?.sellerCode || '123456789';
-    return `${window.location.origin}/${shopSlug}/${code}`;
-  }, [sellerProfileData, storeProfileForm.companyName, verificationForm.businessName, user?.name]);
+    const activeProf = sellerProfileData || sellerProfile;
+    return buildSellerShareUrl(user, activeProf, storeProfileForm.companyName || verificationForm.businessName);
+  }, [sellerProfileData, sellerProfile, storeProfileForm.companyName, verificationForm.businessName, user]);
 
   const copyShareProfileLink = () => {
     if (!shareProfileUrl) return;
@@ -331,6 +323,9 @@ export function SellerDashboard() {
         const data = await res.json();
         setSellerData(data);
         setSellerProfileData(data.profile || null);
+        if (data.profile) {
+          useStore.getState().setSellerProfile(data.profile);
+        }
         setApproved(Boolean(data.approved));
         setVerification(data.verification || null);
         if (data.feeAmount !== undefined) {

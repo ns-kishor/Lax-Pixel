@@ -11,13 +11,14 @@ export async function GET(
       return NextResponse.json({ error: 'Seller ID is required' }, { status: 400 });
     }
 
-    // Try finding the user by User ID, SellerProfile ID, or 9-digit sellerCode
-    const user = await db.user.findFirst({
+    // Try finding the user by User ID, SellerProfile ID, 9-digit sellerCode, or company name
+    let user = await db.user.findFirst({
       where: {
         OR: [
           { id },
           { sellerProfile: { id } },
           { sellerProfile: { sellerCode: id } },
+          { sellerProfile: { companyName: { equals: id, mode: 'insensitive' } } },
         ],
       },
       select: {
@@ -32,6 +33,35 @@ export async function GET(
         sellerProfile: true,
       },
     });
+
+    if (!user) {
+      // Fallback: match by slugified companyName or name
+      const sellers = await db.user.findMany({
+        where: { role: 'SELLER' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          phone: true,
+          createdAt: true,
+          role: true,
+          banned: true,
+          sellerProfile: true,
+        },
+      });
+
+      const cleanTarget = decodeURIComponent(id).toLowerCase().trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+      const matched = sellers.find(s => {
+        const raw = s.sellerProfile?.companyName || s.name || '';
+        const slug = raw.toLowerCase().trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+        return slug === cleanTarget || s.sellerProfile?.sellerCode === id;
+      });
+
+      if (matched) {
+        user = matched;
+      }
+    }
 
     if (!user || user.banned) {
       return NextResponse.json({ error: 'Seller not found or unavailable' }, { status: 404 });

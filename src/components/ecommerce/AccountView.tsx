@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
+import { useStore, authHeaders, safeImgSrc, buildSellerShareUrl } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,10 +20,23 @@ export function AccountView() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
+  const [localSellerProfile, setLocalSellerProfile] = useState<any>(sellerProfile || null);
 
   useEffect(() => {
     if (!user) return;
     fetch('/api/wishlist', { headers: authHeaders(useStore.getState) }).then(r => r.json()).then(setWishlistItems);
+
+    if (user.role === 'SELLER') {
+      fetch('/api/seller', { headers: authHeaders(useStore.getState) })
+        .then(r => r.json())
+        .then(data => {
+          if (data.profile) {
+            setLocalSellerProfile(data.profile);
+            useStore.getState().setSellerProfile(data.profile);
+          }
+        })
+        .catch(console.error);
+    }
   }, [user?.id]);
 
   if (!user) {
@@ -42,7 +55,7 @@ export function AccountView() {
     const res = await fetch('/api/user', { method: 'PUT', headers: authHeaders(useStore.getState), body: JSON.stringify(form) });
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); return; }
-    setUser(data);
+    setUser(data, localSellerProfile || sellerProfile);
     showToast('Profile updated');
   };
 
@@ -58,16 +71,30 @@ export function AccountView() {
     setShowPwForm(false);
   };
 
-  const shareSellerProfile = () => {
-    const rawName = sellerProfile?.companyName || user?.name || 'store';
-    const shopSlug = rawName
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    const code = sellerProfile?.sellerCode || '123456789';
-    const link = `${window.location.origin}/${shopSlug}/${code}`;
+  const shareSellerProfile = async () => {
+    let prof = localSellerProfile || sellerProfile;
+    if (!prof?.sellerCode) {
+      try {
+        const res = await fetch('/api/seller', { headers: authHeaders(useStore.getState) });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            prof = data.profile;
+            setLocalSellerProfile(data.profile);
+            useStore.getState().setSellerProfile(data.profile);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load seller profile for share link:', e);
+      }
+    }
+
+    const link = buildSellerShareUrl(user, prof);
+    if (!link) {
+      showToast('বিক্রেতা প্রোফাইল কোড লোড করা যায়নি, অনুগ্রহ করে পুনরায় চেষ্টা করুন', 'error');
+      return;
+    }
+
     navigator.clipboard.writeText(link);
     showToast('প্রোফাইল লিংক কপি করা হয়েছে! (Profile link copied)');
   };

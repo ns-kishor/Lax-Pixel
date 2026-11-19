@@ -150,6 +150,7 @@ interface AppState {
   user: User | null;
   sellerProfile: SellerProfile | null;
   setUser: (user: User | null, profile?: SellerProfile | null) => void;
+  setSellerProfile: (profile: SellerProfile | null) => void;
   logout: () => void;
   initAuth: () => void;
 
@@ -215,7 +216,7 @@ interface AppState {
   sellerStats: { productCount: number; totalRevenue: number; totalSales?: number; totalOrders: number; pendingOrders: number; confirmedOrders?: number; conversionRate?: number } | null;
   sellerProducts: Product[];
   sellerOrders: Order[];
-  setSellerData: (data: { stats: AppState['sellerStats']; products: Product[]; orders: Order[] }) => void;
+  setSellerData: (data: { stats?: AppState['sellerStats']; products?: Product[]; orders?: Order[]; profile?: SellerProfile | null }) => void;
 
   // Add to cart animation
   justAddedToCart: string | null;
@@ -251,11 +252,12 @@ export const useStore = create<AppState>((set, get) => ({
   user: null,
   sellerProfile: null,
   setUser: (user, profile) => {
+    const currentProfile = profile !== undefined ? profile : get().sellerProfile;
     if (typeof window !== 'undefined') {
       try {
         if (user) {
           localStorage.setItem('lp-user', JSON.stringify(user));
-          if (profile) localStorage.setItem('lp-seller-profile', JSON.stringify(profile));
+          if (currentProfile) localStorage.setItem('lp-seller-profile', JSON.stringify(currentProfile));
           else localStorage.removeItem('lp-seller-profile');
         } else {
           localStorage.removeItem('lp-user');
@@ -265,7 +267,18 @@ export const useStore = create<AppState>((set, get) => ({
         console.error('Failed to save user session to localStorage:', e);
       }
     }
-    set({ user, sellerProfile: profile || null });
+    set({ user, sellerProfile: currentProfile || null });
+  },
+  setSellerProfile: (profile) => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (profile) localStorage.setItem('lp-seller-profile', JSON.stringify(profile));
+        else localStorage.removeItem('lp-seller-profile');
+      } catch (e) {
+        console.error('Failed to save seller profile to localStorage:', e);
+      }
+    }
+    set({ sellerProfile: profile });
   },
   logout: () => {
     if (typeof window !== 'undefined') {
@@ -406,7 +419,16 @@ export const useStore = create<AppState>((set, get) => ({
   sellerStats: null,
   sellerProducts: [],
   sellerOrders: [],
-  setSellerData: (data) => set({ sellerStats: data.stats, sellerProducts: data.products, sellerOrders: data.orders }),
+  setSellerData: (data) => {
+    if (data?.profile) {
+      get().setSellerProfile(data.profile);
+    }
+    set({
+      sellerStats: data?.stats || null,
+      sellerProducts: data?.products || [],
+      sellerOrders: data?.orders || [],
+    });
+  },
 
   // Just added
   justAddedToCart: null,
@@ -440,4 +462,36 @@ export function safeImgSrc(src: string | undefined | null): string {
   const clean = String(src).replace(/[\r\n\t]+/g, '').trim();
   if (clean.length > 0) return clean;
   return '/products/hero.png';
+}
+
+/**
+ * Standardized Public Seller Store URL generator.
+ * Format: [origin] / [seller-shop-name-slug] / [9-digit-seller-code]
+ * Example: https://laxpixel.com/ns-shop/572619968
+ */
+export function buildSellerShareUrl(
+  user?: { id?: string; name?: string } | null,
+  profile?: { companyName?: string; sellerCode?: string } | null,
+  fallbackName?: string
+): string {
+  if (typeof window === 'undefined') return '';
+
+  const rawName =
+    profile?.companyName?.trim() ||
+    fallbackName?.trim() ||
+    user?.name?.trim() ||
+    'store';
+
+  // Slugify shop name cleanly: handle Unicode letters/numbers, spaces, and punctuation
+  const shopSlug =
+    rawName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || 'store';
+
+  const code = profile?.sellerCode;
+  if (!code) return '';
+
+  return `${window.location.origin}/${shopSlug}/${code}`;
 }

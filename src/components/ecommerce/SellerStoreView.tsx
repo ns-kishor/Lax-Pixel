@@ -72,8 +72,12 @@ export function SellerStoreView() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'popular'>('featured');
 
-  // Identify sellerId from store or URL
-  const sellerId = selectedSellerId || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
+  // Identify sellerId from store or URL (safely handling trailing slashes and slug/code paths)
+  const sellerId = selectedSellerId || (() => {
+    if (typeof window === 'undefined') return '';
+    const cleanSegments = window.location.pathname.split('/').filter(Boolean);
+    return cleanSegments[cleanSegments.length - 1] || '';
+  })();
 
   useEffect(() => {
     if (!sellerId) {

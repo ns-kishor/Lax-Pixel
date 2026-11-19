@@ -67,8 +67,17 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   const params = new URLSearchParams(search);
   const result: ParsedRoute = { view: 'home', params: {} };
 
+  const rawPath = typeof pathname === 'string' ? pathname : '';
+  const decodedPath = (() => {
+    try {
+      return decodeURIComponent(rawPath).replace(/\/+$/, '') || '/';
+    } catch {
+      return rawPath.replace(/\/+$/, '') || '/';
+    }
+  })();
+
   // /product/[id]
-  const productMatch = pathname.match(/^\/product\/([^/]+)$/);
+  const productMatch = decodedPath.match(/^\/product\/([^/]+)$/);
   if (productMatch) {
     result.view = 'product';
     result.params.id = productMatch[1];
@@ -76,7 +85,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   }
 
   // /order/[id]
-  const orderMatch = pathname.match(/^\/order\/([^/]+)$/);
+  const orderMatch = decodedPath.match(/^\/order\/([^/]+)$/);
   if (orderMatch) {
     result.view = 'order-detail';
     result.params.id = orderMatch[1];
@@ -84,7 +93,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   }
 
   // /page/[slug]
-  const pageMatch = pathname.match(/^\/page\/([^/]+)$/);
+  const pageMatch = decodedPath.match(/^\/page\/([^/]+)$/);
   if (pageMatch) {
     result.view = 'content';
     result.params.slug = pageMatch[1];
@@ -92,7 +101,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   }
 
   // /store/[id] or /seller-store/[id]
-  const storeMatch = pathname.match(/^\/(?:store|seller-store)\/([^/]+)$/);
+  const storeMatch = decodedPath.match(/^\/(?:store|seller-store)\/([^/]+)$/);
   if (storeMatch) {
     result.view = 'seller-store';
     result.params.id = storeMatch[1];
@@ -100,7 +109,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
   }
 
   // /[shop-name]/[9-digit-code] custom seller profile link
-  const customSellerMatch = pathname.match(/^\/([a-zA-Z0-9_-]+)\/(\d{9})$/);
+  const customSellerMatch = decodedPath.match(/^\/([^/]+)\/(\d{9})$/);
   if (customSellerMatch) {
     result.view = 'seller-store';
     result.params.id = customSellerMatch[2];
@@ -124,8 +133,9 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
     '/admin': 'admin',
   };
 
-  if (viewMap[pathname]) {
-    result.view = viewMap[pathname];
+  const matchedView = viewMap[decodedPath] || viewMap[rawPath];
+  if (matchedView) {
+    result.view = matchedView;
     if (params.has('category')) result.params.category = params.get('category')!;
     if (params.has('q')) result.params.q = params.get('q')!;
     if (params.has('sort')) result.params.sort = params.get('sort')!;
