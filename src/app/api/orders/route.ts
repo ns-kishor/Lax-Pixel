@@ -153,8 +153,13 @@ export async function POST(req: NextRequest) {
     }
 
     const subtotal = verifiedOrderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const shippingCost = subtotal > 2000 ? 0 : 50;
-    const tax = subtotal * 0.01;
+
+    // Dynamic Shipping fee from Admin Settings (defaults to 150 BDT)
+    const shippingSetting = await db.siteSetting.findUnique({ where: { key: 'shipping_fee' } });
+    const shippingCost = shippingSetting?.value !== undefined && !isNaN(parseFloat(shippingSetting.value))
+      ? parseFloat(shippingSetting.value)
+      : 150;
+    const tax = 0; // Tax is removed per requirement
 
     // Validate and calculate coupon discount
     let appliedCouponRecord: any = null;
@@ -207,7 +212,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const totalAmount = Math.max(0, subtotal - validatedCouponDiscount + shippingCost + tax);
+    const totalAmount = Math.max(0, subtotal - validatedCouponDiscount + shippingCost);
     const orderNumber = `NOR-${Date.now().toString(36).toUpperCase()}`;
     const trackingCode = generateTrackingCode();
 

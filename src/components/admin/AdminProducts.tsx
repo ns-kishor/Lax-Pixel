@@ -226,8 +226,8 @@ export function AdminProducts() {
                     <td className="p-3 text-xs font-medium max-w-[180px] truncate">{p.name}</td>
                     <td className="p-3 text-xs font-mono text-muted-foreground hidden lg:table-cell">{p.productCode || '—'}</td>
                     <td className="p-3 text-xs">
-                      <span>{p.price.toLocaleString()}</span>
-                      {p.comparePrice && p.comparePrice > p.price && <span className="text-muted-foreground line-through ml-1.5 text-[10px]">{p.comparePrice.toLocaleString()}</span>}
+                      <span>৳ {p.price.toLocaleString()}</span>
+                      {p.comparePrice && p.comparePrice > p.price && <span className="text-muted-foreground line-through ml-1.5 text-[10px]">৳ {p.comparePrice.toLocaleString()}</span>}
                     </td>
                     <td className="p-3 text-xs hidden md:table-cell"><span className={p.stock <= 5 ? 'text-destructive font-medium' : ''}>{p.stock}</span></td>
                     <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{p.category?.name || '—'}</td>
@@ -269,11 +269,11 @@ export function AdminProducts() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Base Price *</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Base Price (৳) *</Label>
                 <Input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Sale Price</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Sale Price (৳)</Label>
                 <Input type="number" value={form.comparePrice} onChange={e => setForm({ ...form, comparePrice: e.target.value })} className="h-9 bg-secondary border-border text-sm" />
               </div>
               <div className="space-y-1.5">

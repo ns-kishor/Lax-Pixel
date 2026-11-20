@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
       if (coupon.minOrderAmount > 0 && eligibleAmount < coupon.minOrderAmount) {
         return NextResponse.json({
-          error: `এই কুপনটি ব্যবহারের জন্য ন্যূনতম $${coupon.minOrderAmount} টাকার প্রোডাক্ট অর্ডার করতে হবে।`,
+          error: `এই কুপনটি ব্যবহারের জন্য ন্যূনতম ৳${coupon.minOrderAmount} টাকার প্রোডাক্ট অর্ডার করতে হবে।`,
         }, { status: 400 });
       }
     }

@@ -687,7 +687,7 @@ export function SellerDashboard() {
   };
 
   const statCards = [
-    { label: 'Total Revenue', value: `$${(stats.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-green-500' },
+    { label: 'Total Revenue', value: `৳ ${(stats.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-green-500' },
     { label: 'Items Sold', value: (stats.totalSales || 0).toLocaleString(), icon: TrendingUp, color: 'text-blue-500' },
     { label: 'Products', value: stats.productCount || 0, icon: Package, color: 'text-purple-500' },
     { label: 'Orders', value: `${stats.totalOrders || 0} (${stats.pendingOrders || 0} Pending)`, icon: Clock, color: 'text-amber-500' },
@@ -1358,7 +1358,7 @@ export function SellerDashboard() {
               </div>
 
               <div>
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price ($) *</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price (৳) *</Label>
                 <Input
                   type="number"
                   value={newProduct.price}
@@ -1368,7 +1368,7 @@ export function SellerDashboard() {
               </div>
 
               <div>
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Compare Price ($)</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Compare Price (৳)</Label>
                 <Input
                   type="number"
                   value={newProduct.comparePrice}
@@ -1497,8 +1497,8 @@ export function SellerDashboard() {
                         <p className="text-[10px] tracking-wider uppercase text-muted-foreground">{p.category?.name}</p>
                         <h4 className="text-sm font-medium tracking-wide truncate mt-0.5">{p.name}</h4>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-semibold">${p.price.toLocaleString()}</span>
-                          {p.comparePrice && <span className="text-xs text-muted-foreground line-through">${p.comparePrice.toLocaleString()}</span>}
+                          <span className="text-sm font-semibold">৳ {p.price.toLocaleString()}</span>
+                          {p.comparePrice && <span className="text-xs text-muted-foreground line-through">৳ {p.comparePrice.toLocaleString()}</span>}
                         </div>
                       </div>
                       <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
@@ -1565,7 +1565,7 @@ export function SellerDashboard() {
                               </span>
                             </td>
                             <td className="p-3 text-right font-semibold text-green-500">
-                              ${(order.sellerTotal || 0).toLocaleString()}
+                              ৳ {(order.sellerTotal || 0).toLocaleString()}
                             </td>
                             <td className="p-3 text-center">
                               {proof ? (
@@ -1710,7 +1710,7 @@ export function SellerDashboard() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Total:</span>
-                              <span className="font-semibold text-green-500">${(p.amount || p.orderTotal || 0).toLocaleString()}</span>
+                              <span className="font-semibold text-green-500">৳ {(p.amount || p.orderTotal || 0).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Date:</span>
@@ -1878,10 +1878,10 @@ export function SellerDashboard() {
                               {c.code}
                             </td>
                             <td className="p-3 font-semibold text-green-600 dark:text-green-400">
-                              {c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `$${c.discountValue} OFF`}
+                              {c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `৳${c.discountValue} OFF`}
                             </td>
                             <td className="p-3 text-muted-foreground">
-                              {c.minOrderAmount ? `$${c.minOrderAmount}` : 'কোনো শর্ত নেই'}
+                              {c.minOrderAmount ? `৳${c.minOrderAmount}` : 'কোনো শর্ত নেই'}
                             </td>
                             <td className="p-3 text-muted-foreground font-mono">
                               {c.usedCount || 0} {c.maxUses ? `/ ${c.maxUses}` : 'বার'}
@@ -2347,17 +2347,17 @@ export function SellerDashboard() {
                           ) : null}
                           <div>
                             <p className="font-medium text-foreground">{item.productName}</p>
-                            <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} × ${item.price}</p>
+                            <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} × ৳{item.price}</p>
                           </div>
                         </div>
-                        <span className="font-medium">${(item.price * item.quantity).toLocaleString()}</span>
+                        <span className="font-medium">৳{(item.price * item.quantity).toLocaleString()}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="mt-3 flex items-center justify-between p-3 bg-secondary/40 rounded-xl text-xs">
                     <span className="text-muted-foreground">Your Total for this Order:</span>
-                    <span className="text-sm font-semibold text-green-500">${(selectedSellerOrder.sellerTotal || 0).toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-green-500">৳{(selectedSellerOrder.sellerTotal || 0).toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -2406,12 +2406,12 @@ export function SellerDashboard() {
                     className="mt-1.5 h-10 w-full px-2.5 bg-secondary/50 border border-border rounded-md text-xs font-medium"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED">Fixed Amount ($)</option>
+                    <option value="FIXED">Fixed Amount (৳)</option>
                   </select>
                 </div>
                 <div>
                   <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                    পরিমাণ {couponForm.discountType === 'PERCENTAGE' ? '(%)' : '($)'} *
+                    পরিমাণ {couponForm.discountType === 'PERCENTAGE' ? '(%)' : '(৳)'} *
                   </Label>
                   <Input
                     required
@@ -2428,7 +2428,7 @@ export function SellerDashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মিনিমাম অর্ডার ($)</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মিনিমাম অর্ডার (৳)</Label>
                   <Input
                     type="number"
                     min="0"

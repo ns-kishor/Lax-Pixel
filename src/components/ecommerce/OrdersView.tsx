@@ -84,7 +84,7 @@ export function OrdersView() {
                     <div className="flex items-center gap-4">
                       <Badge variant="outline" className={`text-[10px] tracking-wider ${statusColors[order.status] || ''}`}>{order.status}</Badge>
                       {order.paymentStatus === 'PENDING_VERIFICATION' && <Badge variant="outline" className="text-[10px] tracking-wider bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Payment Pending</Badge>}
-                      <span className="text-sm font-light">${(order.totalAmount || 0).toLocaleString()}</span>
+                      <span className="text-sm font-light">৳ {(order.totalAmount || 0).toLocaleString()}</span>
                       <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={(e) => { e.stopPropagation(); selectOrder(order); }}><Eye className="w-3.5 h-3.5" />View</Button>
                     </div>
                   </div>
@@ -201,7 +201,7 @@ export function OrderDetailView() {
                   <p className="text-sm font-medium">{item.productName}</p>
                   <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
-                <span className="text-sm">${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
+                <span className="text-sm">৳ {((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -220,10 +220,9 @@ export function OrderDetailView() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span>{order.paymentMethod}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className={order.paymentStatus === 'PENDING_VERIFICATION' ? 'text-yellow-500' : ''}>{order.paymentStatus?.replace(/_/g, ' ')}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${(order.subtotal || 0).toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${order.shippingCost || 0}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${(order.tax || 0).toFixed(2)}</span></div>
-                <div className="flex justify-between font-medium pt-2 border-t border-border"><span>Total</span><span>${(order.totalAmount || 0).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>৳ {(order.subtotal || 0).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>৳ {order.shippingCost || 0}</span></div>
+                <div className="flex justify-between font-medium pt-2 border-t border-border"><span>Total</span><span>৳ {(order.totalAmount || 0).toLocaleString()}</span></div>
               </div>
             </div>
           </div>

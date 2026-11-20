@@ -279,7 +279,7 @@ export function AdminHeroSlider() {
                         })()}
                         <div>
                           <p className="text-xs font-medium">{slide.product?.name || getProductName(slide.productId)}</p>
-                          <p className="text-[10px] text-muted-foreground">${slide.product?.price || 0}</p>
+                          <p className="text-[10px] text-muted-foreground">৳ {slide.product?.price || 0}</p>
                         </div>
                       </div>
                     </td>
@@ -366,7 +366,7 @@ export function AdminHeroSlider() {
               >
                 <option value="">Select a product...</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} — ${p.price}</option>
+                  <option key={p.id} value={p.id}>{p.name} — ৳ {p.price}</option>
                 ))}
               </select>
             </div>

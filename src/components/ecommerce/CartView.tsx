@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -67,6 +67,19 @@ export function CartView() {
     showToast('Cart cleared', 'info');
   };
 
+  const [shippingFee, setShippingFee] = useState<number>(150);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.shipping_fee !== undefined && !isNaN(parseFloat(d.shipping_fee))) {
+          setShippingFee(parseFloat(d.shipping_fee));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Filter items selected for checkout
   const selectedItems = cart.filter((i) => selectedCartItemIds.includes(i.id));
   const selectedCount = selectedItems.length;
@@ -74,9 +87,8 @@ export function CartView() {
 
   // Calculation based ONLY on selected items
   const subtotal = selectedItems.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
-  const shipping = selectedCount === 0 ? 0 : (subtotal > 2000 ? 0 : 50);
-  const tax = selectedCount === 0 ? 0 : subtotal * 0.01;
-  const total = subtotal + shipping + tax;
+  const shipping = selectedCount === 0 ? 0 : shippingFee;
+  const total = subtotal + shipping;
 
   const handleProceedToCheckout = () => {
     if (selectedCount === 0) {
@@ -265,10 +277,10 @@ export function CartView() {
 
                       <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
                         <p className="text-sm font-light">
-                          ${((item.product?.price || 0) * item.quantity).toLocaleString()}
+                          ৳ {((item.product?.price || 0) * item.quantity).toLocaleString()}
                           {item.quantity > 1 && (
                             <span className="text-xs text-muted-foreground ml-1.5 font-normal">
-                              (${item.product?.price?.toLocaleString()} each)
+                              (৳ {item.product?.price?.toLocaleString()} each)
                             </span>
                           )}
                         </p>
@@ -321,7 +333,7 @@ export function CartView() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal ({selectedCount} items)</span>
-                    <span>${subtotal.toLocaleString()}</span>
+                    <span>৳ {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
@@ -329,13 +341,9 @@ export function CartView() {
                       {shipping === 0 ? (
                         <span className="text-green-500 font-medium">Free</span>
                       ) : (
-                        `$${shipping}`
+                        `৳ ${shipping.toLocaleString()}`
                       )}
                     </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span>${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               )}
@@ -344,14 +352,14 @@ export function CartView() {
 
               <div className="flex justify-between text-lg font-light">
                 <span>Total</span>
-                <span>${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>৳ {total.toLocaleString()}</span>
               </div>
 
-              {selectedCount > 0 && shipping > 0 && (
+              {selectedCount > 0 && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-background/60 text-[11px] text-muted-foreground">
                   <Sparkles className="w-3.5 h-3.5 shrink-0 text-foreground" />
                   <span>
-                    Add ${(2000 - subtotal).toLocaleString()} more for free express shipping
+                    সারাদেশে হোম ডেলিভারি ও দ্রুত শিপিং সুবিধা
                   </span>
                 </div>
               )}
@@ -382,7 +390,7 @@ export function CartView() {
                   {selectedCount} item{selectedCount === 1 ? '' : 's'} selected
                 </p>
                 <p className="text-base font-medium text-foreground">
-                  ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  ৳ {total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </p>
               </div>
 

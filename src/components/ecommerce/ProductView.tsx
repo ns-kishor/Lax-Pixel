@@ -95,9 +95,9 @@ export function ProductView() {
             </div>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-light">${product.price.toLocaleString()}</span>
+              <span className="text-3xl font-light">৳ {product.price.toLocaleString()}</span>
               {product.comparePrice && (
-                <span className="text-lg text-muted-foreground line-through">${product.comparePrice.toLocaleString()}</span>
+                <span className="text-lg text-muted-foreground line-through">৳ {product.comparePrice.toLocaleString()}</span>
               )}
             </div>
 
@@ -165,15 +165,15 @@ export function ProductView() {
               </div>
 
               <Button className="w-full h-12 bg-foreground text-background text-xs tracking-[0.2em] uppercase rounded-lg hover:bg-foreground/90 font-medium" onClick={buyNow}>
-                <Zap className="w-4 h-4 mr-2" /> Buy Now — ${((product.price * qty) || 0).toLocaleString()}
+                <Zap className="w-4 h-4 mr-2" /> Buy Now — ৳ {((product.price * qty) || 0).toLocaleString()}
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'} • Free shipping on orders over $2,000</p>
+            <p className="text-xs text-muted-foreground">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'} • Fast express shipping across Bangladesh</p>
 
             {/* Guarantees */}
             <div className="grid grid-cols-3 gap-3 pt-4">
-              {[{ icon: Truck, label: 'Free Shipping' }, { icon: Shield, label: 'Authenticity' }, { icon: RotateCcw, label: '30-Day Returns' }].map((g, i) => (
+              {[{ icon: Truck, label: 'Express Delivery' }, { icon: Shield, label: 'Authenticity' }, { icon: RotateCcw, label: '7-Day Return' }].map((g, i) => (
                 <div key={i} className="text-center p-3 rounded-lg bg-secondary/50">
                   <g.icon className="w-4 h-4 mx-auto mb-1.5 text-muted-foreground" />
                   <span className="text-[10px] text-muted-foreground tracking-wide">{g.label}</span>
@@ -227,7 +227,7 @@ export function ProductView() {
             <div className="min-w-0">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Price</span>
               <span className="text-base font-semibold text-foreground">
-                ${((product.price * qty) || 0).toLocaleString()}
+                ৳ {((product.price * qty) || 0).toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">

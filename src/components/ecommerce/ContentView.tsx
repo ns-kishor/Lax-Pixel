@@ -31,7 +31,7 @@ const content: Record<string, { title: string; sections: { heading: string; body
       },
       {
         heading: 'What is the shipping policy?',
-        body: 'We offer free express shipping on all orders over $2,000. Standard orders are shipped within 1-3 business days. Express orders are delivered within 2-5 business days depending on your location. All orders include real-time tracking.',
+        body: 'We offer fast doorstep express shipping across Bangladesh. Standard orders are shipped within 1-3 business days. All orders include real-time tracking.',
       },
       {
         heading: 'How do I track my order?',

@@ -278,11 +278,11 @@ export function ShopView() {
                   </h3>
                   <div className="flex items-baseline gap-2 pt-0.5">
                     <span className="text-xs sm:text-sm font-light text-foreground">
-                      ${product.price.toLocaleString()}
+                      ৳ {product.price.toLocaleString()}
                     </span>
                     {product.comparePrice && (
                       <span className="text-[11px] text-muted-foreground line-through">
-                        ${product.comparePrice.toLocaleString()}
+                        ৳ {product.comparePrice.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -326,8 +326,8 @@ export function ShopView() {
                   <h3 className="text-sm font-medium tracking-wide mt-0.5">{product.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-sm font-light">${product.price.toLocaleString()}</span>
-                    {product.comparePrice && <span className="text-xs text-muted-foreground line-through">${product.comparePrice.toLocaleString()}</span>}
+                    <span className="text-sm font-light">৳ {product.price.toLocaleString()}</span>
+                    {product.comparePrice && <span className="text-xs text-muted-foreground line-through">৳ {product.comparePrice.toLocaleString()}</span>}
                     <span className="text-xs text-muted-foreground">{product.reviewCount} reviews</span>
                   </div>
                 </div>

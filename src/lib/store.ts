@@ -464,6 +464,12 @@ export function safeImgSrc(src: string | undefined | null): string {
   return '/products/hero.png';
 }
 
+/** Standardized Bangladeshi Taka (৳) price formatter */
+export function formatPrice(amount: number | string | undefined | null): string {
+  const num = typeof amount === 'number' ? amount : parseFloat(String(amount || 0)) || 0;
+  return `৳ ${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 /**
  * Standardized Public Seller Store URL generator.
  * Format: [origin] / [seller-shop-name-slug] / [9-digit-seller-code]

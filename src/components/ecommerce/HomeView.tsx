@@ -163,11 +163,11 @@ function ProductCard({
 
         <div className="flex items-baseline gap-2 pt-0.5">
           <span className="text-xs sm:text-sm font-light text-foreground">
-            ${product.price.toLocaleString()}
+            ৳ {product.price.toLocaleString()}
           </span>
           {product.comparePrice && (
             <span className="text-[11px] text-muted-foreground line-through">
-              ${product.comparePrice.toLocaleString()}
+              ৳ {product.comparePrice.toLocaleString()}
             </span>
           )}
         </div>
@@ -319,11 +319,11 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
                   <span className="text-muted-foreground/30">•</span>
                   <div className="flex items-center gap-2">
                     <span className="text-base sm:text-lg font-medium">
-                      ${slide.price.toLocaleString()}
+                      ৳ {slide.price.toLocaleString()}
                     </span>
                     {slide.comparePrice && (
                       <span className="text-xs text-muted-foreground line-through">
-                        ${slide.comparePrice.toLocaleString()}
+                        ৳ {slide.comparePrice.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -414,7 +414,7 @@ export function HomeView() {
   }, [products]);
 
   const features = [
-    { icon: Truck, title: 'Free Express Shipping', desc: 'On orders over $2,000' },
+    { icon: Truck, title: 'Express Fast Shipping', desc: 'Doorstep delivery across Bangladesh' },
     { icon: Shield, title: 'Authenticity Guaranteed', desc: 'Every piece verified' },
     { icon: Sparkles, title: 'Quality Curated', desc: 'Handpicked for your style' },
     { icon: Eye, title: 'Real-time Tracking', desc: 'From warehouse to door' },

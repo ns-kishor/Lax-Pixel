@@ -155,7 +155,7 @@ Email: ${proof.user.email}
 ${proof.user.phone ? `Phone: ${proof.user.phone}` : ''}
 
 Payment Method: ${proof.paymentMethod.name}
-Amount: $${proof.amount.toFixed(2)}
+Amount: ৳ ${proof.amount.toFixed(2)}
 Status: ${proof.status}
 ${proof.verifiedAt ? `Verified At: ${new Date(proof.verifiedAt).toLocaleDateString()}` : ''}
 ${proof.notes ? `Notes: ${proof.notes}` : ''}
@@ -227,7 +227,7 @@ ${'='.repeat(50)}
                     <td className="p-3 font-mono text-xs font-medium">{proof.order.orderNumber}</td>
                     <td className="p-3 text-xs">{proof.user.name}</td>
                     <td className="p-3 text-xs text-muted-foreground">{proof.paymentMethod.name}</td>
-                    <td className="p-3 text-xs font-medium">${proof.amount.toFixed(2)}</td>
+                    <td className="p-3 text-xs font-medium">৳ {proof.amount.toFixed(2)}</td>
                     <td className="p-3"><StatusBadge status={proof.status} /></td>
                     <td className="p-3">
                       {proof.proofImage ? (
@@ -349,7 +349,7 @@ ${'='.repeat(50)}
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] tracking-wider uppercase text-muted-foreground">Amount</p>
-                  <p className="text-sm font-medium">${detailProof.amount.toFixed(2)}</p>
+                  <p className="text-sm font-medium">৳ {detailProof.amount.toFixed(2)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] tracking-wider uppercase text-muted-foreground">Status</p>

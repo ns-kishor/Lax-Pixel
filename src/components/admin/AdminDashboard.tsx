@@ -96,7 +96,7 @@ export function AdminDashboard() {
               <s.icon className="w-5 h-5 text-muted-foreground" />
             </div>
             <p className="text-2xl font-light">
-              {s.format ? `$${s.value.toLocaleString()}` : s.value.toLocaleString()}
+              {s.format ? `৳ ${s.value.toLocaleString()}` : s.value.toLocaleString()}
             </p>
             <p className="text-[10px] tracking-wider uppercase text-muted-foreground mt-1">{s.label}</p>
           </motion.div>
@@ -127,7 +127,7 @@ export function AdminDashboard() {
                     <TableRow key={order.id} className="border-border">
                       <TableCell className="text-xs font-mono">{order.orderNumber}</TableCell>
                       <TableCell className="text-xs">{order.userName}</TableCell>
-                      <TableCell className="text-xs">${order.totalAmount.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs">৳ {order.totalAmount.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge variant={badge.variant} className={`text-[10px] ${badge.className}`}>
                           {order.status}

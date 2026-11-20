@@ -56,11 +56,23 @@ export function CheckoutView() {
     discountAmount: number;
   } | null>(null);
 
+  const [shippingFee, setShippingFee] = useState<number>(150);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.shipping_fee !== undefined && !isNaN(parseFloat(d.shipping_fee))) {
+          setShippingFee(parseFloat(d.shipping_fee));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const subtotal = checkoutItems.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
   const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const shipping = subtotal > 2000 ? 0 : 50;
-  const tax = Math.max(0, (subtotal - couponDiscount) * 0.01);
-  const total = Math.max(0, subtotal - couponDiscount + shipping + tax);
+  const shipping = checkoutItems.length > 0 ? shippingFee : 0;
+  const total = Math.max(0, subtotal - couponDiscount + shipping);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -443,7 +455,6 @@ export function CheckoutView() {
               </div>
             )}
             <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? 'Free' : `৳ ${shipping}`}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>৳ {tax.toFixed(2)}</span></div>
             <Separator className="bg-border" />
             <div className="flex justify-between text-lg font-light"><span>Total</span><span>৳ {total.toFixed(2)}</span></div>
           </div>
@@ -667,7 +678,6 @@ export function CheckoutView() {
                   </div>
                 )}
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? 'Free' : `৳ ${shipping}`}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>৳ {tax.toFixed(2)}</span></div>
               </div>
               <Separator className="bg-border" />
               <div className="flex justify-between text-lg font-light"><span>Total</span><span>৳ {total.toFixed(2)}</span></div>

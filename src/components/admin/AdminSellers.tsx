@@ -515,10 +515,10 @@ export function AdminSellers() {
                               ) : null}
                               <span className="truncate max-w-[180px] font-medium">{p.name}</span>
                             </td>
-                            <td className="p-2 text-right">${p.price}</td>
+                            <td className="p-2 text-right">৳ {p.price}</td>
                             <td className="p-2 text-center">{p.stock}</td>
                             <td className="p-2 text-center font-medium">{p.salesCount || 0}</td>
-                            <td className="p-2 text-right font-medium text-green-500">${p.revenue.toLocaleString()}</td>
+                            <td className="p-2 text-right font-medium text-green-500">৳ {p.revenue.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -537,7 +537,7 @@ export function AdminSellers() {
                     {detailTarget.monthlyRevenue.map(m => (
                       <div key={m.month} className="p-2.5 bg-secondary/40 border border-border rounded-lg">
                         <p className="text-[10px] text-muted-foreground">{m.month}</p>
-                        <p className="text-sm font-medium mt-0.5">${m.revenue.toLocaleString()}</p>
+                        <p className="text-sm font-medium mt-0.5">৳ {m.revenue.toLocaleString()}</p>
                         <p className="text-[10px] text-muted-foreground">{m.sales} units sold</p>
                       </div>
                     ))}

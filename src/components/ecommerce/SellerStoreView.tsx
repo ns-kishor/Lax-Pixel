@@ -514,11 +514,11 @@ export function SellerStoreView() {
                         {/* Price */}
                         <div className="flex items-baseline gap-2 pt-1">
                           <span className="text-base font-light text-foreground">
-                            ${product.price.toLocaleString()}
+                            ৳ {product.price.toLocaleString()}
                           </span>
                           {product.comparePrice && (
                             <span className="text-xs text-muted-foreground line-through">
-                              ${product.comparePrice.toLocaleString()}
+                              ৳ {product.comparePrice.toLocaleString()}
                             </span>
                           )}
                         </div>

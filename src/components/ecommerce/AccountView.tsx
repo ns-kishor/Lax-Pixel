@@ -231,7 +231,7 @@ export function AccountView() {
                       <div className="w-14 h-14 rounded-lg overflow-hidden bg-background relative shrink-0"><Image src={safeImgSrc(w.product.image)} alt={w.product.name} fill className="object-cover" /></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{w.product.name}</p>
-                        <p className="text-xs text-muted-foreground">${w.product.price.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">৳ {w.product.price.toLocaleString()}</p>
                       </div>
                       <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                     </div>
