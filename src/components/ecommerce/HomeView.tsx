@@ -54,7 +54,7 @@ function ProductCard({
       className="group cursor-pointer flex flex-col justify-between"
       onClick={() => selectProduct(product)}
     >
-      <div className="relative img-zoom rounded-xl overflow-hidden bg-secondary aspect-square border border-border shadow-xs group-hover:border-foreground/40 transition-all duration-300">
+      <div className="relative img-zoom rounded-2xl overflow-hidden bg-secondary aspect-square border border-border/40 shadow-xs group-hover:shadow-md group-hover:border-foreground/30 transition-all duration-300">
         {!imgError ? (
           <Image
             src={safeImgSrc(product.image)}
@@ -70,30 +70,37 @@ function ProductCard({
           </div>
         )}
 
-        {/* Badges on top-left - Strict Black & White */}
+        {/* Badges on top-left */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 pointer-events-none">
           {badgeText && (
             <Badge
-              className="text-[9px] tracking-wider font-semibold uppercase px-2 py-0.5 bg-foreground text-background border-0 shadow-xs"
+              className={`text-[9px] tracking-wider font-semibold uppercase px-2 py-0.5 border shadow-xs ${
+                badgeVariant === 'new'
+                  ? 'bg-blue-600/90 text-white border-blue-400/30'
+                  : badgeVariant === 'popular'
+                  ? 'bg-amber-600/90 text-white border-amber-400/30'
+                  : 'bg-foreground text-background border-transparent'
+              }`}
             >
+              {badgeVariant === 'popular' && <Flame className="w-2.5 h-2.5 mr-1 inline fill-current" />}
               {badgeText}
             </Badge>
           )}
           {discount > 0 && (
-            <Badge className="bg-background text-foreground border border-border text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-xs">
+            <Badge className="bg-foreground text-background text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-xs">
               -{discount}%
             </Badge>
           )}
         </div>
 
-        {/* Wishlist button top-right */}
+        {/* Wishlist button top-right (Accessible on all devices) */}
         <button
           onClick={toggleWish}
           aria-label="Wishlist"
-          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center z-10 transition-all duration-200 border border-border shadow-xs ${
+          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center z-10 transition-all duration-200 shadow-sm ${
             isWished
-              ? 'bg-foreground text-background border-foreground'
-              : 'bg-background text-foreground hover:bg-secondary'
+              ? 'bg-foreground text-background'
+              : 'bg-background/80 backdrop-blur-md text-foreground hover:bg-background'
           }`}
         >
           <Heart className={`w-3.5 h-3.5 ${isWished ? 'fill-current' : ''}`} />
@@ -101,27 +108,27 @@ function ProductCard({
 
         {/* Just added to bag banner */}
         {useStore.getState().justAddedToCart === product.id && (
-          <div className="absolute inset-0 bg-background/85 flex items-center justify-center animate-fade-in z-20">
-            <span className="text-[10px] tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-md font-semibold shadow-md">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-xs flex items-center justify-center animate-fade-in z-20">
+            <span className="text-[10px] tracking-widest uppercase bg-foreground text-background px-3 py-1.5 rounded-full font-semibold shadow-md">
               Added to Bag
             </span>
           </div>
         )}
 
-        {/* Mobile Quick Add Button */}
+        {/* Mobile Quick Add Button (Bottom Right - Tap-friendly) */}
         <button
           onClick={addToCart}
           aria-label="Add to Bag"
-          className="lg:hidden absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-background border border-border flex items-center justify-center text-foreground active:scale-90 shadow-sm z-10"
+          className="lg:hidden absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-background/90 backdrop-blur-md border border-border/80 flex items-center justify-center text-foreground active:scale-90 shadow-md z-10"
         >
           <ShoppingBag className="w-4 h-4" />
         </button>
 
         {/* Desktop Hover Action Bar */}
-        <div className="hidden lg:flex absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-2 z-10 bg-gradient-to-t from-background/95 via-background/60 to-transparent">
+        <div className="hidden lg:flex absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-2 z-10 bg-gradient-to-t from-background/90 via-background/60 to-transparent">
           <Button
             size="sm"
-            className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider uppercase hover:bg-foreground/90 rounded-md font-medium shadow-xs"
+            className="flex-1 h-9 bg-foreground text-background text-xs tracking-wider hover:bg-foreground/90 rounded-lg font-medium shadow-sm"
             onClick={addToCart}
           >
             <ShoppingBag className="w-3.5 h-3.5 mr-1.5" /> Add to Bag
@@ -416,37 +423,27 @@ export function HomeView() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative pt-[110px] sm:pt-[130px] pb-12 lg:pb-16 overflow-hidden bg-background">
+      <section className="relative pt-[104px] sm:pt-[120px] pb-12 lg:pb-16 overflow-hidden bg-background">
+        <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
-          {/* Hero Editorial Header */}
-          <div className="mb-8 lg:mb-10 text-center max-w-3xl mx-auto">
-            <p className="text-[10px] sm:text-[11px] tracking-[0.25em] uppercase text-muted-foreground font-semibold mb-2.5">
-              Premium Fashion & Lifestyle Marketplace
-            </p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground uppercase leading-[1.1]">
-              Style That Speaks. <span className="font-semibold block sm:inline">Quality That Lasts.</span>
-            </h1>
-            <p className="mt-3 text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl mx-auto font-light">
-              Discover thoughtfully curated fashion and lifestyle essentials, selected to elevate your everyday style.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
             {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.8 }}
               className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5 order-2 lg:order-1"
             >
-              {/* 2 Guarantee/Feature Cards */}
+
+              {/* 2 Guarantee/Feature Cards (Responsive 1-col on phone / 2-col on tablet / 1-col on desktop) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4 flex-1">
                 {/* Card 1: Delivery All Over Bangladesh */}
-                <div className="group relative rounded-xl border border-border bg-card p-5 sm:p-6 shadow-xs hover:border-foreground/30 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
                   <div className="flex flex-col items-center text-center gap-3 w-full">
                     {/* Top Middle Icon */}
-                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-secondary border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 mx-auto">
-                      <Truck className="w-6 h-6 text-foreground stroke-[1.8]" />
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs mx-auto">
+                      <Truck className="w-6 h-6 text-foreground" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
                     {/* Headline Below Icon */}
                     <div className="flex flex-col items-center justify-center gap-1.5">
@@ -454,23 +451,24 @@ export function HomeView() {
                         Delivery All Over Bangladesh
                       </h3>
                       <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                        64 Districts • ৳150 Doorstep
+                        64 Districts
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
-                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground" /> Nationwide Coverage</span>
-                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground" /> Express Dispatch</span>
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Nationwide Coverage</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Express Dispatch</span>
                   </div>
                 </div>
 
                 {/* Card 2: Easy Exchange Available */}
-                <div className="group relative rounded-xl border border-border bg-card p-5 sm:p-6 shadow-xs hover:border-foreground/30 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
+                <div className="group relative rounded-2xl border border-border bg-card/80 backdrop-blur-md p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-foreground/40 transition-all duration-300 flex flex-col justify-between flex-1 items-center text-center">
                   <div className="flex flex-col items-center text-center gap-3 w-full">
                     {/* Top Middle Icon */}
-                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-secondary border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 mx-auto">
-                      <ArrowLeftRight className="w-6 h-6 text-foreground stroke-[1.8]" />
+                    <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center text-foreground group-hover:scale-105 transition-all duration-300 shadow-xs mx-auto">
+                      <ArrowLeftRight className="w-6 h-6 text-foreground" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-foreground ring-2 ring-background" />
                     </div>
                     {/* Headline Below Icon */}
                     <div className="flex flex-col items-center justify-center gap-1.5">
@@ -478,23 +476,23 @@ export function HomeView() {
                         Easy Exchange Available
                       </h3>
                       <Badge variant="secondary" className="text-[10px] tracking-wider uppercase border border-border bg-secondary text-foreground shrink-0 font-medium px-2.5 py-0.5">
-                        7-Day Hassle-Free Policy
+                        7-Day Policy
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
-                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground" /> Seamless Replacement</span>
-                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground" /> 100% Peace of Mind</span>
+                  <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground font-light w-full">
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Seamless Replacement</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-foreground/70" /> Zero Hassle</span>
                   </div>
                 </div>
               </div>
 
               {/* CTA Buttons */}
-              <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3 pt-1">
+              <div className="shrink-0 flex flex-row items-center gap-3">
                 <Button
                   size="lg"
-                  className="w-full sm:flex-1 h-12 px-6 bg-foreground text-background text-xs tracking-[0.16em] uppercase hover:bg-foreground/90 rounded-md font-medium shadow-xs transition-all"
+                  className="flex-1 h-12 px-6 bg-foreground text-background text-xs tracking-[0.16em] uppercase hover:bg-foreground/90 rounded-xl font-medium shadow-sm hover:shadow-md transition-all"
                   onClick={() => setView('shop')}
                 >
                   Explore Collection <ArrowRight className="w-3.5 h-3.5 ml-2" />
@@ -502,15 +500,10 @@ export function HomeView() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:flex-1 h-12 px-6 text-xs tracking-[0.16em] uppercase border-border hover:bg-foreground hover:text-background rounded-md font-medium transition-all"
-                  onClick={() => {
-                    useStore.getState().setShopCategory('');
-                    useStore.getState().setSearchQuery('');
-                    useStore.getState().setShopSort('createdAt');
-                    setView('shop', { sort: 'createdAt' });
-                  }}
+                  className="flex-1 h-12 px-6 text-xs tracking-[0.16em] uppercase border-border hover:bg-secondary rounded-xl font-medium transition-all"
+                  onClick={() => setView('shop')}
                 >
-                  Shop New Arrivals
+                  Start Shopping
                 </Button>
               </div>
             </motion.div>
@@ -531,58 +524,20 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* Trust & Shopping Benefits */}
-      <section className="border-y border-border bg-secondary/40">
-        <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-          <div className="flex items-center gap-3 p-2.5 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
-              <Truck className="w-4 h-4 text-foreground stroke-[1.8]" />
+      {/* Features */}
+      <section className="border-y border-border/80 bg-secondary/20">
+        <div className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 xl:gap-8">
+          {features.map((f, i) => (
+            <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-secondary/40 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0 shadow-xs">
+                <f.icon className="w-4 h-4 text-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium tracking-tight text-foreground truncate">{f.title}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{f.desc}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold tracking-tight text-foreground truncate">Nationwide Delivery</p>
-              <p className="text-[11px] text-muted-foreground truncate">৳150 Doorstep across BD</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-2.5 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
-              <ArrowLeftRight className="w-4 h-4 text-foreground stroke-[1.8]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold tracking-tight text-foreground truncate">7-Day Exchange Policy</p>
-              <p className="text-[11px] text-muted-foreground truncate">Hassle-free replacement</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-2.5 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
-              <Shield className="w-4 h-4 text-foreground stroke-[1.8]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold tracking-tight text-foreground truncate">100% Secure Shopping</p>
-              <p className="text-[11px] text-muted-foreground truncate">COD & Verified Payments</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-2.5 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 text-foreground stroke-[1.8]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold tracking-tight text-foreground truncate">Curated Quality</p>
-              <p className="text-[11px] text-muted-foreground truncate">Handpicked essentials</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-2.5 rounded-lg col-span-2 sm:col-span-1">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center shrink-0">
-              <Eye className="w-4 h-4 text-foreground stroke-[1.8]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold tracking-tight text-foreground truncate">Real-Time Tracking</p>
-              <p className="text-[11px] text-muted-foreground truncate">Live order tracking</p>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -590,12 +545,7 @@ export function HomeView() {
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-10 sm:py-14">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold mb-1">
-              Curated Collections
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground uppercase">
-              Shop By Category
-            </h2>
+            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Categories</h2>
           </div>
           <button
             onClick={() => setView('shop')}
@@ -611,7 +561,7 @@ export function HomeView() {
               useStore.getState().setShopCategory('');
               setView('shop');
             }}
-            className="shrink-0 px-4 sm:px-5 py-2.5 rounded-md border border-foreground bg-foreground text-background text-xs tracking-wider uppercase font-medium transition-all active:scale-95"
+            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-foreground/30 bg-foreground text-background text-xs tracking-wider uppercase font-medium shadow-xs transition-all active:scale-95"
           >
             All Products
           </button>
@@ -623,7 +573,7 @@ export function HomeView() {
                 useStore.getState().setShopCategory(c.slug);
                 setView('shop', { category: c.slug });
               }}
-              className="shrink-0 px-4 sm:px-5 py-2.5 rounded-md border border-border bg-card hover:bg-secondary hover:border-foreground text-foreground text-xs tracking-wider uppercase font-medium transition-all active:scale-95"
+              className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-border bg-secondary/50 hover:bg-secondary hover:border-foreground/30 text-foreground text-xs tracking-wider uppercase font-medium transition-all active:scale-95"
             >
               {c.name}
             </button>
@@ -635,12 +585,7 @@ export function HomeView() {
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold mb-1">
-              Fresh Arrivals
-            </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-tight text-foreground uppercase">
-              Recently Added Products
-            </h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Recently Added Products</h2>
           </div>
           <button
             onClick={() => {
@@ -661,42 +606,16 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* Editorial Promotional Section */}
-      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="relative rounded-xl border border-border bg-[#111111] text-[#FFFFFF] dark:bg-[#121212] dark:border-[#262626] p-8 sm:p-12 lg:p-16 overflow-hidden">
-          <div className="max-w-2xl relative z-10 space-y-4">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-white/70 font-semibold block">
-              Curated Editorial Collection
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-white uppercase leading-snug">
-              The Art of Timeless Living. <span className="font-semibold block sm:inline">Crafted for Distinction.</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-white/80 font-light leading-relaxed max-w-xl">
-              Elevate your everyday wardrobe and lifestyle aesthetic with minimalist pieces crafted with exceptional attention to detail and enduring quality.
-            </p>
-            <div className="pt-2">
-              <Button
-                size="lg"
-                onClick={() => setView('shop')}
-                className="h-11 px-7 bg-white text-black hover:bg-white/90 text-xs tracking-[0.16em] uppercase rounded-md font-medium"
-              >
-                Discover Collection <ArrowRight className="w-3.5 h-3.5 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Section 2: Best Selling Products */}
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground font-semibold mb-1">
-              Top Trending
-            </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-tight text-foreground uppercase">
-              Best Selling Products
-            </h2>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-amber-500 bg-amber-500/10 border-amber-500/25">
+                <Flame className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" /> Top Trending
+              </Badge>
+            </div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Best Selling Products</h2>
           </div>
           <button
             onClick={() => {
@@ -717,27 +636,18 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* Become a Seller Section */}
+      {/* CTA Banner */}
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="relative rounded-xl border border-border bg-secondary/50 p-8 sm:p-12 lg:p-14 overflow-hidden">
-          <div className="relative max-w-2xl space-y-3">
-            <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-semibold block">
-              Marketplace Partnership
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-foreground uppercase">
-              YOUR BRAND DESERVES A <span className="font-semibold">BIGGER STAGE.</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-light">
-              Join Lax Pixel as a seller, showcase your products and connect with customers through our marketplace. Access modern merchant tools, automated payments, and doorstep dispatch.
+        <div className="relative rounded-2xl border border-border bg-secondary p-8 sm:p-12 overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative max-w-lg">
+            <h2 className="text-2xl sm:text-3xl font-light tracking-tight">Become a <span className="font-medium">Seller</span></h2>
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              List your luxury products on Lax Pixel and reach discerning customers worldwide. Advanced seller tools help you optimize listings and grow sales.
             </p>
-            <div className="pt-2">
-              <Button
-                className="bg-foreground text-background text-xs tracking-[0.18em] uppercase h-11 px-7 rounded-md font-medium hover:bg-foreground/90 transition-all shadow-xs"
-                onClick={() => setView('auth')}
-              >
-                Start Selling <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
+            <Button className="mt-6 bg-foreground text-background text-xs tracking-[0.2em] uppercase h-11 px-8 rounded-lg" onClick={() => setView('auth')}>
+              Start Selling <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </div>
       </section>

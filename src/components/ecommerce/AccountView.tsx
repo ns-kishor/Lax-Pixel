@@ -126,156 +126,112 @@ export function AccountView() {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-background">
+    <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 xl:px-12">
-        <button onClick={goBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8 transition-colors uppercase tracking-wider font-medium">
+        <button onClick={goBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-8 transition-colors">
           <ArrowRight className="w-3.5 h-3.5 rotate-180" /> Back
         </button>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="lg:col-span-1">
-            <div className="p-6 rounded-xl bg-card border border-border text-center shadow-xs">
-              <div className="relative w-20 h-20 rounded-full bg-secondary border border-border flex items-center justify-center text-2xl font-light mx-auto mb-4 overflow-hidden">
+            <div className="p-6 rounded-xl bg-secondary border border-border text-center">
+              <div className="relative w-20 h-20 rounded-full bg-muted flex items-center justify-center text-2xl font-light mx-auto mb-4 overflow-hidden">
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                 ) : user.avatar ? (
                   <Image src={user.avatar} alt={user.name} fill className="object-cover" />
                 ) : (
-                  <span className="text-2xl font-light text-foreground">{user.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-2xl font-light">{user.name.charAt(0).toUpperCase()}</span>
                 )}
               </div>
-              <h2 className="text-lg font-semibold text-foreground tracking-tight">{user.name}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
-              <Badge variant="outline" className="mt-3 text-[10px] tracking-widest uppercase border-border bg-secondary font-semibold">
-                {user.role}
-              </Badge>
-              <Separator className="bg-border my-5" />
+              <h2 className="text-lg font-medium">{user.name}</h2>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <Badge variant="secondary" className="mt-3 text-[10px] tracking-wider">{user.role}</Badge>
+              <Separator className="bg-secondary my-4" />
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-              <Button variant="outline" size="sm" className="w-full text-xs uppercase tracking-wider gap-2 border-border font-medium hover:bg-secondary" onClick={() => avatarPreview ? saveAvatar() : fileRef.current?.click()}>
+              <Button variant="outline" size="sm" className="w-full text-xs gap-2" onClick={() => avatarPreview ? saveAvatar() : fileRef.current?.click()}>
                 <Camera className="w-3.5 h-3.5" /> {avatarPreview ? 'Save Photo' : 'Change Photo'}
               </Button>
               {avatarPreview && (
-                <Button variant="ghost" size="sm" className="w-full text-xs uppercase tracking-wider text-muted-foreground mt-2" onClick={() => setAvatarPreview(user?.avatar || null)}>Cancel</Button>
+                <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground mt-2" onClick={() => setAvatarPreview(user?.avatar || null)}>Cancel</Button>
               )}
-              <Separator className="bg-border my-5" />
+              <Separator className="bg-secondary my-4" />
               <div className="space-y-2">
-                <button onClick={() => setView('orders')} className="w-full flex items-center justify-between p-3 rounded-lg border border-border/60 hover:bg-secondary text-xs uppercase tracking-wider text-foreground transition-colors font-medium">
-                  <span className="flex items-center gap-2.5"><Package className="w-4 h-4" /> My Orders</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
-                </button>
+                <button onClick={() => setView('orders')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><Package className="w-4 h-4" /> My Orders</span><ArrowRight className="w-3.5 h-3.5" /></button>
                 {user.role === 'SELLER' && (
                   <>
-                    <button onClick={() => setView('seller-dashboard')} className="w-full flex items-center justify-between p-3 rounded-lg border border-border/60 hover:bg-secondary text-xs uppercase tracking-wider text-foreground transition-colors font-medium">
-                      <span className="flex items-center gap-2.5"><Store className="w-4 h-4" /> Seller Dashboard</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
-                    <button onClick={shareSellerProfile} className="w-full flex items-center justify-between p-3 rounded-lg bg-foreground text-background text-xs uppercase tracking-wider transition-all font-semibold hover:bg-foreground/90 shadow-xs">
-                      <span className="flex items-center gap-2.5"><Share2 className="w-4 h-4" /> শেয়ার প্রোফাইল (Share Store)</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    <button onClick={() => setView('seller-dashboard')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Seller Dashboard</span><ArrowRight className="w-3.5 h-3.5" /></button>
+                    <button onClick={shareSellerProfile} className="w-full flex items-center justify-between p-2.5 rounded-lg bg-foreground/5 hover:bg-secondary text-sm text-foreground transition-colors font-medium"><span className="flex items-center gap-2"><Share2 className="w-4 h-4 text-primary" /> শেয়ার প্রোফাইল (Share Profile)</span><ArrowRight className="w-3.5 h-3.5" /></button>
                   </>
                 )}
               </div>
-              <Separator className="bg-border my-5" />
-              <Button variant="ghost" size="sm" className="w-full text-xs uppercase tracking-wider text-destructive hover:bg-destructive/10 font-medium" onClick={() => { logout(); setView('home'); }}>Sign Out</Button>
+              <Separator className="bg-secondary my-4" />
+              <Button variant="ghost" size="sm" className="w-full text-xs text-destructive hover:text-destructive hover:bg-secondary" onClick={() => { logout(); setView('home'); }}>Sign Out</Button>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             {/* Edit Profile */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-xl bg-card border border-border shadow-xs">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-5">Profile Information</h3>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-xl bg-secondary border border-border">
+              <h3 className="text-sm font-medium tracking-wide mb-5">Profile Information</h3>
               <div className="space-y-4">
-                <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Full Name</Label>
-                  <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" />
+                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Full Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Email</Label><Input value={user.email} disabled className="mt-1.5 h-10 bg-secondary border-border text-sm text-muted-foreground" /></div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Phone</Label>
-                    <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Email</Label>
-                    <Input value={user.email} disabled className="mt-1.5 h-10 bg-secondary border-border text-sm text-muted-foreground cursor-not-allowed" />
-                  </div>
+                <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" placeholder="Street address" /></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City</Label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label><Input value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
+                  <div><Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP</Label><Input value={form.zipCode} onChange={e => setForm({ ...form, zipCode: e.target.value })} className="mt-1.5 h-10 bg-secondary border-border text-sm" /></div>
                 </div>
-                <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Address</Label>
-                  <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" placeholder="House/Apartment, Street, Area" />
-                </div>
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  <div>
-                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">City</Label>
-                    <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Country</Label>
-                    <Input value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ZIP</Label>
-                    <Input value={form.zipCode} onChange={e => setForm({ ...form, zipCode: e.target.value })} className="mt-1.5 h-10 bg-secondary/50 border-border text-sm" />
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <Button size="sm" className="bg-foreground text-background text-xs uppercase tracking-wider font-semibold h-10 px-5 rounded-md hover:bg-foreground/90" onClick={saveProfile}>
-                    <Save className="w-3.5 h-3.5 mr-2" /> Save Changes
-                  </Button>
-                </div>
+                <Button size="sm" className="bg-foreground text-background text-xs tracking-wider" onClick={saveProfile}><Save className="w-3.5 h-3.5 mr-2" />Save Changes</Button>
               </div>
             </motion.div>
 
             {/* Change Password */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-card border border-border shadow-xs">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-secondary border border-border">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground flex items-center gap-2">
-                  <Lock className="w-4 h-4" /> Password & Security
-                </h3>
-                <Button variant="outline" size="sm" className="text-xs uppercase tracking-wider border-border h-8 font-medium" onClick={() => setShowPwForm(!showPwForm)}>
-                  {showPwForm ? 'Cancel' : 'Change Password'}
+                <h3 className="text-sm font-medium tracking-wide flex items-center gap-2"><Lock className="w-4 h-4" /> Change Password</h3>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPwForm(!showPwForm)}>
+                  {showPwForm ? 'Cancel' : 'Change'}
                 </Button>
               </div>
               {showPwForm && (
-                <div className="space-y-4 pt-1">
+                <div className="space-y-4">
                   <div className="relative">
                     <Eye className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input type="password" value={passwordForm.current} onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })} className="pl-10 h-10 bg-secondary/50 border-border text-sm" placeholder="Current password" />
+                    <Input type="password" value={passwordForm.current} onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })} className="pl-10 h-10 bg-secondary border-border text-sm" placeholder="Current password" />
                   </div>
                   <div className="relative">
                     <EyeOff className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input type="password" value={passwordForm.newPw} onChange={e => setPasswordForm({ ...passwordForm, newPw: e.target.value })} className="pl-10 h-10 bg-secondary/50 border-border text-sm" placeholder="New password (min 6 characters)" />
+                    <Input type="password" value={passwordForm.newPw} onChange={e => setPasswordForm({ ...passwordForm, newPw: e.target.value })} className="pl-10 h-10 bg-secondary border-border text-sm" placeholder="New password (min 6 chars)" />
                   </div>
                   <div className="relative">
                     <EyeOff className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="pl-10 h-10 bg-secondary/50 border-border text-sm" placeholder="Confirm new password" onKeyDown={e => e.key === 'Enter' && changePassword()} />
+                    <Input type="password" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} className="pl-10 h-10 bg-secondary border-border text-sm" placeholder="Confirm new password" onKeyDown={e => e.key === 'Enter' && changePassword()} />
                   </div>
-                  <Button size="sm" className="bg-foreground text-background text-xs uppercase tracking-wider font-semibold h-10 px-5 rounded-md hover:bg-foreground/90" onClick={changePassword} disabled={uploading}>
-                    <Lock className="w-3.5 h-3.5 mr-2" /> Update Password
-                  </Button>
+                  <Button size="sm" className="bg-foreground text-background text-xs tracking-wider" onClick={changePassword} disabled={uploading}><Lock className="w-3.5 h-3.5 mr-2" /> Update Password</Button>
                 </div>
               )}
             </motion.div>
 
             {/* Wishlist */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-6 rounded-xl bg-card border border-border shadow-xs">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-5 flex items-center gap-2">
-                <Heart className="w-4 h-4" /> My Wishlist ({wishlistItems.length})
-              </h3>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-6 rounded-xl bg-secondary border border-border">
+              <h3 className="text-sm font-medium tracking-wide mb-5 flex items-center gap-2"><Heart className="w-4 h-4" /> Wishlist ({wishlistItems.length})</h3>
               {wishlistItems.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8">Your wishlist is currently empty</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Your wishlist is empty</p>
               ) : (
                 <div className="space-y-3">
                   {wishlistItems.map((w: any) => (
-                    <div key={w.id} className="flex items-center gap-4 p-3 rounded-lg border border-border/70 hover:bg-secondary cursor-pointer transition-colors" onClick={() => useStore.getState().selectProduct(w.product)}>
-                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-secondary relative shrink-0 border border-border">
-                        <Image src={safeImgSrc(w.product.image)} alt={w.product.name} fill className="object-cover" />
-                      </div>
+                    <div key={w.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary cursor-pointer transition-colors" onClick={() => useStore.getState().selectProduct(w.product)}>
+                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-background relative shrink-0"><Image src={safeImgSrc(w.product.image)} alt={w.product.name} fill className="object-cover" /></div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-foreground truncate">{w.product.name}</p>
-                        <p className="text-xs text-foreground font-mono mt-0.5">৳ {w.product.price.toLocaleString()}</p>
+                        <p className="text-sm font-medium truncate">{w.product.name}</p>
+                        <p className="text-xs text-muted-foreground">৳ {w.product.price.toLocaleString()}</p>
                       </div>
                       <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                     </div>
