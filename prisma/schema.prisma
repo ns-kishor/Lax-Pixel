@@ -262,6 +262,8 @@ model PaymentMethod {
   icon          String?
   proofRequired String?
   instructions  String?
+  accountNumber String?
+  accountType   String?  @default("PERSONAL")
   active        Boolean  @default(true)
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())

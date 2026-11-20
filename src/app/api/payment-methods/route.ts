@@ -23,9 +23,22 @@ export async function GET(req: NextRequest) {
     }
 
     // Always fetch system payment methods for icons, defaults, and fallback
-    const systemMethods = await db.paymentMethod.findMany({
+    const rawSystemMethods = await db.paymentMethod.findMany({
       where: { active: true },
       orderBy: { sortOrder: 'asc' },
+    });
+
+    const systemMethods = rawSystemMethods.map((m) => {
+      const isCod = m.name === 'cash_on_delivery' || m.name === 'Cash on Delivery' || m.name === 'COD';
+      const phoneMatch = m.instructions?.match(/01[3-9]\d{8}/);
+      const isMerchant = /merchant/i.test(m.instructions || '') || /merchant/i.test(m.description || '');
+      const accountNumber = m.accountNumber || (phoneMatch ? phoneMatch[0] : null);
+      const accountType = m.accountType || (isMerchant ? 'MERCHANT' : 'PERSONAL');
+      return {
+        ...m,
+        accountNumber: isCod ? null : accountNumber,
+        accountType: isCod ? null : accountType,
+      };
     });
 
     // If sellerId is present, check if seller has custom payment methods configured

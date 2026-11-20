@@ -21,6 +21,8 @@ interface PaymentMethod {
   icon: string | null;
   proofRequired: string | null;
   instructions: string | null;
+  accountNumber?: string | null;
+  accountType?: string | null;
   active: boolean;
   sortOrder: number;
   createdAt: string;
@@ -33,6 +35,8 @@ interface MethodForm {
   icon: string;
   proofRequired: string;
   instructions: string;
+  accountNumber: string;
+  accountType: string;
   active: boolean;
   sortOrder: string;
 }
@@ -43,6 +47,8 @@ const emptyForm: MethodForm = {
   icon: '',
   proofRequired: '',
   instructions: '',
+  accountNumber: '',
+  accountType: 'PERSONAL',
   active: true,
   sortOrder: '0',
 };
@@ -93,6 +99,8 @@ export function AdminPaymentMethods() {
       icon: method.icon || '',
       proofRequired: method.proofRequired || '',
       instructions: method.instructions || '',
+      accountNumber: method.accountNumber || '',
+      accountType: method.accountType || 'PERSONAL',
       active: method.active,
       sortOrder: String(method.sortOrder),
     });
@@ -112,6 +120,8 @@ export function AdminPaymentMethods() {
         icon: form.icon || null,
         proofRequired: form.proofRequired || null,
         instructions: form.instructions || null,
+        accountNumber: form.accountNumber.trim() || null,
+        accountType: form.accountType || 'PERSONAL',
         active: form.active,
         sortOrder: parseInt(form.sortOrder, 10) || 0,
       };
@@ -275,7 +285,14 @@ export function AdminPaymentMethods() {
                             <span className="text-base">{method.icon}</span>
                           )
                         )}
-                        <span className="text-xs font-medium">{method.name}</span>
+                        <div>
+                          <span className="text-xs font-medium">{method.name}</span>
+                          {method.accountNumber && (
+                            <span className="font-mono text-[10px] text-muted-foreground block">
+                              {method.accountNumber} ({method.accountType || 'PERSONAL'})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="p-3 text-xs text-muted-foreground max-w-[160px] truncate">
@@ -383,6 +400,29 @@ export function AdminPaymentMethods() {
                 placeholder="Brief description"
                 className="h-9 bg-secondary border-border text-sm"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Number / টাকা পাঠানোর নম্বর</Label>
+                <Input
+                  value={form.accountNumber}
+                  onChange={e => setForm({ ...form, accountNumber: e.target.value })}
+                  placeholder="e.g. 017XXXXXXXX"
+                  className="h-9 bg-secondary border-border text-sm font-mono"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Type / অ্যাকাউন্টের ধরণ</Label>
+                <select
+                  value={form.accountType}
+                  onChange={e => setForm({ ...form, accountType: e.target.value })}
+                  className="h-9 w-full bg-secondary border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="PERSONAL">Personal (পার্সোনাল)</option>
+                  <option value="MERCHANT">Merchant (মার্চেন্ট)</option>
+                  <option value="AGENT">Agent (এজেন্ট)</option>
+                </select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Proof Required</Label>

@@ -88,6 +88,8 @@ export async function POST(req: NextRequest) {
         icon: body.icon !== undefined ? sanitizeInput(body.icon) : null,
         proofRequired: body.proofRequired !== undefined ? sanitizeInput(body.proofRequired) : null,
         instructions: body.instructions !== undefined ? sanitizeInput(body.instructions) : null,
+        accountNumber: body.accountNumber !== undefined ? sanitizeInput(body.accountNumber) || null : null,
+        accountType: body.accountType !== undefined ? sanitizeInput(body.accountType) || 'PERSONAL' : 'PERSONAL',
         active: body.active !== undefined ? Boolean(body.active) : true,
         sortOrder: body.sortOrder !== undefined ? parseInt(body.sortOrder, 10) || 0 : 0,
       },
@@ -122,6 +124,8 @@ export async function PATCH(req: NextRequest) {
     if (body.icon !== undefined) data.icon = sanitizeInput(body.icon) || null;
     if (body.proofRequired !== undefined) data.proofRequired = sanitizeInput(body.proofRequired) || null;
     if (body.instructions !== undefined) data.instructions = sanitizeInput(body.instructions) || null;
+    if (body.accountNumber !== undefined) data.accountNumber = sanitizeInput(body.accountNumber) || null;
+    if (body.accountType !== undefined) data.accountType = sanitizeInput(body.accountType) || 'PERSONAL';
     if (body.active !== undefined) data.active = Boolean(body.active);
     if (body.sortOrder !== undefined) data.sortOrder = parseInt(body.sortOrder, 10) || 0;
 

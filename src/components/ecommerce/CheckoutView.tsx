@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Lock, CreditCard, Truck, Info, CheckCircle2, Loader2, LogIn, Phone, ArrowLeft, Ticket } from 'lucide-react';
+import { Lock, CreditCard, Truck, Info, CheckCircle2, Loader2, LogIn, Phone, ArrowLeft, Ticket, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PaymentMethod {
@@ -327,6 +327,12 @@ export function CheckoutView() {
 
   // Payment details screen (Step 2)
   if (step === 'payment') {
+    const currentAccountNumber = selectedMethod?.accountNumber ||
+      selectedMethod?.instructions?.match(/01[3-9]\d{8}/)?.[0] ||
+      '';
+    const currentAccountType = selectedMethod?.accountType ||
+      (/merchant/i.test(selectedMethod?.instructions || '') ? 'MERCHANT' : 'PERSONAL');
+
     return (
       <div className="min-h-screen pt-24 pb-16">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
@@ -341,55 +347,122 @@ export function CheckoutView() {
 
           {/* Selected Payment Method Details */}
           <div className="p-6 rounded-xl bg-secondary border border-border mb-6">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-start sm:items-center gap-4 mb-4">
               {selectedMethod?.icon && (
-                <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 bg-background border border-border">
+                <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-background border border-border p-1.5 shadow-sm">
                   {selectedMethod.icon.startsWith('/') || selectedMethod.icon.startsWith('http') ? (
-                    <img src={selectedMethod.icon} alt={selectedMethod.name} className="w-8 h-8 object-contain" />
+                    <img src={selectedMethod.icon} alt={selectedMethod.name} className="w-full h-full object-contain" />
                   ) : (
                     <span className="text-2xl">{selectedMethod.icon}</span>
                   )}
                 </div>
               )}
-              <div>
-                <h3 className="text-base font-medium">{selectedMethod?.name}</h3>
-                {selectedMethod?.description && <p className="text-xs text-muted-foreground">{selectedMethod.description}</p>}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold tracking-tight">{selectedMethod?.name}</h3>
+                  {!isCod && (
+                    <Badge variant="outline" className="text-[10px] uppercase font-semibold border-primary/30 text-primary bg-primary/5">
+                      {currentAccountType === 'PERSONAL'
+                        ? 'Personal (পার্সোনাল)'
+                        : currentAccountType === 'AGENT'
+                        ? 'Agent (এজেন্ট)'
+                        : 'Merchant (মার্চেন্ট)'}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Account Number & Account Type directly under payment method name */}
+                {!isCod && currentAccountNumber && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-muted-foreground font-medium">অ্যাকাউন্ট নাম্বার:</span>
+                      <span className="font-mono font-bold text-sm text-foreground bg-background px-2 py-0.5 rounded border border-border select-all inline-flex items-center gap-1.5">
+                        {currentAccountNumber}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentAccountNumber);
+                            showToast('অ্যাকাউন্ট নাম্বার কপি হয়েছে', 'success');
+                          }}
+                          className="text-[10px] text-primary hover:underline font-sans font-normal"
+                          title="নাম্বার কপি করুন"
+                        >
+                          কপি
+                        </button>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground font-medium">অ্যাকাউন্টের ধরণ:</span>
+                      <span className="font-semibold text-foreground">
+                        {currentAccountType === 'PERSONAL'
+                          ? 'Personal (পার্সোনাল)'
+                          : currentAccountType === 'AGENT'
+                          ? 'Agent (এজেন্ট)'
+                          : 'Merchant (মার্চেন্ট)'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedMethod?.description && !currentAccountNumber && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{selectedMethod.description}</p>
+                )}
                 {selectedMethod?.sellerName && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     পণ্য বিক্রেতা: <span className="text-foreground font-medium">{selectedMethod.sellerName}</span>
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Seller Account Number & Type Details */}
-            {selectedMethod?.accountNumber && !isCod && (
-              <div className="p-3.5 rounded-lg bg-background border border-border space-y-2 mb-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">টাকা পাঠানোর অ্যাকাউন্ট নাম্বার:</span>
-                  <span className="font-mono font-bold text-sm text-foreground select-all bg-secondary/80 px-2 py-0.5 rounded">
-                    {selectedMethod.accountNumber}
+            {/* Prominent Payment Box for Non-COD */}
+            {!isCod && currentAccountNumber && (
+              <div className="p-4 rounded-xl bg-background border border-primary/30 space-y-3 mb-4 shadow-sm">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                      টাকা পাঠানোর নাম্বার ({currentAccountType === 'MERCHANT' ? 'Make Payment' : 'Send Money'}):
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      নিচের নাম্বারে টাকা পাঠিয়ে Transaction ID এবং প্রেরক নাম্বার দিন
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-base sm:text-lg font-bold text-primary tracking-wider select-all bg-primary/10 px-3 py-1 rounded-lg border border-primary/20">
+                      {currentAccountNumber}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentAccountNumber);
+                        showToast('অ্যাকাউন্ট নাম্বার কপি হয়েছে!', 'success');
+                      }}
+                      className="h-8 px-2.5 text-xs gap-1 border-primary/40 text-primary hover:bg-primary/10 font-medium"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> কপি করুন
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-2.5 border-t border-border">
+                  <span className="text-muted-foreground">অ্যাকাউন্টের ধরণ (Account Type):</span>
+                  <span className="font-semibold text-foreground bg-secondary px-2.5 py-1 rounded text-xs border border-border">
+                    {currentAccountType === 'PERSONAL'
+                      ? 'Personal (পার্সোনাল - Send Money অপশন ব্যবহার করুন)'
+                      : currentAccountType === 'AGENT'
+                      ? 'Agent (এজেন্ট - Cash Out অপশন ব্যবহার করুন)'
+                      : 'Merchant (মার্চেন্ট - Make Payment অপশন ব্যবহার করুন)'}
                   </span>
                 </div>
-                {selectedMethod.accountType && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">অ্যাকাউন্টের ধরণ:</span>
-                    <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
-                      {selectedMethod.accountType === 'PERSONAL'
-                        ? 'Personal (পার্সোনাল)'
-                        : selectedMethod.accountType === 'AGENT'
-                        ? 'Agent (এজেন্ট)'
-                        : 'Merchant (মার্চেন্ট)'}
-                    </Badge>
-                  </div>
-                )}
               </div>
             )}
 
             {selectedMethod?.instructions && (
-              <div className="p-3.5 rounded-lg bg-background border border-border text-xs text-muted-foreground leading-relaxed">
+              <div className="p-3.5 rounded-lg bg-background/70 border border-border text-xs text-muted-foreground leading-relaxed">
                 <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-foreground" />
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
                   <span>{selectedMethod.instructions}</span>
                 </div>
               </div>
@@ -571,12 +644,14 @@ export function CheckoutView() {
                   {paymentMethods.map((m) => {
                     const isCodMethod = m.name === 'cash_on_delivery' || m.name === 'Cash on Delivery' || m.name === 'COD';
                     const isSelected = selectedMethod?.id === m.id;
+                    const mNumber = m.accountNumber || m.instructions?.match(/01[3-9]\d{8}/)?.[0];
+                    const mType = m.accountType || (/merchant/i.test(m.instructions || '') ? 'MERCHANT' : 'PERSONAL');
                     return (
                       <button
                         key={m.id}
                         type="button"
                         onClick={() => setSelectedMethod(m)}
-                        className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all text-center ${
+                        className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
                           isSelected
                             ? 'border-foreground bg-background ring-1 ring-foreground shadow-sm'
                             : 'border-border bg-card hover:border-muted-foreground/40'
@@ -591,15 +666,20 @@ export function CheckoutView() {
                             )}
                           </div>
                         )}
-                        <p className="text-xs font-medium leading-tight">{m.name}</p>
+                        <p className="text-xs font-semibold leading-tight">{m.name}</p>
                         {isCodMethod ? (
                           <span className="text-[9px] text-green-600 dark:text-green-400 font-medium">Cash on Delivery</span>
-                        ) : m.accountType ? (
-                          <span className="text-[9px] text-muted-foreground font-mono">
-                            {m.accountType === 'PERSONAL' ? 'Personal' : m.accountType === 'AGENT' ? 'Agent' : 'Merchant'}
-                          </span>
                         ) : (
-                          <span className="text-[9px] text-muted-foreground">TrxID Needed</span>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[9px] text-muted-foreground font-medium uppercase">
+                              {mType === 'AGENT' ? 'Agent' : mType === 'MERCHANT' ? 'Merchant' : 'Personal'}
+                            </span>
+                            {mNumber && (
+                              <span className="text-[9px] text-foreground font-mono font-medium">
+                                {mNumber}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </button>
                     );
