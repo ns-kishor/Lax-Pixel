@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       }),
       db.product.findMany({
         where: { sellerId },
-        include: { category: true },
+        include: { category: true, specs: { orderBy: { sortOrder: 'asc' } } },
         orderBy: { createdAt: 'desc' },
       }),
       db.siteSetting.findUnique({ where: { key: 'seller_verification_fee' } }),

@@ -13,7 +13,7 @@ import {
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
   AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
   MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter,
-  Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy
+  Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -75,7 +75,32 @@ export function SellerDashboard() {
     description: '',
     tags: '',
     image: '',
+    specs: [] as { label: string; value: string }[],
   });
+
+  const addProductSpec = () => {
+    setNewProduct(prev => ({
+      ...prev,
+      specs: [...(prev.specs || []), { label: '', value: '' }],
+    }));
+  };
+
+  const updateProductSpec = (idx: number, field: 'label' | 'value', val: string) => {
+    setNewProduct(prev => {
+      const updated = [...(prev.specs || [])];
+      if (updated[idx]) {
+        updated[idx] = { ...updated[idx], [field]: val };
+      }
+      return { ...prev, specs: updated };
+    });
+  };
+
+  const removeProductSpec = (idx: number) => {
+    setNewProduct(prev => ({
+      ...prev,
+      specs: (prev.specs || []).filter((_, i) => i !== idx),
+    }));
+  };
 
   const [verificationForm, setVerificationForm] = useState({
     businessName: '',
@@ -652,11 +677,13 @@ export function SellerDashboard() {
       showToast('Name, price and category are required', 'error');
       return;
     }
+    const filteredSpecs = (newProduct.specs || []).filter(s => s.label.trim() && s.value.trim());
     const res = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...newProduct,
+        specs: filteredSpecs,
         sellerId: user.id,
         price: parseFloat(newProduct.price) || 0,
         comparePrice: newProduct.comparePrice ? parseFloat(newProduct.comparePrice) : null,
@@ -670,7 +697,7 @@ export function SellerDashboard() {
     if (res.ok) {
       showToast('Product created successfully!');
       setAddProductOpen(false);
-      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', stock: '', description: '', tags: '', image: '' });
+      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', stock: '', description: '', tags: '', image: '', specs: [] });
       loadSellerData();
     } else {
       showToast(data.error || 'Failed to create product', 'error');
@@ -1425,6 +1452,57 @@ export function SellerDashboard() {
                   className="mt-1.5 h-10 bg-background border-border text-sm"
                   placeholder="luxury, handmade, authentic"
                 />
+              </div>
+
+              {/* Product Specifications (Optional) */}
+              <div className="sm:col-span-2 pt-2 border-t border-border/60">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold">
+                      Product Specifications (Optional)
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground">Add custom details like Material, Color, Size, Warranty, etc.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1 border-border"
+                    onClick={addProductSpec}
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Specification
+                  </Button>
+                </div>
+
+                {(newProduct.specs || []).length > 0 && (
+                  <div className="space-y-2 mt-3">
+                    {newProduct.specs.map((spec, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          placeholder="Label (e.g. Material)"
+                          value={spec.label}
+                          onChange={e => updateProductSpec(idx, 'label', e.target.value)}
+                          className="h-9 bg-background border-border text-xs flex-1"
+                        />
+                        <Input
+                          placeholder="Value (e.g. 100% Cotton)"
+                          value={spec.value}
+                          onChange={e => updateProductSpec(idx, 'value', e.target.value)}
+                          className="h-9 bg-background border-border text-xs flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => removeProductSpec(idx)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

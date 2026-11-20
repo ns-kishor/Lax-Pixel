@@ -232,10 +232,10 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 40 }}
+      initial={{ opacity: 0, x: -40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full mx-auto lg:mx-0 lg:ml-auto h-full flex flex-col justify-between"
+      className="relative w-full mx-auto lg:mx-0 lg:mr-auto h-full flex flex-col justify-between"
     >
       <div className="relative glass rounded-2xl border border-border overflow-hidden shadow-xl flex flex-col h-full justify-between">
         {/* Product Image - fluid 16:9 ratio */}
@@ -427,14 +427,26 @@ export function HomeView() {
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-background pointer-events-none" />
         <div className="relative max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-            {/* Left - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
+            {/* Left - Product Card Slider */}
+            <div className="lg:col-span-7 flex justify-center lg:justify-start w-full h-full order-1">
+              <HeroSlider
+                featuredProducts={
+                  heroProducts.length > 0
+                    ? heroProducts
+                    : products.filter(p => p.featured).length > 0
+                    ? products.filter(p => p.featured)
+                    : products.slice(0, 8)
+                }
+              />
+            </div>
+
+            {/* Right - 2 Guarantee/Feature Cards + Lowered CTA buttons */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5 order-2 lg:order-1"
+              className="lg:col-span-5 flex flex-col justify-between h-full gap-4 sm:gap-5 order-2"
             >
-
               {/* 2 Guarantee/Feature Cards (Responsive 1-col on phone / 2-col on tablet / 1-col on desktop) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4 flex-1">
                 {/* Card 1: Delivery All Over Bangladesh */}
@@ -507,19 +519,6 @@ export function HomeView() {
                 </Button>
               </div>
             </motion.div>
-
-            {/* Right - Product Card Slider */}
-            <div className="lg:col-span-7 flex justify-center lg:justify-end w-full h-full order-1 lg:order-2">
-              <HeroSlider
-                featuredProducts={
-                  heroProducts.length > 0
-                    ? heroProducts
-                    : products.filter(p => p.featured).length > 0
-                    ? products.filter(p => p.featured)
-                    : products.slice(0, 8)
-                }
-              />
-            </div>
           </div>
         </div>
       </section>

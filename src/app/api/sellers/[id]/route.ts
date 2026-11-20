@@ -73,6 +73,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
       include: {
         category: true,
+        specs: { orderBy: { sortOrder: 'asc' } },
       },
     });
 

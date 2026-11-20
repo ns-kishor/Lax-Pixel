@@ -34,6 +34,14 @@ export interface SellerProfile {
   sellerCode?: string;
 }
 
+export interface ProductSpec {
+  id?: string;
+  productId?: string;
+  label: string;
+  value: string;
+  sortOrder?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -53,6 +61,7 @@ export interface Product {
   tags: string;
   aiGenerated: boolean;
   aiTags: string;
+  specs?: ProductSpec[];
   createdAt: string;
   category?: { id: string; name: string; slug: string };
   seller?: {

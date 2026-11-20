@@ -138,15 +138,30 @@ export function Header() {
           {/* Search - Desktop */}
           <div className={`hidden md:flex items-center transition-all duration-300 ${searchFocused ? 'w-80 lg:w-96' : 'w-52 lg:w-72'}`}>
             <form onSubmit={handleSearch} className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <button
+                type="submit"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Submit search"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
               <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
-                placeholder="Search..."
-                className="pl-9 pr-4 h-9 bg-secondary border-border rounded-full text-xs tracking-wide focus:bg-muted focus:border"
+                placeholder="Search products..."
+                className="pl-9 pr-8 h-9 bg-secondary border-border rounded-full text-xs tracking-wide focus:bg-muted focus:border"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </form>
           </div>
 
@@ -236,12 +251,18 @@ export function Header() {
               }}
               className="relative w-full"
             >
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <button
+                type="submit"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Submit search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
               <Input
                 ref={mobileSearchRef}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search luxury products, watches, bags..."
+                placeholder="Search products..."
                 className="pl-10 pr-10 h-10 bg-secondary/80 border-border rounded-xl text-xs tracking-wide focus:bg-background"
               />
               {searchQuery && (

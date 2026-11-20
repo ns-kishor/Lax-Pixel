@@ -18,11 +18,34 @@ export async function GET(req: NextRequest) {
     if (featured === 'true') where.featured = true;
     if (sellerId) where.sellerId = sellerId;
     if (search) {
-      where.OR = [
-        { name: { contains: search } },
-        { description: { contains: search } },
-        { tags: { contains: search } },
+      const trimmed = search.trim();
+      const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+
+      const fieldMatches = (term: string) => [
+        { name: { contains: term, mode: 'insensitive' as const } },
+        { description: { contains: term, mode: 'insensitive' as const } },
+        { tags: { contains: term, mode: 'insensitive' as const } },
+        { productCode: { contains: term, mode: 'insensitive' as const } },
+        { category: { name: { contains: term, mode: 'insensitive' as const } } },
+        { seller: { name: { contains: term, mode: 'insensitive' as const } } },
+        { seller: { sellerProfile: { companyName: { contains: term, mode: 'insensitive' as const } } } },
+        { specs: { some: { value: { contains: term, mode: 'insensitive' as const } } } },
+        { specs: { some: { label: { contains: term, mode: 'insensitive' as const } } } },
       ];
+
+      if (words.length <= 1) {
+        where.OR = fieldMatches(trimmed);
+      } else {
+        where.OR = [
+          ...fieldMatches(trimmed),
+          {
+            AND: words.map(word => ({
+              OR: fieldMatches(word),
+            })),
+          },
+          ...words.flatMap(word => fieldMatches(word)),
+        ];
+      }
     }
 
     let orderBy: any;
@@ -38,6 +61,7 @@ export async function GET(req: NextRequest) {
       orderBy,
       include: {
         category: true,
+        specs: { orderBy: { sortOrder: 'asc' } },
         seller: {
           select: {
             id: true,
@@ -121,6 +145,17 @@ export async function POST(req: NextRequest) {
     const cleanImg = image ? String(image).replace(/[\r\n\t]+/g, '').trim() : '/products/hero.png';
     const cleanImgs = images ? String(images).replace(/[\r\n\t]+/g, '').trim() : cleanImg;
 
+    // Handle specifications (optional)
+    const specsData = Array.isArray(body.specs)
+      ? body.specs
+          .filter((s: any) => s && s.label && String(s.label).trim())
+          .map((s: { label: string; value: string }, i: number) => ({
+            label: String(s.label).trim().slice(0, 255),
+            value: String(s.value || '').trim().slice(0, 1000),
+            sortOrder: i,
+          }))
+      : [];
+
     const product = await db.product.create({
       data: {
         name: trimmedName,
@@ -137,6 +172,11 @@ export async function POST(req: NextRequest) {
         tags: String(tags || ''),
         aiGenerated: false,
         aiTags: '',
+        specs: specsData.length > 0 ? { create: specsData } : undefined,
+      },
+      include: {
+        category: true,
+        specs: { orderBy: { sortOrder: 'asc' } },
       },
     });
 

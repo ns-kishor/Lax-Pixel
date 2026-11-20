@@ -19,7 +19,7 @@ export function ShopView() {
   const [fetching, setFetching] = useState(false);
   const initializedRef = useRef(false);
 
-  // Sync shopCategory from URL on mount
+  // Sync shopCategory and searchQuery from URL on mount
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
@@ -30,8 +30,13 @@ export function ShopView() {
       if (params.has('sort')) {
         setShopSort(params.get('sort')!);
       }
+      if (params.has('q') && !searchQuery) {
+        setSearchQuery(params.get('q')!);
+      } else if (params.has('search') && !searchQuery) {
+        setSearchQuery(params.get('search')!);
+      }
     }
-  }, [shopCategory, setShopCategory, setShopSort]);
+  }, [shopCategory, setShopCategory, setShopSort, searchQuery, setSearchQuery]);
 
   useEffect(() => {
     let active = true;
@@ -52,8 +57,11 @@ export function ShopView() {
         if (active) setFetching(false);
       }
     };
-    load();
-    return () => { active = false; };
+    const timer = setTimeout(load, 200);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [shopCategory, shopSort, searchQuery, setProducts]);
 
   // Push history entry when category changes (within shop view)

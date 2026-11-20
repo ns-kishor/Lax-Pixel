@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Heart, ShoppingBag, ArrowLeft, Sparkles, Truck, Shield, RotateCcw, Minus, Plus, Check, Store, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
+import { Star, Heart, ShoppingBag, ArrowLeft, Sparkles, Truck, Shield, RotateCcw, Minus, Plus, Check, Store, CheckCircle2, ArrowRight, Zap, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 
@@ -180,6 +180,23 @@ export function ProductView() {
                 </div>
               ))}
             </div>
+
+            {/* Specifications */}
+            {product.specs && product.specs.length > 0 && (
+              <div className="pt-5 border-t border-border">
+                <h3 className="text-xs font-semibold tracking-wider uppercase text-foreground mb-3 flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Specifications
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {product.specs.map((spec, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/60 border border-border/60">
+                      <span className="text-muted-foreground">{spec.label}</span>
+                      <span className="text-foreground font-medium text-right">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tags */}
             {product.tags && (
