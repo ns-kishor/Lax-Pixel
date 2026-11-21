@@ -4,10 +4,24 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2, Store, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2, Store, ShoppingBag, Watch, Shirt, Glasses, Gem, Headphones, Footprints, Smartphone, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product, Category } from '@/lib/store';
 import Image from 'next/image';
+
+function getCategoryIcon(name: string, slug?: string) {
+  const s = `${name} ${slug || ''}`.toLowerCase();
+  if (s.includes('watch') || s.includes('chron')) return Watch;
+  if (s.includes('bag') || s.includes('tote') || s.includes('backpack') || s.includes('leather')) return ShoppingBag;
+  if (s.includes('cloth') || s.includes('shirt') || s.includes('dress') || s.includes('pant') || s.includes('fashion') || s.includes('wear') || s.includes('t-shirt')) return Shirt;
+  if (s.includes('glass') || s.includes('eyewear') || s.includes('sunglass') || s.includes('aviator')) return Glasses;
+  if (s.includes('jewel') || s.includes('gem') || s.includes('ring') || s.includes('neck') || s.includes('gold') || s.includes('diamond')) return Gem;
+  if (s.includes('perfume') || s.includes('fragrance') || s.includes('oud') || s.includes('beauty') || s.includes('scent')) return Sparkles;
+  if (s.includes('headphone') || s.includes('audio') || s.includes('sound') || s.includes('electronic')) return Headphones;
+  if (s.includes('shoe') || s.includes('sneaker') || s.includes('footwear') || s.includes('boot')) return Footprints;
+  if (s.includes('phone') || s.includes('gadget') || s.includes('mobile')) return Smartphone;
+  return Layers;
+}
 
 function ProductCard({
   product,
@@ -413,6 +427,17 @@ export function HomeView() {
     });
   }, [products]);
 
+  // Derived: First 4 categories with products for dedicated home sections (per user sketch)
+  const featuredCategorySections = useMemo(() => {
+    return (categories || []).slice(0, 4).map(cat => {
+      const catProducts = products.filter(p => p.categoryId === cat.id || p.category?.slug === cat.slug);
+      return {
+        category: cat,
+        products: catProducts.slice(0, 4), // Exactly 4 products in one line per sketch
+      };
+    }).filter(sec => sec.products.length > 0);
+  }, [categories, products]);
+
   const features = [
     { icon: Truck, title: 'Express Fast Shipping', desc: 'Doorstep delivery across Bangladesh' },
     { icon: Shield, title: 'Authenticity Guaranteed', desc: 'Every piece verified' },
@@ -540,52 +565,82 @@ export function HomeView() {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* ─── Category Design Blocks (Per User Sketch) ─── */}
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 py-10 sm:py-14">
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-light tracking-tight">Categories</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Explore collections by department</p>
           </div>
           <button
-            onClick={() => setView('shop')}
-            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
-          >
-            All Collections <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <button
             onClick={() => {
-              useStore.getState().setSearchQuery('');
               useStore.getState().setShopCategory('');
+              useStore.getState().setSearchQuery('');
               setView('shop');
             }}
-            className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-foreground/30 bg-foreground text-background text-xs tracking-wider uppercase font-medium shadow-xs transition-all active:scale-95"
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
           >
-            All Products
+            All Products <ArrowRight className="w-3.5 h-3.5" />
           </button>
-          {(categories || []).map((c) => (
-            <button
-              key={c.id}
-              onClick={() => {
-                useStore.getState().setSearchQuery('');
-                useStore.getState().setShopCategory(c.slug);
-                setView('shop', { category: c.slug });
-              }}
-              className="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-border bg-secondary/50 hover:bg-secondary hover:border-foreground/30 text-foreground text-xs tracking-wider uppercase font-medium transition-all active:scale-95"
-            >
-              {c.name}
-            </button>
-          ))}
+        </div>
+
+        {/* 2-Row Category Blocks Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {(categories || []).map((c) => {
+            const IconComponent = getCategoryIcon(c.name, c.slug);
+            const iconUrl = c.icon || c.image;
+            return (
+              <motion.div
+                key={c.id}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  useStore.getState().setSearchQuery('');
+                  useStore.getState().setShopCategory(c.slug);
+                  setView('shop', { category: c.slug });
+                }}
+                className="group p-4 sm:p-5 rounded-2xl border border-border bg-card hover:bg-secondary/70 hover:border-foreground/30 transition-all duration-300 cursor-pointer flex flex-col items-center text-center justify-between shadow-xs hover:shadow-md"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center shrink-0 mb-3 transition-transform duration-300 group-hover:scale-110">
+                  {iconUrl ? (
+                    <img src={safeImgSrc(iconUrl)} alt={c.name} className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
+                  ) : (
+                    <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
+                  )}
+                </div>
+                <span className="text-xs sm:text-sm font-medium tracking-tight text-foreground group-hover:underline">
+                  {c.name}
+                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  {c._count?.products !== undefined ? `${c._count.products} Products` : 'Collection'}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Section 1: Recently Added Products */}
-      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="flex items-end justify-between mb-6 sm:mb-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Recently Added Products</h2>
-          </div>
+      {/* ─── Section 1: Recently Added Products (Per User Sketch) ─── */}
+      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-14 sm:pb-18">
+        {/* Themed Header Box from Hand-drawn Diagram */}
+        <div className="relative rounded-2xl border border-border bg-secondary/70 backdrop-blur-xs p-5 sm:p-7 mb-6 sm:mb-8 text-center shadow-xs">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight text-foreground">
+            Recently Added Products
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Enjoy with new Products
+          </p>
+        </div>
+
+        {/* 4 Products per line, exactly 2 lines = 8 products total */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {recentProducts.slice(0, 8).map((p, i) => (
+            <ProductCard key={p.id} product={p} index={i} badgeText="NEW" badgeVariant="new" />
+          ))}
+        </div>
+
+        {/* Bottom Right: View All —> */}
+        <div className="flex justify-end mt-6 sm:mt-8">
           <button
             onClick={() => {
               useStore.getState().setShopCategory('');
@@ -593,47 +648,48 @@ export function HomeView() {
               useStore.getState().setShopSort('createdAt');
               setView('shop', { sort: 'createdAt' });
             }}
-            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
+            className="text-xs sm:text-sm tracking-[0.16em] uppercase text-foreground hover:text-foreground/80 flex items-center gap-2 font-medium px-5 py-2.5 rounded-full border border-border bg-secondary/60 hover:bg-secondary transition-all active:scale-95 shadow-xs"
           >
-            View All <ArrowRight className="w-3.5 h-3.5" />
+            View All <ArrowRight className="w-4 h-4" />
           </button>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3.5 sm:gap-6 xl:gap-7 2xl:gap-8">
-          {recentProducts.slice(0, 12).map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} badgeText="NEW" badgeVariant="new" />
-          ))}
         </div>
       </section>
 
-      {/* Section 2: Best Selling Products */}
-      <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">
-        <div className="flex items-end justify-between mb-6 sm:mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Badge variant="secondary" className="text-[10px] tracking-[0.2em] uppercase font-semibold text-amber-500 bg-amber-500/10 border-amber-500/25">
-                <Flame className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" /> Top Trending
-              </Badge>
-            </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight">Best Selling Products</h2>
+      {/* ─── First 4 Categories Product Sections (Per User Sketch) ─── */}
+      {featuredCategorySections.map(({ category, products: catProds }) => (
+        <section key={category.id} className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-14 sm:pb-18">
+          {/* Themed Header Box with Category Name */}
+          <div className="relative rounded-2xl border border-border bg-secondary/70 backdrop-blur-xs p-5 sm:p-7 mb-6 sm:mb-8 text-center shadow-xs">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-light tracking-tight text-foreground">
+              {category.name}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {category.description || `Explore our curated ${category.name} collection`}
+            </p>
           </div>
-          <button
-            onClick={() => {
-              useStore.getState().setShopCategory('');
-              useStore.getState().setSearchQuery('');
-              useStore.getState().setShopSort('popular');
-              setView('shop', { sort: 'popular' });
-            }}
-            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors font-medium shrink-0"
-          >
-            View All <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3.5 sm:gap-6 xl:gap-7 2xl:gap-8">
-          {bestSellingProducts.slice(0, 12).map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} badgeText="HOT" badgeVariant="popular" />
-          ))}
-        </div>
-      </section>
+
+          {/* 4 Products in one line */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {catProds.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+
+          {/* Bottom Right: View All —> */}
+          <div className="flex justify-end mt-6 sm:mt-8">
+            <button
+              onClick={() => {
+                useStore.getState().setSearchQuery('');
+                useStore.getState().setShopCategory(category.slug);
+                setView('shop', { category: category.slug });
+              }}
+              className="text-xs sm:text-sm tracking-[0.16em] uppercase text-foreground hover:text-foreground/80 flex items-center gap-2 font-medium px-5 py-2.5 rounded-full border border-border bg-secondary/60 hover:bg-secondary transition-all active:scale-95 shadow-xs"
+            >
+              View All <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      ))}
 
       {/* CTA Banner */}
       <section className="max-w-[1720px] 2xl:max-w-[1880px] mx-auto px-4 sm:px-6 md:px-8 xl:px-12 2xl:px-16 pb-16 sm:pb-20">

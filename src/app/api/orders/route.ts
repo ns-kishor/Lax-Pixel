@@ -93,6 +93,10 @@ export async function POST(req: NextRequest) {
     interface RawOrderItemInput {
       productId: string;
       quantity?: number;
+      selectedColor?: string | null;
+      selectedSize?: string | null;
+      color?: string | null;
+      size?: string | null;
     }
 
     let requestedItems: RawOrderItemInput[] = [];
@@ -101,6 +105,8 @@ export async function POST(req: NextRequest) {
       requestedItems = items.map((i: any) => ({
         productId: String(i.productId || ''),
         quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
+        selectedColor: i.selectedColor || i.color || null,
+        selectedSize: i.selectedSize || i.size || null,
       }));
     } else {
       const cartItems = await db.cartItem.findMany({
@@ -109,6 +115,8 @@ export async function POST(req: NextRequest) {
       requestedItems = cartItems.map((ci) => ({
         productId: ci.productId,
         quantity: Math.max(1, Math.floor(Number(ci.quantity) || 1)),
+        selectedColor: ci.selectedColor || null,
+        selectedSize: ci.selectedSize || null,
       }));
     }
 
@@ -129,6 +137,8 @@ export async function POST(req: NextRequest) {
       productImage: string;
       price: number;
       quantity: number;
+      selectedColor?: string | null;
+      selectedSize?: string | null;
     }
     const verifiedOrderItems: VerifiedOrderItem[] = [];
     for (const item of requestedItems) {
@@ -149,6 +159,8 @@ export async function POST(req: NextRequest) {
         productImage: product.image || '/products/hero.png',
         price: product.price, // STRICT DB PRICE - prevents client price tampering
         quantity: qty,
+        selectedColor: item.selectedColor || item.color || null,
+        selectedSize: item.selectedSize || item.size || null,
       });
     }
 

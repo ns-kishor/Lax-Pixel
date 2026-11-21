@@ -59,6 +59,8 @@ export interface Product {
   reviewCount: number;
   salesCount: number;
   tags: string;
+  colors?: string;
+  sizes?: string;
   aiGenerated: boolean;
   aiTags: string;
   specs?: ProductSpec[];
@@ -92,6 +94,8 @@ export interface CartItem {
   userId: string;
   productId: string;
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
   product: Product;
 }
 
@@ -103,6 +107,8 @@ export interface OrderItem {
   productImage: string;
   price: number;
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
 }
 
 export interface OrderTracking {
@@ -145,6 +151,7 @@ export interface Category {
   slug: string;
   description?: string;
   image?: string;
+  icon?: string;
   _count?: { products: number };
 }
 

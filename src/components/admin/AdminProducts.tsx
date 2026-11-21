@@ -25,6 +25,8 @@ interface AdminProduct {
   description: string;
   categoryId: string;
   productCode?: string;
+  colors?: string;
+  sizes?: string;
   specs?: { id: string; label: string; value: string }[];
   category?: { id: string; name: string; slug: string } | null;
   seller?: { id: string; name: string } | null;
@@ -37,6 +39,7 @@ interface SpecField { label: string; value: string; }
 const emptyForm = {
   name: '', price: '', comparePrice: '', stock: '', description: '',
   featured: false, categoryId: '', productCode: '', tags: '',
+  colors: '', sizes: '',
   images: '' as string, specs: [] as SpecField[],
 };
 
@@ -93,6 +96,7 @@ export function AdminProducts() {
       name: p.name, price: String(p.price), comparePrice: p.comparePrice ? String(p.comparePrice) : '',
       stock: String(p.stock), description: p.description, featured: p.featured, categoryId: p.categoryId,
       productCode: p.productCode || '', tags: '', images: p.images || '',
+      colors: p.colors || '', sizes: p.sizes || '',
       specs: (p.specs || []).map(s => ({ label: s.label, value: s.value })),
     });
   };
@@ -142,6 +146,8 @@ export function AdminProducts() {
         stock: parseInt(form.stock, 10) || 0, tags: form.tags,
         productCode: form.productCode || null,
         comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
+        colors: form.colors || '',
+        sizes: form.sizes || '',
         images: imgList.join(','),
         image: primaryImage,
         specs: form.specs.filter(s => s.label),
@@ -285,6 +291,31 @@ export function AdminProducts() {
                 <Input value={form.productCode} onChange={e => setForm({ ...form, productCode: e.target.value })} className="h-9 bg-secondary border-border text-sm" placeholder="e.g. LP-001" />
               </div>
             </div>
+
+            {/* Colors & Sizes (Optional) - Placed directly below price */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Colors (Optional)</Label>
+                <Input
+                  value={form.colors}
+                  onChange={e => setForm({ ...form, colors: e.target.value })}
+                  className="h-9 bg-secondary border-border text-sm"
+                  placeholder="e.g. Black, White, Navy Blue"
+                />
+                <p className="text-[10px] text-muted-foreground">Comma-separated colors for fashion items</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Sizes (Optional)</Label>
+                <Input
+                  value={form.sizes}
+                  onChange={e => setForm({ ...form, sizes: e.target.value })}
+                  className="h-9 bg-secondary border-border text-sm"
+                  placeholder="e.g. S, M, L, XL, XXL"
+                />
+                <p className="text-[10px] text-muted-foreground">Comma-separated sizes for customer selection</p>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category *</Label>
               <select value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm">

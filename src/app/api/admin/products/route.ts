@@ -127,6 +127,8 @@ export async function POST(req: NextRequest) {
     const featured = body.featured !== undefined ? Boolean(body.featured) : false;
     const productCode = body.productCode !== undefined ? sanitizeInput(body.productCode) || null : null;
     const tags = body.tags !== undefined ? sanitizeInput(body.tags) : '';
+    const colors = body.colors !== undefined ? sanitizeInput(body.colors) : '';
+    const sizes = body.sizes !== undefined ? sanitizeInput(body.sizes) : '';
     const images = body.images !== undefined ? cleanImageUrls(body.images) : '';
     const mainImage = cleanImageUrls(body.image) || (images ? images.split(',')[0].trim() : '') || '/products/hero.png';
 
@@ -161,6 +163,8 @@ export async function POST(req: NextRequest) {
         featured,
         productCode,
         tags,
+        colors,
+        sizes,
         specs: {
           create: specsData,
         },
@@ -194,7 +198,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const data: Record<string, unknown> = {};
-    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'images', 'image'];
+    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'colors', 'sizes', 'images', 'image'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {

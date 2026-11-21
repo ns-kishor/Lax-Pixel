@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Star, Heart, ShoppingBag, ArrowLeft, Sparkles, Truck, Shield, RotateCcw, Minus, Plus, Check, Store, CheckCircle2, ArrowRight, Zap, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -26,20 +27,69 @@ export function ProductView() {
   } = useStore();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
   useEffect(() => {
     if (!product) return;
     fetch(`/api/reviews?productId=${product.id}`).then(r => r.json()).then(setReviews);
+    setActiveImgIdx(0);
+    setSelectedColor('');
+    setSelectedSize('');
   }, [product?.id]);
+
+  const imageList = useMemo(() => {
+    const list: string[] = [];
+    if (product?.images) {
+      product.images.split(',').map(s => s.trim()).filter(Boolean).forEach(img => {
+        if (!list.includes(img)) list.push(img);
+      });
+    }
+    if (product?.image && !list.includes(product.image)) {
+      list.unshift(product.image);
+    }
+    return list.length > 0 ? list : ['/products/hero.png'];
+  }, [product?.image, product?.images]);
+
+  const availableColors = useMemo(() => {
+    return product?.colors ? product.colors.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }, [product?.colors]);
+
+  const availableSizes = useMemo(() => {
+    return product?.sizes ? product.sizes.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }, [product?.sizes]);
 
   if (!product) return <div className="pt-24 text-center">Product not found</div>;
 
   const discount = product.comparePrice ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
 
+  const validateOptions = () => {
+    if (availableColors.length > 0 && !selectedColor) {
+      showToast('Please select a color first', 'error');
+      return false;
+    }
+    if (availableSizes.length > 0 && !selectedSize) {
+      showToast('Please select a size first', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const addToCart = async () => {
     if (!user) { useStore.getState().setView('auth'); return; }
+    if (!validateOptions()) return;
     setJustAddedToCart(product.id);
-    await fetch('/api/cart', { method: 'POST', headers: authHeaders(useStore.getState), body: JSON.stringify({ productId: product.id, quantity: qty }) });
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: authHeaders(useStore.getState),
+      body: JSON.stringify({
+        productId: product.id,
+        quantity: qty,
+        color: selectedColor || undefined,
+        size: selectedSize || undefined,
+      }),
+    });
     const res = await fetch('/api/cart', { headers: authHeaders(useStore.getState) });
     setCart(await res.json());
     showToast(`${product.name} added to bag`);
@@ -47,7 +97,17 @@ export function ProductView() {
 
   const buyNow = async () => {
     if (!user) { useStore.getState().setView('auth'); return; }
-    await fetch('/api/cart', { method: 'POST', headers: authHeaders(useStore.getState), body: JSON.stringify({ productId: product.id, quantity: qty }) });
+    if (!validateOptions()) return;
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: authHeaders(useStore.getState),
+      body: JSON.stringify({
+        productId: product.id,
+        quantity: qty,
+        color: selectedColor || undefined,
+        size: selectedSize || undefined,
+      }),
+    });
     const res = await fetch('/api/cart', { headers: authHeaders(useStore.getState) });
     const updatedCart = await res.json();
     setCart(updatedCart);
@@ -74,12 +134,56 @@ export function ProductView() {
         </button>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
-          {/* Image */}
+          {/* Left Column: Multi-Image Gallery & Specifications */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary">
-              <Image src={safeImgSrc(product.image)} alt={product.name} fill className="object-cover" priority />
+            {/* Main Active Image */}
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary border border-border">
+              <Image
+                src={safeImgSrc(imageList[activeImgIdx] || product.image)}
+                alt={product.name}
+                fill
+                className="object-cover transition-all duration-300"
+                priority
+              />
               {discount > 0 && <Badge className="absolute top-4 left-4 bg-foreground text-background text-xs">-{discount}%</Badge>}
             </div>
+
+            {/* Multiple Images Thumbnails */}
+            {imageList.length > 1 && (
+              <div className="flex gap-2.5 overflow-x-auto pb-1 pt-1 scrollbar-none">
+                {imageList.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveImgIdx(idx)}
+                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                      activeImgIdx === idx
+                        ? 'border-foreground shadow-sm scale-95'
+                        : 'border-border/70 hover:border-foreground/50 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <Image src={safeImgSrc(img)} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Specifications (Positioned directly below the images per user request) */}
+            {product.specs && product.specs.length > 0 && (
+              <div className="pt-5 border-t border-border mt-4">
+                <h3 className="text-xs font-semibold tracking-wider uppercase text-foreground mb-3 flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Product Specifications
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {product.specs.map((spec, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/60 border border-border/60">
+                      <span className="text-muted-foreground">{spec.label}</span>
+                      <span className="text-foreground font-medium text-right">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Details */}
@@ -100,6 +204,77 @@ export function ProductView() {
                 <span className="text-lg text-muted-foreground line-through">৳ {product.comparePrice.toLocaleString()}</span>
               )}
             </div>
+
+            {/* ─── Color & Size Selection (Mandatory if available) ─── */}
+            {(availableColors.length > 0 || availableSizes.length > 0) && (
+              <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-3.5">
+                {/* Color Selection */}
+                {availableColors.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-medium tracking-wider uppercase text-foreground">
+                        Color: <span className="font-semibold text-foreground">{selectedColor || 'Please select'}</span>
+                      </Label>
+                      {!selectedColor && (
+                        <span className="text-[10px] text-amber-500 font-medium">* Required</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {availableColors.map((color, idx) => {
+                        const isSelected = selectedColor === color;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedColor(color)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                              isSelected
+                                ? 'bg-foreground text-background border-foreground shadow-sm'
+                                : 'bg-background text-foreground border-border hover:border-foreground/40'
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Size Selection */}
+                {availableSizes.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-medium tracking-wider uppercase text-foreground">
+                        Size: <span className="font-semibold text-foreground">{selectedSize || 'Please select'}</span>
+                      </Label>
+                      {!selectedSize && (
+                        <span className="text-[10px] text-amber-500 font-medium">* Required</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {availableSizes.map((size, idx) => {
+                        const isSelected = selectedSize === size;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedSize(size)}
+                            className={`min-w-10 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                              isSelected
+                                ? 'bg-foreground text-background border-foreground shadow-sm'
+                                : 'bg-background text-foreground border-border hover:border-foreground/40'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <Separator className="bg-secondary" />
 
@@ -180,23 +355,6 @@ export function ProductView() {
                 </div>
               ))}
             </div>
-
-            {/* Specifications */}
-            {product.specs && product.specs.length > 0 && (
-              <div className="pt-5 border-t border-border">
-                <h3 className="text-xs font-semibold tracking-wider uppercase text-foreground mb-3 flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Specifications
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {product.specs.map((spec, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/60 border border-border/60">
-                      <span className="text-muted-foreground">{spec.label}</span>
-                      <span className="text-foreground font-medium text-right">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Tags */}
             {product.tags && (

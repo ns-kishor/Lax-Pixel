@@ -75,6 +75,9 @@ export function SellerDashboard() {
     description: '',
     tags: '',
     image: '',
+    images: '',
+    colors: '',
+    sizes: '',
     specs: [] as { label: string; value: string }[],
   });
 
@@ -533,31 +536,55 @@ export function SellerDashboard() {
     }
   };
 
-  // Handle image upload for product
+  // Handle image upload for product (multiple supported)
   const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploadingImage(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'x-user-id': user.id },
-        body: fd,
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        setNewProduct(prev => ({ ...prev, image: data.url }));
-        showToast('Image uploaded successfully');
-      } else {
-        showToast(data.error || 'Upload failed', 'error');
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'x-user-id': user.id },
+          body: fd,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          newUrls.push(data.url);
+        }
+      }
+      if (newUrls.length > 0) {
+        setNewProduct(prev => {
+          const currentList = prev.images ? prev.images.split(',').filter(Boolean) : (prev.image ? [prev.image] : []);
+          const merged = [...currentList, ...newUrls];
+          return {
+            ...prev,
+            image: merged[0] || '',
+            images: merged.join(','),
+          };
+        });
+        showToast(`${newUrls.length} image(s) uploaded successfully`);
       }
     } catch {
       showToast('Image upload failed', 'error');
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const removeProductImage = (idx: number) => {
+    setNewProduct(prev => {
+      const list = prev.images ? prev.images.split(',').filter(Boolean) : (prev.image ? [prev.image] : []);
+      list.splice(idx, 1);
+      return {
+        ...prev,
+        image: list[0] || '',
+        images: list.join(','),
+      };
+    });
   };
 
   // Submit business verification form
@@ -678,6 +705,9 @@ export function SellerDashboard() {
       return;
     }
     const filteredSpecs = (newProduct.specs || []).filter(s => s.label.trim() && s.value.trim());
+    const primaryImg = newProduct.image || (newProduct.images ? newProduct.images.split(',')[0].trim() : '') || '/products/hero.png';
+    const allImages = newProduct.images || primaryImg;
+
     const res = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -688,8 +718,10 @@ export function SellerDashboard() {
         price: parseFloat(newProduct.price) || 0,
         comparePrice: newProduct.comparePrice ? parseFloat(newProduct.comparePrice) : null,
         stock: parseInt(newProduct.stock, 10) || 0,
-        image: newProduct.image || '/products/hero.png',
-        images: newProduct.image || '/products/hero.png',
+        image: primaryImg,
+        images: allImages,
+        colors: newProduct.colors || '',
+        sizes: newProduct.sizes || '',
         featured: false,
       }),
     });
@@ -697,7 +729,7 @@ export function SellerDashboard() {
     if (res.ok) {
       showToast('Product created successfully!');
       setAddProductOpen(false);
-      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', stock: '', description: '', tags: '', image: '', specs: [] });
+      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', stock: '', description: '', tags: '', image: '', images: '', colors: '', sizes: '', specs: [] });
       loadSellerData();
     } else {
       showToast(data.error || 'Failed to create product', 'error');
@@ -1414,21 +1446,73 @@ export function SellerDashboard() {
                 />
               </div>
 
-              {/* Image Upload Component */}
+              {/* Colors & Sizes (Optional) - Placed directly below price/stock */}
               <div>
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product Image *</Label>
-                <div className="mt-1.5 flex items-center gap-3">
-                  <label className="flex items-center gap-2 px-4 h-10 rounded-md border border-border bg-background cursor-pointer hover:bg-secondary text-xs transition-colors shrink-0">
-                    <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleProductImageUpload} disabled={uploadingImage} />
-                  </label>
-                  {newProduct.image ? (
-                    <div className="relative w-10 h-10 rounded-md overflow-hidden border border-border shrink-0">
-                      <Image src={safeImgSrc(newProduct.image)} alt="Preview" fill className="object-cover" />
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Colors (Optional)</Label>
+                <Input
+                  value={newProduct.colors}
+                  onChange={e => setNewProduct({ ...newProduct, colors: e.target.value })}
+                  className="mt-1.5 h-10 bg-background border-border text-sm"
+                  placeholder="e.g. Black, White, Navy Blue"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Separate multiple colors with comma</p>
+              </div>
+
+              <div>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Sizes (Optional)</Label>
+                <Input
+                  value={newProduct.sizes}
+                  onChange={e => setNewProduct({ ...newProduct, sizes: e.target.value })}
+                  className="mt-1.5 h-10 bg-background border-border text-sm"
+                  placeholder="e.g. S, M, L, XL, XXL"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Separate multiple sizes with comma</p>
+              </div>
+
+              {/* Multiple Images Upload Component */}
+              <div className="sm:col-span-2">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product Images * (Multiple allowed)</Label>
+                <div className="mt-1.5 space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <label className="flex items-center gap-2 px-4 h-10 rounded-md border border-border bg-background cursor-pointer hover:bg-secondary text-xs transition-colors shrink-0">
+                      <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>{uploadingImage ? 'Uploading...' : 'Choose Images'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleProductImageUpload}
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                    <span className="text-[11px] text-muted-foreground">
+                      Select one or multiple photos (JPG, PNG, WebP)
+                    </span>
+                  </div>
+
+                  {/* Uploaded Images Thumbnails */}
+                  {(newProduct.images || newProduct.image) && (
+                    <div className="flex gap-2.5 flex-wrap pt-1">
+                      {(newProduct.images ? newProduct.images.split(',').filter(Boolean) : [newProduct.image]).map((imgUrl, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-background group shrink-0">
+                          <Image src={safeImgSrc(imgUrl)} alt={`Product ${idx + 1}`} fill className="object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeProductImage(idx)}
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                            title="Remove photo"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          {idx === 0 && (
+                            <span className="absolute bottom-0 inset-x-0 bg-foreground/80 text-background text-[8px] text-center font-medium py-0.5">
+                              Main
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground truncate">Upload from device or enter URL</span>
                   )}
                 </div>
               </div>

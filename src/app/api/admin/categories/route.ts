@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
     const name = sanitizeInput(body.name);
     const slug = sanitizeInput(body.slug);
     const description = body.description !== undefined ? sanitizeInput(body.description) : undefined;
+    const icon = body.icon ? String(body.icon).trim() : null;
+    const image = body.image ? String(body.image).trim() : icon;
 
     if (!name || !slug) {
       return NextResponse.json({ error: 'Name and slug are required.' }, { status: 400 });
@@ -73,6 +75,8 @@ export async function POST(req: NextRequest) {
         name,
         slug,
         description: description || null,
+        icon: icon || image || null,
+        image: image || icon || null,
       },
       include: {
         _count: { select: { products: true } },
@@ -134,6 +138,14 @@ export async function PATCH(req: NextRequest) {
 
     if (body.description !== undefined) {
       data.description = sanitizeInput(body.description) || null;
+    }
+
+    if (body.icon !== undefined) {
+      data.icon = body.icon ? String(body.icon).trim() : null;
+    }
+
+    if (body.image !== undefined) {
+      data.image = body.image ? String(body.image).trim() : null;
     }
 
     if (Object.keys(data).length === 0) {

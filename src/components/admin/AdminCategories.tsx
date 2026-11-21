@@ -11,15 +11,17 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, FolderTree } from 'lucide-react';
+import { Plus, Pencil, Trash2, FolderTree, Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useStore } from '@/lib/store';
+import { useStore, safeImgSrc } from '@/lib/store';
 
 interface AdminCategory {
   id: string;
   name: string;
   slug: string;
   description?: string | null;
+  icon?: string | null;
+  image?: string | null;
   _count: { products: number };
 }
 
@@ -32,7 +34,7 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-const emptyForm = { name: '', slug: '', description: '' };
+const emptyForm = { name: '', slug: '', description: '', icon: '' };
 
 type FormState = typeof emptyForm;
 
@@ -61,6 +63,8 @@ export function AdminCategories() {
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+
   const openAdd = () => {
     setEditId(null);
     setForm(emptyForm);
@@ -73,8 +77,32 @@ export function AdminCategories() {
       name: cat.name,
       slug: cat.slug,
       description: cat.description || '',
+      icon: cat.icon || cat.image || '',
     });
     setDialogOpen(true);
+  };
+
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingIcon(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { 'x-admin-token': localStorage.getItem('admin-token') || '' },
+        body: fd,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setForm(prev => ({ ...prev, icon: data.url }));
+      showToast('Icon uploaded successfully');
+    } catch {
+      showToast('Icon upload failed', 'error');
+    } finally {
+      setUploadingIcon(false);
+    }
   };
 
   const handleSave = async () => {
@@ -90,6 +118,8 @@ export function AdminCategories() {
         name: form.name,
         slug: form.slug,
         description: form.description || undefined,
+        icon: form.icon || null,
+        image: form.icon || null,
       };
       if (editId) body.id = editId;
 
@@ -184,7 +214,20 @@ export function AdminCategories() {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-border hover:bg-secondary transition-colors"
                 >
-                  <td className="p-2 text-xs font-medium">{cat.name}</td>
+                  <td className="p-2 text-xs font-medium">
+                    <div className="flex items-center gap-2.5">
+                      {cat.icon || cat.image ? (
+                        <div className="w-7 h-7 rounded-lg overflow-hidden border border-border bg-secondary shrink-0 relative flex items-center justify-center">
+                          <img src={safeImgSrc(cat.icon || cat.image)} alt={cat.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 rounded-lg border border-border bg-secondary shrink-0 flex items-center justify-center text-muted-foreground">
+                          <FolderTree className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                      <span>{cat.name}</span>
+                    </div>
+                  </td>
                   <td className="p-2 text-xs font-mono text-muted-foreground">{cat.slug}</td>
                   <td className="p-2">
                     <Badge variant="secondary" className="text-[10px]">{cat._count.products}</Badge>
@@ -260,6 +303,38 @@ export function AdminCategories() {
                 className="h-9 bg-secondary border-border text-sm font-mono"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category Icon (Optional)</Label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 px-3 h-9 rounded-md border border-border bg-secondary cursor-pointer hover:bg-muted text-xs transition-colors shrink-0">
+                  <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>{uploadingIcon ? 'Uploading…' : 'Upload Icon'}</span>
+                  <input
+                    type="file"
+                    accept="image/*,.jpg,.jpeg,.png,.avif,.webp,.svg"
+                    className="hidden"
+                    onChange={handleIconUpload}
+                    disabled={uploadingIcon}
+                  />
+                </label>
+                {form.icon ? (
+                  <div className="relative w-9 h-9 rounded-md overflow-hidden border border-border shrink-0 bg-secondary group">
+                    <img src={safeImgSrc(form.icon)} alt="Icon Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, icon: '' })}
+                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                      title="Remove Icon"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground truncate">JPG, PNG, WebP, AVIF, SVG</span>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Description</Label>
               <Textarea

@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, slug, description, price, comparePrice, image, images, categoryId, sellerId, stock, featured, tags } = body;
+    const { name, slug, description, price, comparePrice, image, images, categoryId, sellerId, stock, featured, tags, colors, sizes } = body;
 
     const trimmedName = String(name || '').trim();
     if (!trimmedName || price === undefined || price === null || !categoryId || !sellerId) {
@@ -170,6 +170,8 @@ export async function POST(req: NextRequest) {
         stock: validStock,
         featured: Boolean(featured),
         tags: String(tags || ''),
+        colors: String(colors || ''),
+        sizes: String(sizes || ''),
         aiGenerated: false,
         aiTags: '',
         specs: specsData.length > 0 ? { create: specsData } : undefined,

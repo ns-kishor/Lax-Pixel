@@ -210,6 +210,8 @@ export function CheckoutView() {
           productImage: safeImgSrc(i.product?.image),
           price: i.product?.price,
           quantity: i.quantity,
+          selectedColor: i.selectedColor || undefined,
+          selectedSize: i.selectedSize || undefined,
         })),
         phone: form.phone.trim(),
         shippingAddress: form.shippingAddress.trim(),
@@ -695,9 +697,18 @@ export function CheckoutView() {
               <h3 className="text-sm font-medium tracking-wide">Order Summary</h3>
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {checkoutItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground truncate mr-2">{item.product?.name} x{item.quantity}</span>
-                    <span className="shrink-0">৳ {((item.product?.price || 0) * item.quantity).toLocaleString()}</span>
+                  <div key={item.id} className="flex justify-between items-start text-sm">
+                    <div className="min-w-0 mr-2">
+                      <p className="text-muted-foreground truncate">{item.product?.name} x{item.quantity}</p>
+                      {(item.selectedColor || item.selectedSize) && (
+                        <p className="text-[10px] text-muted-foreground">
+                          {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+                          {item.selectedColor && item.selectedSize && <span> • </span>}
+                          {item.selectedSize && <span>Size: {item.selectedSize}</span>}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 font-medium">৳ {((item.product?.price || 0) * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>

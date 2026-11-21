@@ -252,6 +252,18 @@ export function CartView() {
                             {item.product?.name}
                           </h3>
 
+                          {(item.selectedColor || item.selectedSize) && (
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                              {item.selectedColor && (
+                                <span>Color: <strong className="text-foreground font-medium">{item.selectedColor}</strong></span>
+                              )}
+                              {item.selectedColor && item.selectedSize && <span>•</span>}
+                              {item.selectedSize && (
+                                <span>Size: <strong className="text-foreground font-medium">{item.selectedSize}</strong></span>
+                              )}
+                            </div>
+                          )}
+
                           {/* Seller link */}
                           {item.product?.sellerId && (
                             <button

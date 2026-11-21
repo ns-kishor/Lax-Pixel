@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const { productId, quantity } = await req.json();
+    const { productId, quantity, color, size } = await req.json();
     if (!productId) return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
 
     const product = await db.product.findUnique({ where: { id: productId } });
@@ -36,14 +36,24 @@ export async function POST(req: NextRequest) {
       const newQty = Math.min(product.stock, existing.quantity + addQty);
       const updated = await db.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: newQty },
+        data: {
+          quantity: newQty,
+          selectedColor: color ? String(color).trim() : existing.selectedColor,
+          selectedSize: size ? String(size).trim() : existing.selectedSize,
+        },
         include: { product: true },
       });
       return NextResponse.json(updated);
     }
 
     const item = await db.cartItem.create({
-      data: { userId, productId, quantity: Math.min(product.stock, addQty) },
+      data: {
+        userId,
+        productId,
+        quantity: Math.min(product.stock, addQty),
+        selectedColor: color ? String(color).trim() : null,
+        selectedSize: size ? String(size).trim() : null,
+      },
       include: { product: true },
     });
     return NextResponse.json(item, { status: 201 });
