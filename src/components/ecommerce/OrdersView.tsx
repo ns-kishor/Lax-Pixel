@@ -199,7 +199,19 @@ export function OrderDetailView() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.productName}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                    <span>Qty: {item.quantity}</span>
+                    {item.selectedColor && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-background border border-border text-foreground">
+                        Color: <strong className="ml-1 font-semibold">{item.selectedColor}</strong>
+                      </span>
+                    )}
+                    {item.selectedSize && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-background border border-border text-foreground">
+                        Size: <strong className="ml-1 font-semibold">{item.selectedSize}</strong>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-sm">৳ {((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
               </div>

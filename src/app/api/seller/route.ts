@@ -92,6 +92,8 @@ export async function GET(req: NextRequest) {
         productImage: item.productImage,
         price: item.price,
         quantity: item.quantity,
+        selectedColor: item.selectedColor || null,
+        selectedSize: item.selectedSize || null,
       });
       orderEntry.sellerTotal += (item.price * item.quantity);
     }

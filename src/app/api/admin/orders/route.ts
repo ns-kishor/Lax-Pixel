@@ -73,6 +73,12 @@ export async function GET(req: NextRequest) {
       userEmail: o.user.email,
       fullAddress: `${o.shippingAddress}, ${o.shippingCity}, ${o.shippingCountry}${o.shippingZip ? ` ${o.shippingZip}` : ''}`,
       itemCount: o.items.length,
+      items: o.items.map((i) => ({
+        ...i,
+        productCode: i.product?.productCode || null,
+        selectedColor: i.selectedColor || null,
+        selectedSize: i.selectedSize || null,
+      })),
     }));
 
     return NextResponse.json({ orders: formattedOrders, total });

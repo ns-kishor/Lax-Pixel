@@ -1722,9 +1722,18 @@ export function SellerDashboard() {
                             </td>
                             <td className="p-3">
                               <span className="font-medium">{order.items?.length || 0} item(s)</span>
-                              <span className="block text-[10px] text-muted-foreground truncate max-w-[200px]">
-                                {order.items?.map((i: any) => i.productName).join(', ')}
-                              </span>
+                              <div className="space-y-1 mt-1">
+                                {order.items?.map((i: any) => (
+                                  <div key={i.id} className="text-[11px] text-muted-foreground truncate max-w-[240px]">
+                                    <span className="font-medium text-foreground">{i.productName}</span> (×{i.quantity})
+                                    {(i.selectedColor || i.selectedSize) && (
+                                      <span className="ml-1 text-[10px] text-foreground font-medium bg-secondary px-1.5 py-0.5 rounded border border-border">
+                                        {[i.selectedColor && `Color: ${i.selectedColor}`, i.selectedSize && `Size: ${i.selectedSize}`].filter(Boolean).join(' | ')}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </td>
                             <td className="p-3 text-right font-semibold text-green-500">
                               ৳ {(order.sellerTotal || 0).toLocaleString()}
@@ -2510,6 +2519,20 @@ export function SellerDashboard() {
                           <div>
                             <p className="font-medium text-foreground">{item.productName}</p>
                             <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} × ৳{item.price}</p>
+                            {(item.selectedColor || item.selectedSize) && (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {item.selectedColor && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-background border border-border text-foreground">
+                                    Color: <span className="ml-1 font-semibold">{item.selectedColor}</span>
+                                  </span>
+                                )}
+                                {item.selectedSize && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-background border border-border text-foreground">
+                                    Size: <span className="ml-1 font-semibold">{item.selectedSize}</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span className="font-medium">৳{(item.price * item.quantity).toLocaleString()}</span>
