@@ -2,6 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { Sparkles, Facebook, Instagram, Youtube, MessageCircle } from 'lucide-react';
+import Script from 'next/script';
 
 const WHATSAPP_NUMBER = '1234567890'; // Replace with actual number
 
@@ -136,6 +137,22 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[10px] text-muted-foreground">© 2025 Lax Pixel. All rights reserved.</p>
+          <div className="flex items-center gap-2">
+            <a
+              href="//www.dmca.com/Protection/Status.aspx?ID=bb2c8b45-c021-43de-93a7-4f95d672c7f9"
+              title="DMCA.com Protection Status"
+              className="dmca-badge inline-block hover:opacity-90 transition-opacity"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://images.dmca.com/Badges/dmca_protected_sml_120q.png?ID=bb2c8b45-c021-43de-93a7-4f95d672c7f9"
+                alt="DMCA.com Protection Status"
+                className="h-6 w-auto"
+              />
+            </a>
+            <Script src="https://images.dmca.com/Badges/DMCABadgeHelper.min.js" strategy="lazyOnload" />
+          </div>
           <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
             Lax Pixel • Luxury Redefined
           </p>
