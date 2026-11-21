@@ -293,12 +293,34 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
     }
 
-    // Delete related records in a transaction
+    // Check if product has historical order items
+    const orderCount = await db.orderItem.count({ where: { productId: id } });
+    if (orderCount > 0) {
+      await db.product.update({
+        where: { id },
+        data: {
+          stock: 0,
+          featured: false,
+          name: product.name.startsWith('[Archived]') ? product.name : `[Archived] ${product.name}`,
+        },
+      });
+      await db.$transaction([
+        db.cartItem.deleteMany({ where: { productId: id } }),
+        db.wishlist.deleteMany({ where: { productId: id } }),
+      ]);
+      return NextResponse.json({
+        success: true,
+        archived: true,
+        message: 'Product archived to preserve customer order history.',
+      });
+    }
+
+    // Delete related records in a transaction when no orders exist
     await db.$transaction([
       db.cartItem.deleteMany({ where: { productId: id } }),
       db.wishlist.deleteMany({ where: { productId: id } }),
-      db.orderItem.deleteMany({ where: { productId: id } }),
       db.review.deleteMany({ where: { productId: id } }),
+      db.productSpec.deleteMany({ where: { productId: id } }),
       db.product.delete({ where: { id } }),
     ]);
 

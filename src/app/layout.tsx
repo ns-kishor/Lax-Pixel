@@ -26,6 +26,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://laxpixel.com'),
   title: "Lax Pixel — Luxury Redefined",
   description: "Exclusive curated luxury ecommerce. Timeless elegance, authentic collections, and seamless shopping experience across Bangladesh.",
   icons: {
@@ -35,6 +36,28 @@ export const metadata: Metadata = {
     ],
     shortcut: "/favicon.png",
     apple: "/favicon.png",
+  },
+  openGraph: {
+    title: "Lax Pixel — Luxury Redefined",
+    description: "Exclusive curated luxury ecommerce. Timeless elegance, authentic collections, and seamless shopping experience across Bangladesh.",
+    url: "https://laxpixel.com",
+    siteName: "Lax Pixel",
+    images: [
+      {
+        url: "/White mood.png",
+        width: 800,
+        height: 600,
+        alt: "Lax Pixel Luxury Ecommerce",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lax Pixel — Luxury Redefined",
+    description: "Exclusive curated luxury ecommerce. Timeless elegance, authentic collections, and seamless shopping experience across Bangladesh.",
+    images: ["/White mood.png"],
   },
 };
 

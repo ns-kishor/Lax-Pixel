@@ -215,7 +215,7 @@ export function AdminVerifications() {
                             <div key={idx} className="p-3 rounded-xl bg-background border border-border flex items-start gap-3">
                               {m.icon ? (
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-secondary/50">
-                                  <img src={m.icon} alt="" className="w-6 h-6 object-contain" />
+                                  <img src={m.icon} alt={m.name || "Payment method"} className="w-6 h-6 object-contain" />
                                 </div>
                               ) : null}
                               <div className="flex-1 min-w-0 text-xs">

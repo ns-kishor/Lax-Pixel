@@ -60,11 +60,11 @@ export function TrackingView() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={orderNumber}
-              onChange={e => setOrderNumber(e.target.value.replace(/\D/g, '').slice(0, 13))}
+              onChange={e => setOrderNumber(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 30))}
               onKeyDown={e => e.key === 'Enter' && track()}
-              placeholder="e.g. 1234567890123"
+              placeholder="e.g. 1234567890123 or NOR-000001"
               className="pl-10 h-11 bg-secondary border-border text-sm rounded-lg font-mono tracking-wider"
-              maxLength={13}
+              maxLength={30}
             />
           </div>
           <Button className="h-11 bg-foreground text-background text-xs tracking-wider px-6 rounded-lg" onClick={track} disabled={loading}>

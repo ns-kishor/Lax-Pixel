@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAndConsumeOtp } from '@/lib/otp-store';
+import { generateUserToken } from '@/lib/user-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
     if (existing) {
       const { password: _, ...safeUser } = existing;
       const sellerProfile = existing.role === 'SELLER' ? await db.sellerProfile.findUnique({ where: { userId: existing.id } }) : null;
-      return NextResponse.json({ user: safeUser, sellerProfile, message: 'Account already active.' }, { status: 200 });
+      const token = generateUserToken({ id: existing.id, email: existing.email, role: existing.role });
+      return NextResponse.json({ user: safeUser, sellerProfile, token, message: 'Account already active.' }, { status: 200 });
     }
 
     // Create user in DB
@@ -62,10 +64,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { password: _, ...safeUser } = user;
+    const token = generateUserToken({ id: user.id, email: user.email, role: user.role });
     return NextResponse.json({
       success: true,
       user: safeUser,
       sellerProfile,
+      token,
       message: 'Account verified and created successfully.',
     });
   } catch (error) {
@@ -73,4 +77,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Verification failed: ' + String(error) }, { status: 500 });
   }
 }
-

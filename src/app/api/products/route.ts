@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminToken } from '@/lib/admin-auth';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -116,6 +118,19 @@ export async function POST(req: NextRequest) {
 
     const parsedStock = parseInt(String(stock || '0'), 10);
     const validStock = isNaN(parsedStock) || parsedStock < 0 ? 0 : parsedStock;
+
+    // Check authorization: Must be Admin or the Seller themselves
+    const adminToken = req.headers.get('x-admin-token');
+    const admin = verifyAdminToken(adminToken);
+    const authUser = getAuthenticatedUser(req);
+
+    if (!admin && !authUser) {
+      return NextResponse.json({ error: 'Authentication required to publish products.' }, { status: 401 });
+    }
+
+    if (!admin && authUser && authUser.userId !== sellerId) {
+      return NextResponse.json({ error: 'Unauthorized to publish products for another seller.' }, { status: 403 });
+    }
 
     // Check seller verification approval
     const sellerProfile = await db.sellerProfile.findUnique({ where: { userId: sellerId } });

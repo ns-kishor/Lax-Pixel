@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         requireOtp: true,
         email,
         message: 'A 6-digit verification code has been sent to your email.',
-        devCode: emailResult.devCode || undefined,
+        devCode: process.env.NODE_ENV === 'development' ? emailResult.devCode : undefined,
       },
       { status: 200 }
     );

@@ -18,7 +18,7 @@ export function MobileBottomNav() {
   const isHome = view === 'home';
   const isShop = view === 'shop' || view === 'seller-store';
   const isCart = view === 'cart';
-  const isWishlist = view === 'account' && false; // Or dedicated saved tab
+  const isWishlist = view === 'wishlist';
   const isAccount = view === 'account' || view === 'auth' || view === 'orders' || view === 'seller-dashboard';
 
   return (
@@ -129,13 +129,7 @@ export function MobileBottomNav() {
         {/* 4. Wishlist / Saved */}
         <button
           type="button"
-          onClick={() => {
-            if (!user) {
-              setView('auth');
-            } else {
-              setView('account');
-            }
-          }}
+          onClick={() => setView('wishlist')}
           className="flex flex-col items-center justify-center h-full w-full relative transition-all active:scale-95"
           aria-label="Wishlist"
         >

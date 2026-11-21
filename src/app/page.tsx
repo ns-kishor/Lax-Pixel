@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useStore, authHeaders } from '@/lib/store';
 import { parseUrl } from '@/lib/navigator';
 import { Header } from '@/components/ecommerce/Header';
@@ -13,10 +14,8 @@ import { OrdersView, OrderDetailView } from '@/components/ecommerce/OrdersView';
 import { AuthView } from '@/components/ecommerce/AuthView';
 import { TrackingView } from '@/components/ecommerce/TrackingView';
 import { AccountView } from '@/components/ecommerce/AccountView';
-import { SellerDashboard } from '@/components/ecommerce/SellerDashboard';
+import { WishlistView } from '@/components/ecommerce/WishlistView';
 import { ContentView } from '@/components/ecommerce/ContentView';
-import { AdminLogin } from '@/components/admin/AdminLogin';
-import { AdminPanel } from '@/components/admin/AdminPanel';
 import { SupportView } from '@/components/ecommerce/SupportView';
 import { SellerStoreView } from '@/components/ecommerce/SellerStoreView';
 import { MobileBottomNav } from '@/components/ecommerce/MobileBottomNav';
@@ -24,6 +23,43 @@ import { Footer } from '@/components/ecommerce/Footer';
 import { Toast } from '@/components/ecommerce/Toast';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Code-split heavy vendor and admin dashboards to optimize initial page bundle
+const SellerDashboard = dynamic(
+  () => import('@/components/ecommerce/SellerDashboard').then(mod => mod.SellerDashboard),
+  {
+    loading: () => (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const AdminLogin = dynamic(
+  () => import('@/components/admin/AdminLogin').then(mod => mod.AdminLogin),
+  {
+    loading: () => (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const AdminPanel = dynamic(
+  () => import('@/components/admin/AdminPanel').then(mod => mod.AdminPanel),
+  {
+    loading: () => (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 function ViewRouter() {
   const { view } = useStore();
@@ -41,6 +77,7 @@ function ViewRouter() {
         {view === 'auth' && <AuthView />}
         {view === 'tracking' && <TrackingView />}
         {view === 'account' && <AccountView />}
+        {view === 'wishlist' && <WishlistView />}
         {view === 'seller-dashboard' && <SellerDashboard />}
         {view === 'content' && <ContentView />}
         {view === 'seller-products' && <SellerDashboard />}

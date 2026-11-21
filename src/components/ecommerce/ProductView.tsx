@@ -30,6 +30,11 @@ export function ProductView() {
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -369,7 +374,164 @@ export function ProductView() {
 
         {/* Reviews */}
         <div className="mt-16">
-          <h2 className="text-xl font-light tracking-tight mb-6">Reviews ({reviews.length})</h2>
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+            <div>
+              <h2 className="text-xl font-light tracking-tight">Customer Reviews ({reviews.length})</h2>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`w-3.5 h-3.5 ${
+                          s <= Math.round(product.rating || 5)
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-muted-foreground'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-foreground">{product.rating?.toFixed(1) || '5.0'} out of 5</span>
+                </div>
+              )}
+            </div>
+
+            {user ? (
+              <Button
+                variant={showReviewForm ? 'outline' : 'default'}
+                size="sm"
+                onClick={() => setShowReviewForm(!showReviewForm)}
+                className="text-xs h-9 rounded-lg"
+              >
+                {showReviewForm ? 'Cancel' : 'Write a Review'}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setView('auth')}
+                className="text-xs h-9 border-border rounded-lg"
+              >
+                Sign in to Review
+              </Button>
+            )}
+          </div>
+
+          {/* Review Submission Form */}
+          {showReviewForm && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!user) {
+                  setView('auth');
+                  return;
+                }
+                if (!reviewComment.trim()) {
+                  showToast('Please enter your review feedback', 'error');
+                  return;
+                }
+                setSubmittingReview(true);
+                try {
+                  const res = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: authHeaders(useStore.getState),
+                    body: JSON.stringify({
+                      productId: product.id,
+                      rating: reviewRating,
+                      title: reviewTitle.trim() || undefined,
+                      comment: reviewComment.trim(),
+                    }),
+                  });
+                  if (res.ok) {
+                    showToast('Review submitted successfully!', 'success');
+                    setShowReviewForm(false);
+                    setReviewTitle('');
+                    setReviewComment('');
+                    const updatedReviews = await (await fetch(`/api/reviews?productId=${product.id}`)).json();
+                    setReviews(Array.isArray(updatedReviews) ? updatedReviews : []);
+                  } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to submit review', 'error');
+                  }
+                } catch {
+                  showToast('An error occurred while submitting review', 'error');
+                } finally {
+                  setSubmittingReview(false);
+                }
+              }}
+              className="mb-8 p-5 rounded-xl bg-secondary/60 border border-border space-y-4"
+            >
+              <h3 className="text-sm font-medium tracking-wide">Write Your Review</h3>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1.5">Rating</label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setReviewRating(s)}
+                      className="p-1 hover:scale-110 transition-transform"
+                    >
+                      <Star
+                        className={`w-5 h-5 ${
+                          s <= reviewRating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-muted-foreground'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="text-xs font-semibold ml-2">{reviewRating} Star{reviewRating > 1 ? 's' : ''}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Headline (Optional)</label>
+                <input
+                  type="text"
+                  value={reviewTitle}
+                  onChange={(e) => setReviewTitle(e.target.value)}
+                  placeholder="e.g. Exceptional luxury quality & fast delivery"
+                  className="w-full h-10 px-3 rounded-lg bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-foreground"
+                  maxLength={150}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Review Details *</label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Share your experience with this product..."
+                  rows={4}
+                  required
+                  className="w-full p-3 rounded-lg bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-foreground"
+                  maxLength={2000}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReviewForm(false)}
+                  className="text-xs h-9"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={submittingReview}
+                  className="text-xs h-9 bg-foreground text-background rounded-lg px-5 font-medium"
+                >
+                  {submittingReview ? 'Submitting...' : 'Submit Review'}
+                </Button>
+              </div>
+            </form>
+          )}
+
           {reviews.length === 0 ? (
             <div className="text-center py-12 bg-secondary rounded-xl border border-border">
               <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review this product.</p>

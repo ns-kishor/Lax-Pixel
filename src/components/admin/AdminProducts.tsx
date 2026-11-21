@@ -350,7 +350,7 @@ export function AdminProducts() {
                 <div className="flex gap-2 flex-wrap">
                   {imageList.map((url, idx) => (
                     <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <img src={url} alt="Product image preview" className="w-full h-full object-cover" />
                       <button onClick={() => removeImage(idx)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3 text-white" /></button>
                     </div>
                   ))}

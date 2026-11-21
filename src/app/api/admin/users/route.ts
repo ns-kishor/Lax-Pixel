@@ -100,7 +100,39 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    await db.user.delete({ where: { id } });
+    // Check if user has orders or products
+    const [orderCount, productCount] = await Promise.all([
+      db.order.count({ where: { userId: id } }),
+      db.product.count({ where: { sellerId: id } }),
+    ]);
+
+    if (orderCount > 0 || productCount > 0) {
+      await db.user.update({
+        where: { id },
+        data: {
+          banned: true,
+          name: `[Deactivated] ${user.name.slice(0, 20)}`,
+        },
+      });
+      await db.$transaction([
+        db.cartItem.deleteMany({ where: { userId: id } }),
+        db.wishlist.deleteMany({ where: { userId: id } }),
+      ]);
+      return NextResponse.json({
+        success: true,
+        deactivated: true,
+        message: 'User account has existing orders or products; account deactivated to preserve store history.',
+      });
+    }
+
+    await db.$transaction([
+      db.cartItem.deleteMany({ where: { userId: id } }),
+      db.wishlist.deleteMany({ where: { userId: id } }),
+      db.review.deleteMany({ where: { userId: id } }),
+      db.sellerProfile.deleteMany({ where: { userId: id } }),
+      db.sellerVerification.deleteMany({ where: { userId: id } }),
+      db.user.delete({ where: { id } }),
+    ]);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Admin delete user error:', error);

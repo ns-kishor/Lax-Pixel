@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdmin } from '../auth/route';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'svg', 'gif'];
+
 export async function POST(req: NextRequest) {
   try {
     const admin = verifyAdmin(req.headers.get('x-admin-token'));
@@ -15,9 +18,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds maximum allowed limit of 5MB.' }, { status: 400 });
+    }
+
     const originalName = file.name || 'image.jpg';
     const ext = originalName.split('.').pop()?.toLowerCase() || 'jpg';
+
+    if (!ALLOWED_EXTS.includes(ext) || (file.type && !file.type.startsWith('image/'))) {
+      return NextResponse.json({ error: 'Only image files (JPG, PNG, WebP, AVIF, SVG, GIF) are allowed.' }, { status: 400 });
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
     const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
 
     const rawSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yywssvjzjhqvdvsvoipy.supabase.co';
@@ -57,4 +69,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Upload failed: ' + String(error) }, { status: 500 });
   }
 }
-

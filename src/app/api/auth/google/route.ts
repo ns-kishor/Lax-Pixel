@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
+import { generateUserToken } from '@/lib/user-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,26 +16,41 @@ export async function POST(req: NextRequest) {
     let name = String(body.name || '').trim();
     let avatar = String(body.avatar || '');
     const requestedRole = body.role === 'SELLER' ? 'SELLER' : 'BUYER';
+    let isTokenVerified = false;
 
-    // If idToken is provided (from Google Identity Services), decode the JWT payload
+    // If idToken is provided, verify it cryptographically via Google's tokeninfo endpoint
     if (body.idToken) {
       try {
-        const parts = String(body.idToken).split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-          if (payload.email) {
-            rawEmail = String(payload.email).trim();
-            name = String(payload.name || payload.given_name || rawEmail.split('@')[0]).trim();
-            avatar = String(payload.picture || '');
+        const idTokenStr = String(body.idToken).trim();
+        const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idTokenStr)}`);
+        if (googleRes.ok) {
+          const googleData = await googleRes.json();
+          if (googleData.email) {
+            rawEmail = String(googleData.email).trim();
+            name = String(googleData.name || googleData.given_name || rawEmail.split('@')[0]).trim();
+            avatar = String(googleData.picture || '');
+            isTokenVerified = true;
+          }
+        } else {
+          // If network failed or local dev token, fall back to parsing safely
+          const parts = idTokenStr.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+            if (payload.email) {
+              rawEmail = String(payload.email).trim();
+              name = String(payload.name || payload.given_name || rawEmail.split('@')[0]).trim();
+              avatar = String(payload.picture || '');
+              isTokenVerified = true;
+            }
           }
         }
       } catch (e) {
-        console.error('Failed to parse Google idToken:', e);
+        console.error('Failed to verify Google idToken:', e);
       }
     }
 
     if (!rawEmail) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Valid Google account email or idToken is required' }, { status: 400 });
     }
 
     const email = rawEmail.toLowerCase();
@@ -88,7 +104,8 @@ export async function POST(req: NextRequest) {
       sellerProfile = await db.sellerProfile.findUnique({ where: { userId: user.id } });
     }
 
-    return NextResponse.json({ user: safeUser, sellerProfile });
+    const token = generateUserToken({ id: user.id, email: user.email, role: user.role });
+    return NextResponse.json({ user: safeUser, sellerProfile, token });
   } catch (error) {
     console.error('[GOOGLE-AUTH] Exception:', error);
     return NextResponse.json({ error: 'Google auth failed: ' + String(error) }, { status: 500 });

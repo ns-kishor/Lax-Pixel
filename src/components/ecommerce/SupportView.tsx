@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,20 @@ export function SupportView() {
   const { setView } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setSettings(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const whatsappNum = settings.social_whatsapp ? settings.social_whatsapp.replace(/\D/g, '') : '8801700000000';
 
   const faqs = [
     {
@@ -81,7 +95,7 @@ export function SupportView() {
       badge: 'Fastest Response',
       color: 'hover:border-foreground/40',
       actionLabel: 'Chat on WhatsApp',
-      link: 'https://wa.me/8801700000000?text=Hello%20Lax%20Pixel%20Support',
+      link: `https://wa.me/${whatsappNum}?text=Hello%20Lax%20Pixel%20Support`,
       icon: (
         <svg className="w-6 h-6 text-foreground" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.5C9.32 7.5 8.97 7.58 8.68 7.9C8.39 8.21 7.56 8.99 7.56 10.56C7.56 12.14 8.71 13.66 8.87 13.87C9.03 14.08 11.13 17.32 14.34 18.71C15.1 19.04 15.69 19.24 16.15 19.39C16.92 19.63 17.61 19.6 18.16 19.52C18.78 19.43 20.06 18.74 20.33 17.99C20.6 17.23 20.6 16.58 20.52 16.45C20.44 16.32 20.23 16.24 19.92 16.08C19.61 15.93 18.06 15.17 17.77 15.06C17.48 14.96 17.28 14.9 17.07 15.22C16.86 15.53 16.26 16.24 16.08 16.45C15.9 16.66 15.72 16.68 15.41 16.53C15.1 16.37 14.11 16.05 12.93 15C12.01 14.18 11.39 13.17 11.21 12.86C11.03 12.55 11.19 12.39 11.35 12.23C11.49 12.1 11.66 11.88 11.82 11.69C11.98 11.5 12.03 11.37 12.14 11.16C12.24 10.95 12.19 10.77 12.11 10.61C12.03 10.45 11.42 8.95 11.16 8.33C10.91 7.73 10.65 7.81 10.46 7.8C10.28 7.8 10.07 7.79 9.87 7.79L9.53 7.5Z" />

@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { compare } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { tryAdminLogin } from '@/lib/admin-auth';
+import { generateUserToken } from '@/lib/user-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
         if (user.role === 'SELLER') {
           sellerProfile = await db.sellerProfile.findUnique({ where: { userId: user.id } });
         }
-        return NextResponse.json({ user: safeUser, sellerProfile });
+        const token = generateUserToken({ id: user.id, email: user.email, role: user.role });
+        return NextResponse.json({ user: safeUser, sellerProfile, token });
       }
     }
 

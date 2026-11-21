@@ -1860,7 +1860,7 @@ export function SellerDashboard() {
                             <div className="flex items-center gap-2">
                               {p.paymentMethod?.icon ? (
                                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-background border border-border">
-                                  <img src={p.paymentMethod.icon} alt="" className="w-6 h-6 object-contain" />
+                                  <img src={p.paymentMethod.icon} alt={p.paymentMethod.name || "Payment method"} className="w-6 h-6 object-contain" />
                                 </div>
                               ) : null}
                               <div>
@@ -2514,7 +2514,7 @@ export function SellerDashboard() {
                       <div key={item.id} className="p-3 flex items-center justify-between text-xs bg-secondary/20">
                         <div className="flex items-center gap-3">
                           {item.productImage ? (
-                            <img src={item.productImage} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                            <img src={item.productImage} alt={item.productName || "Product item"} className="w-9 h-9 rounded-lg object-cover" />
                           ) : null}
                           <div>
                             <p className="font-medium text-foreground">{item.productName}</p>

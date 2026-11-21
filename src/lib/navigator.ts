@@ -44,6 +44,8 @@ export function buildUrl(view: View, params?: Record<string, string>): string {
       return '/tracking';
     case 'account':
       return '/account';
+    case 'wishlist':
+      return '/wishlist';
     case 'seller-dashboard':
       return '/seller';
     case 'admin-login':
@@ -126,6 +128,7 @@ export function parseUrl(pathname: string, search: string): ParsedRoute {
     '/orders': 'orders',
     '/auth': 'auth',
     '/tracking': 'tracking',
+    '/wishlist': 'wishlist',
     '/account': 'account',
     '/support': 'support',
     '/seller': 'seller-dashboard',

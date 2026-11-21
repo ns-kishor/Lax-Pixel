@@ -318,7 +318,7 @@ export function AdminSellers() {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         {seller.logo ? (
-                          <img src={seller.logo} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                          <img src={seller.logo} alt={seller.companyName || "Seller logo"} className="w-8 h-8 rounded-full object-cover border border-border" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-medium">
                             {(seller.companyName || seller.user?.name || 'S').charAt(0).toUpperCase()}
@@ -448,7 +448,7 @@ export function AdminSellers() {
               {/* Company Info */}
               <div className="flex items-center gap-4">
                 {detailTarget.logo ? (
-                  <img src={detailTarget.logo} alt="" className="w-14 h-14 rounded-xl object-cover border border-border" />
+                  <img src={detailTarget.logo} alt={detailTarget.companyName || "Seller logo"} className="w-14 h-14 rounded-xl object-cover border border-border" />
                 ) : (
                   <div className="w-14 h-14 rounded-xl bg-secondary border border-border flex items-center justify-center text-lg font-bold">
                     {(detailTarget.companyName || detailTarget.user?.name || 'S').charAt(0).toUpperCase()}
@@ -511,7 +511,7 @@ export function AdminSellers() {
                           <tr key={p.id} className="hover:bg-secondary/40">
                             <td className="p-2 flex items-center gap-2">
                               {p.image ? (
-                                <img src={p.image} alt="" className="w-7 h-7 rounded object-cover shrink-0" />
+                                <img src={p.image} alt={p.name || "Product"} className="w-7 h-7 rounded object-cover shrink-0" />
                               ) : null}
                               <span className="truncate max-w-[180px] font-medium">{p.name}</span>
                             </td>
@@ -605,7 +605,7 @@ export function AdminSellers() {
                           return (
                             <div key={idx} className="p-2.5 rounded-lg bg-secondary/50 border border-border flex items-start gap-2.5 text-xs">
                               {m.icon ? (
-                                <img src={m.icon} alt="" className="w-6 h-6 object-contain shrink-0 mt-0.5" />
+                                <img src={m.icon} alt={m.name || "Payment method"} className="w-6 h-6 object-contain shrink-0 mt-0.5" />
                               ) : null}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-1 mb-0.5">

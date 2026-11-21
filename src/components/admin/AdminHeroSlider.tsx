@@ -268,7 +268,7 @@ export function AdminHeroSlider() {
                           return img ? (
                             <img
                               src={img}
-                              alt=""
+                              alt="Slide banner preview"
                               className="w-10 h-10 rounded-md object-cover border border-border"
                             />
                           ) : (

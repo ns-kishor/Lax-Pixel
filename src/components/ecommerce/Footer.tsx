@@ -1,10 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Sparkles, Facebook, Instagram, Youtube, MessageCircle } from 'lucide-react';
 import Script from 'next/script';
-
-const WHATSAPP_NUMBER = '1234567890'; // Replace with actual number
 
 function SocialIcon({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -21,6 +20,20 @@ function SocialIcon({ href, children }: { href: string; children: React.ReactNod
 
 export function Footer() {
   const { setView } = useStore();
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setSettings(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const whatsappNumber = settings.social_whatsapp ? settings.social_whatsapp.replace(/\D/g, '') : '8801700000000';
 
   const shopLinks = [
     { label: 'All Products', sort: 'createdAt' },
@@ -58,20 +71,20 @@ export function Footer() {
               <span className="text-sm font-extralight tracking-[0.3em]">Lax Pixel</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5">
-              Premium luxury ecommerce. Curated collections and exceptional shopping experience.
+              {settings.footer_description || "Premium luxury ecommerce. Curated collections and exceptional shopping experience."}
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-2">
-              <SocialIcon href="https://facebook.com/laxpixel">
+              <SocialIcon href={settings.social_facebook || "https://facebook.com/laxpixel"}>
                 <Facebook className="w-3.5 h-3.5" />
               </SocialIcon>
-              <SocialIcon href="https://instagram.com/laxpixel">
+              <SocialIcon href={settings.social_instagram || "https://instagram.com/laxpixel"}>
                 <Instagram className="w-3.5 h-3.5" />
               </SocialIcon>
-              <SocialIcon href="https://youtube.com/@laxpixel">
+              <SocialIcon href={settings.social_youtube || "https://youtube.com/@laxpixel"}>
                 <Youtube className="w-3.5 h-3.5" />
               </SocialIcon>
-              <SocialIcon href="https://tiktok.com/@laxpixel">
+              <SocialIcon href={settings.social_tiktok || "https://tiktok.com/@laxpixel"}>
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.87a8.28 8.28 0 0 0 4.76 1.5v-3.4a4.85 4.85 0 0 1-1-.28z"/></svg>
               </SocialIcon>
             </div>
@@ -107,7 +120,7 @@ export function Footer() {
                 </button>
               ))}
               <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                href={`https://wa.me/${whatsappNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -136,7 +149,9 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-muted-foreground">© 2025 Lax Pixel. All rights reserved.</p>
+          <p className="text-[10px] text-muted-foreground">
+            {settings.footer_copyright || `© ${new Date().getFullYear()} Lax Pixel. All rights reserved.`}
+          </p>
           <div className="flex items-center gap-2">
             <a
               href="//www.dmca.com/Protection/Status.aspx?ID=bb2c8b45-c021-43de-93a7-4f95d672c7f9"

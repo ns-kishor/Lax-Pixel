@@ -4,7 +4,7 @@ import { pushNavigation, replaceNavigation, parseUrl } from './navigator';
 export type View =
   | 'home' | 'shop' | 'product' | 'cart' | 'checkout' | 'account' | 'orders'
   | 'order-detail' | 'seller-dashboard' | 'seller-products' | 'seller-orders' | 'seller-store'
-  | 'auth' | 'tracking' | 'search' | 'content' | 'support'
+  | 'auth' | 'tracking' | 'search' | 'content' | 'support' | 'wishlist'
   | 'admin-login' | 'admin';
 
 export interface User {
@@ -164,8 +164,10 @@ interface AppState {
 
   // Auth
   user: User | null;
+  userToken: string | null;
   sellerProfile: SellerProfile | null;
-  setUser: (user: User | null, profile?: SellerProfile | null) => void;
+  setUser: (user: User | null, profile?: SellerProfile | null, token?: string | null) => void;
+  setUserToken: (token: string | null) => void;
   setSellerProfile: (profile: SellerProfile | null) => void;
   logout: () => void;
   initAuth: () => void;
@@ -266,24 +268,35 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Auth
   user: null,
+  userToken: null,
   sellerProfile: null,
-  setUser: (user, profile) => {
+  setUserToken: (token) => {
+    if (typeof window !== 'undefined') {
+      if (token) localStorage.setItem('lp-token', token);
+      else localStorage.removeItem('lp-token');
+    }
+    set({ userToken: token });
+  },
+  setUser: (user, profile, token) => {
     const currentProfile = profile !== undefined ? profile : get().sellerProfile;
+    const currentToken = token !== undefined ? token : get().userToken;
     if (typeof window !== 'undefined') {
       try {
         if (user) {
           localStorage.setItem('lp-user', JSON.stringify(user));
           if (currentProfile) localStorage.setItem('lp-seller-profile', JSON.stringify(currentProfile));
           else localStorage.removeItem('lp-seller-profile');
+          if (currentToken) localStorage.setItem('lp-token', currentToken);
         } else {
           localStorage.removeItem('lp-user');
           localStorage.removeItem('lp-seller-profile');
+          localStorage.removeItem('lp-token');
         }
       } catch (e) {
         console.error('Failed to save user session to localStorage:', e);
       }
     }
-    set({ user, sellerProfile: currentProfile || null });
+    set({ user, sellerProfile: currentProfile || null, userToken: currentToken || null });
   },
   setSellerProfile: (profile) => {
     if (typeof window !== 'undefined') {
@@ -301,22 +314,24 @@ export const useStore = create<AppState>((set, get) => ({
       try {
         localStorage.removeItem('lp-user');
         localStorage.removeItem('lp-seller-profile');
+        localStorage.removeItem('lp-token');
       } catch (e) {
         console.error('Failed to clear user session from localStorage:', e);
       }
     }
     pushNavigation('home');
-    set({ user: null, sellerProfile: null, cart: [], orders: [], view: 'home' });
+    set({ user: null, userToken: null, sellerProfile: null, cart: [], orders: [], view: 'home' });
   },
   initAuth: () => {
     if (typeof window === 'undefined') return;
     try {
       const rawUser = localStorage.getItem('lp-user');
       const rawProfile = localStorage.getItem('lp-seller-profile');
+      const rawToken = localStorage.getItem('lp-token');
       if (rawUser) {
         const u = JSON.parse(rawUser);
         const p = rawProfile ? JSON.parse(rawProfile) : null;
-        set({ user: u, sellerProfile: p });
+        set({ user: u, sellerProfile: p, userToken: rawToken || null });
       }
     } catch (e) {
       console.error('Failed to restore user session:', e);
@@ -465,6 +480,11 @@ export function authHeaders(getStore: (() => AppState) | AppState): HeadersInit 
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
   const store = typeof getStore === 'function' ? getStore() : getStore;
   const user = store?.user;
+  const token = store?.userToken || (typeof window !== 'undefined' ? localStorage.getItem('lp-token') : null);
+  if (token) {
+    h['Authorization'] = `Bearer ${token}`;
+    h['x-user-token'] = token;
+  }
   if (user) {
     h['x-user-id'] = user.id;
     if (user.role === 'SELLER') h['x-seller-id'] = user.id;

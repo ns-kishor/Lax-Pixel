@@ -188,12 +188,10 @@ export function Header() {
               <Package className="w-4.5 h-4.5" />
             </Button>
 
-            {user && (
-              <Button variant="ghost" size="icon" onClick={() => setView('account')} className="text-foreground hover:bg-secondary relative">
-                <Heart className="w-4.5 h-4.5" />
-                {wc > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-foreground text-background text-[9px] flex items-center justify-center font-medium">{wc}</span>}
-              </Button>
-            )}
+            <Button variant="ghost" size="icon" onClick={() => setView('wishlist')} className="text-foreground hover:bg-secondary relative" title="Wishlist">
+              <Heart className="w-4.5 h-4.5" />
+              {wc > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-foreground text-background text-[9px] flex items-center justify-center font-medium">{wc}</span>}
+            </Button>
 
             <Button variant="ghost" size="icon" onClick={() => setView('cart')} className="text-foreground hover:bg-secondary relative">
               <ShoppingBag className="w-4.5 h-4.5" />
