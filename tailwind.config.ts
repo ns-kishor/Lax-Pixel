@@ -50,6 +50,14 @@ const config: Config = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			ivory: 'var(--ivory)',
+  			warmBeige: 'var(--warm-beige)',
+  			charcoal: 'var(--charcoal)',
+  			champagne: {
+  				DEFAULT: 'var(--champagne)',
+  				light: 'var(--champagne-light)',
+  				dark: 'var(--champagne-dark)',
   			}
   		},
   		borderRadius: {

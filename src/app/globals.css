@@ -37,6 +37,15 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Luxury Brand Palette: Ivory · Warm Beige · Charcoal · Champagne · White */
+  --color-ivory: var(--ivory);
+  --color-warm-beige: var(--warm-beige);
+  --color-charcoal: var(--charcoal);
+  --color-champagne: var(--champagne);
+  --color-champagne-light: var(--champagne-light);
+  --color-champagne-dark: var(--champagne-dark);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -46,71 +55,93 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #ffffff;
-  --foreground: #111111;
-  --card: #ffffff;
-  --card-foreground: #111111;
-  --popover: #f8f8f8;
-  --popover-foreground: #111111;
-  --primary: #111111;
-  --primary-foreground: #ffffff;
-  --secondary: #f0f0f0;
-  --secondary-foreground: #111111;
-  --muted: #ebebeb;
-  --muted-foreground: #777777;
-  --accent: #e5e5e5;
-  --accent-foreground: #111111;
+  /* Ivory · Warm Beige · Charcoal · Champagne · White Theme */
+  --background: #FAF7F2; /* Creamy Ivory Background */
+  --foreground: #1E2224; /* Refined Charcoal Typography */
+  --card: #FFFFFF; /* Pristine White Card Surface */
+  --card-foreground: #1E2224; /* Refined Charcoal */
+  --popover: #FAF6F0; /* Soft Ivory-Beige Popover */
+  --popover-foreground: #1E2224; /* Refined Charcoal */
+  --primary: #1E2224; /* Charcoal CTA */
+  --primary-foreground: #FAF7F2; /* Ivory Text */
+  --secondary: #EFE9DF; /* Warm Beige Surfaces & Badges */
+  --secondary-foreground: #1E2224; /* Refined Charcoal */
+  --muted: #E8E0D2; /* Muted Warm Beige */
+  --muted-foreground: #766D60; /* Warm Taupe-Charcoal Text */
+  --accent: #E5D7C3; /* Champagne-Beige Accent */
+  --accent-foreground: #1E2224; /* Refined Charcoal */
   --destructive: #ef4444;
-  --border: rgba(0,0,0,0.1);
-  --input: rgba(0,0,0,0.1);
-  --ring: rgba(0,0,0,0.3);
-  --chart-1: #111111;
-  --chart-2: #777777;
-  --chart-3: #bbbbbb;
-  --chart-4: #555555;
-  --chart-5: #999999;
-  --sidebar: #f8f8f8;
-  --sidebar-foreground: #111111;
-  --sidebar-primary: #111111;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ebebeb;
-  --sidebar-accent-foreground: #111111;
-  --sidebar-border: rgba(0,0,0,0.1);
-  --sidebar-ring: rgba(0,0,0,0.3);
+  --border: rgba(100, 85, 65, 0.14); /* Warm Beige Border */
+  --input: rgba(100, 85, 65, 0.16); /* Warm Beige Input Border */
+  --ring: #C5A880; /* Champagne Gold Focus Ring */
+
+  /* Dedicated Brand Palette Tokens */
+  --ivory: #FAF7F2;
+  --warm-beige: #EFE9DF;
+  --charcoal: #1E2224;
+  --champagne: #C5A880;
+  --champagne-light: #F4ECE0;
+  --champagne-dark: #9E7D4E;
+
+  --chart-1: #C5A880;
+  --chart-2: #1E2224;
+  --chart-3: #8C7D6B;
+  --chart-4: #D9C3A5;
+  --chart-5: #5C5245;
+
+  --sidebar: #FAF7F2;
+  --sidebar-foreground: #1E2224;
+  --sidebar-primary: #1E2224;
+  --sidebar-primary-foreground: #FAF7F2;
+  --sidebar-accent: #EFE9DF;
+  --sidebar-accent-foreground: #1E2224;
+  --sidebar-border: rgba(100, 85, 65, 0.14);
+  --sidebar-ring: #C5A880;
 }
 
 .dark {
-  --background: #050505;
-  --foreground: #f5f5f5;
-  --card: #0a0a0a;
-  --card-foreground: #f5f5f5;
-  --popover: #111111;
-  --popover-foreground: #f5f5f5;
-  --primary: #ffffff;
-  --primary-foreground: #050505;
-  --secondary: #161616;
-  --secondary-foreground: #f5f5f5;
-  --muted: #161616;
-  --muted-foreground: #888888;
-  --accent: #1a1a1a;
-  --accent-foreground: #f5f5f5;
+  /* Dark Charcoal & Champagne & Ivory Theme */
+  --background: #14171A; /* Velvet Charcoal Night */
+  --foreground: #F7F4EE; /* Soft Ivory Typography */
+  --card: #1A1E22; /* Rich Charcoal Card Surface */
+  --card-foreground: #F7F4EE; /* Soft Ivory */
+  --popover: #1E2328; /* Charcoal Popover */
+  --popover-foreground: #F7F4EE; /* Soft Ivory */
+  --primary: #E5D2B8; /* Champagne Primary CTA */
+  --primary-foreground: #14171A; /* Charcoal Text */
+  --secondary: #22272E; /* Warm Charcoal-Beige Surface */
+  --secondary-foreground: #F7F4EE; /* Soft Ivory */
+  --muted: #22272E; /* Warm Charcoal Surface */
+  --muted-foreground: #9E9587; /* Warm Taupe-Beige Text */
+  --accent: #2A3038; /* Elevated Charcoal Accent */
+  --accent-foreground: #F7F4EE; /* Soft Ivory */
   --destructive: #ef4444;
-  --border: rgba(255,255,255,0.08);
-  --input: rgba(255,255,255,0.08);
-  --ring: rgba(255,255,255,0.3);
-  --chart-1: #ffffff;
-  --chart-2: #888888;
-  --chart-3: #444444;
-  --chart-4: #cccccc;
-  --chart-5: #666666;
-  --sidebar: #0a0a0a;
-  --sidebar-foreground: #f5f5f5;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #050505;
-  --sidebar-accent: #161616;
-  --sidebar-accent-foreground: #f5f5f5;
-  --sidebar-border: rgba(255,255,255,0.08);
-  --sidebar-ring: rgba(255,255,255,0.3);
+  --border: rgba(229, 210, 184, 0.14); /* Subtle Champagne-tinted Border */
+  --input: rgba(229, 210, 184, 0.16); /* Subtle Champagne-tinted Input */
+  --ring: #C5A880; /* Champagne Gold Focus Ring */
+
+  /* Dedicated Brand Palette Tokens */
+  --ivory: #F7F4EE;
+  --warm-beige: #22272E;
+  --charcoal: #14171A;
+  --champagne: #D4B982;
+  --champagne-light: #F0E2CA;
+  --champagne-dark: #A88750;
+
+  --chart-1: #D4B982;
+  --chart-2: #F7F4EE;
+  --chart-3: #9E9587;
+  --chart-4: #4A5460;
+  --chart-5: #D9C3A5;
+
+  --sidebar: #1A1E22;
+  --sidebar-foreground: #F7F4EE;
+  --sidebar-primary: #D4B982;
+  --sidebar-primary-foreground: #14171A;
+  --sidebar-accent: #22272E;
+  --sidebar-accent-foreground: #F7F4EE;
+  --sidebar-border: rgba(229, 210, 184, 0.14);
+  --sidebar-ring: #C5A880;
 }
 
 @layer base {
@@ -132,7 +163,7 @@
 /* Luxury animations */
 @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--foreground) 10%, transparent); } 50% { box-shadow: 0 0 20px 4px color-mix(in srgb, var(--foreground) 5%, transparent); } }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ring) 15%, transparent); } 50% { box-shadow: 0 0 20px 4px color-mix(in srgb, var(--ring) 10%, transparent); } }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
 .animate-fade-in { animation: fade-in 0.4s ease-out; }
@@ -140,7 +171,7 @@
 .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, var(--secondary) 25%, var(--muted) 50%, var(--secondary) 75%);
+  background: linear-gradient(90deg, var(--secondary) 25%, var(--accent) 50%, var(--secondary) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -152,14 +183,22 @@
 
 /* Glass effect */
 .glass {
-  background: color-mix(in srgb, var(--background) 80%, transparent);
+  background: color-mix(in srgb, var(--background) 82%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 /* Text gradient */
 .text-gradient {
-  background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--champagne-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Luxury Champagne text gradient */
+.text-champagne-gradient {
+  background: linear-gradient(135deg, #C5A880 0%, #EADBC8 50%, #9E7D4E 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
