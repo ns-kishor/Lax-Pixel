@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 function sanitizeInput(input: unknown): string {
   if (typeof input !== 'string') return '';
@@ -9,7 +10,8 @@ function sanitizeInput(input: unknown): string {
 // GET: List coupons for the authenticated seller
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
@@ -29,7 +31,8 @@ export async function GET(req: NextRequest) {
 // POST: Create a product coupon by seller (applies exclusively to their products)
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
@@ -101,7 +104,8 @@ export async function POST(req: NextRequest) {
 // PATCH: Update seller coupon
 export async function PATCH(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
@@ -163,7 +167,8 @@ export async function PATCH(req: NextRequest) {
 // DELETE: Delete seller coupon
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }

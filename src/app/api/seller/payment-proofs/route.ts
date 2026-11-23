@@ -1,10 +1,12 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 // GET: List payment proofs for this seller's products
 export async function GET(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const sellerId = auth?.userId;
     if (!sellerId) {
       return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
     }
@@ -47,7 +49,8 @@ export async function GET(req: NextRequest) {
 // PATCH: Approve or Reject a payment proof by seller
 export async function PATCH(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const sellerId = auth?.userId;
     if (!sellerId) {
       return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
     }

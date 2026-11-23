@@ -3,7 +3,8 @@ import { getAuthenticatedUser } from '@/lib/user-auth';
 import { verifyAdminToken } from '@/lib/admin-auth';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'svg', 'gif'];
+// SEC-FIND-12: Exclude SVG to eliminate Stored Cross-Site Scripting (XSS)
+const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,8 +30,8 @@ export async function POST(req: NextRequest) {
     const originalName = file.name || 'image.jpg';
     const ext = originalName.split('.').pop()?.toLowerCase() || 'jpg';
 
-    if (!ALLOWED_EXTS.includes(ext) || (file.type && !file.type.startsWith('image/'))) {
-      return NextResponse.json({ error: 'Only image files (JPG, PNG, WebP, AVIF, SVG, GIF) are allowed.' }, { status: 400 });
+    if (!ALLOWED_EXTS.includes(ext) || (file.type && (!file.type.startsWith('image/') || file.type === 'image/svg+xml'))) {
+      return NextResponse.json({ error: 'Only raster image files (JPG, PNG, WebP, AVIF, GIF) are allowed.' }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -62,7 +63,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // High-reliability Fallback: Data URL
+    // SEC-FIND-13: Guard against database bloat; reject large base64 fallbacks (> 250KB)
+    if (buffer.length > 250 * 1024) {
+      return NextResponse.json(
+        { error: 'Cloud storage is temporarily unavailable. High-resolution images cannot be uploaded right now.' },
+        { status: 503 }
+      );
+    }
+
+    // High-reliability Fallback: Data URL for small icons/thumbnails only
     const mime = file.type || 'image/jpeg';
     const base64 = buffer.toString('base64');
     const dataUrl = `data:${mime};base64,${base64}`;

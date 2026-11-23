@@ -1,9 +1,11 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json([]);
     const items = await db.wishlist.findMany({
       where: { userId },
@@ -18,7 +20,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const { productId } = await req.json();
     const existing = await db.wishlist.findUnique({ where: { userId_productId: { userId, productId } } });

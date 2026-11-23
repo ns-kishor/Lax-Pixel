@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/admin-auth';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,6 +38,45 @@ export async function GET(req: NextRequest) {
     }
 
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+    // SEC-FIND-08: Redact sensitive customer PII for public tracking queries
+    const auth = getAuthenticatedUser(req);
+    const adminToken = req.headers.get('x-admin-token');
+    const isAdmin = adminToken ? verifyAdminToken(adminToken) : null;
+    const isOwner = auth && auth.userId === order.userId;
+
+    if (!isAdmin && !isOwner) {
+      const maskedName = order.user?.name
+        ? order.user.name.slice(0, 2) + '***'
+        : 'Customer';
+
+      return NextResponse.json({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        trackingCode: order.trackingCode,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        shippingCity: order.shippingCity,
+        shippingCountry: order.shippingCountry,
+        estimatedDelivery: order.estimatedDelivery,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        tracking: order.tracking,
+        items: order.items.map((i: any) => ({
+          id: i.id,
+          productName: i.productName,
+          productImage: i.productImage,
+          quantity: i.quantity,
+          selectedColor: i.selectedColor,
+          selectedSize: i.selectedSize,
+        })),
+        user: { name: maskedName, email: '***@***.***' },
+        shippingAddress: '*** Protected ***',
+        shippingZip: '***',
+      });
+    }
+
     return NextResponse.json(order);
   } catch {
     return NextResponse.json({ error: 'Failed to fetch tracking' }, { status: 500 });
@@ -47,7 +87,8 @@ export async function POST(req: NextRequest) {
   try {
     const adminToken = req.headers.get('x-admin-token');
     const isAdmin = adminToken ? verifyAdminToken(adminToken) : null;
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
 
     if (!isAdmin && !userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });

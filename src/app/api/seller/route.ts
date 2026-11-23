@@ -1,9 +1,11 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const sellerId = auth?.userId;
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const [profile, verification, products, feeSetting, allPaymentMethods] = await Promise.all([
@@ -160,7 +162,8 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const sellerId = auth?.userId;
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await req.json();

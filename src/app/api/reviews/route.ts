@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await req.json();
@@ -42,6 +44,24 @@ export async function POST(req: NextRequest) {
     const product = await db.product.findUnique({ where: { id: productId } });
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    // SEC-FIND-10: Verified Purchase policy enforcement
+    const verifiedPurchase = await db.orderItem.findFirst({
+      where: {
+        productId,
+        order: {
+          userId,
+          status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] },
+        },
+      },
+    });
+
+    if (!verifiedPurchase) {
+      return NextResponse.json(
+        { error: 'Verified Purchase required: Only buyers who ordered this product can write a review.' },
+        { status: 403 }
+      );
     }
 
     const review = await db.review.upsert({

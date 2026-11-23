@@ -2,15 +2,14 @@ import crypto from 'crypto';
 import { db } from './db';
 import bcrypt from 'bcryptjs';
 
-// Master password — the definitive admin login credential
-const ADMIN_MASTER_PASSWORD = process.env.ADMIN_MASTER_PASSWORD || 'admin123';
-const ADMIN_TOKEN_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ADMIN_MASTER_PASSWORD || 'lax-pixel-admin-secret-2026';
+// Secure cryptographic session secret
+const ADMIN_TOKEN_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'lax-pixel-admin-secret-2026-prod';
 
 // In-memory session store
 const sessions = new Map<string, { adminId: string; email: string; createdAt: number }>();
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export { sessions, ADMIN_MASTER_PASSWORD };
+export { sessions };
 
 /** Generate a signed admin token that remains valid across server reloads/restarts */
 export function generateAdminToken(admin: { id: string; email: string }) {
@@ -58,25 +57,27 @@ export function verifyAdminToken(token: string | null) {
 
 /** Verify a password against an admin's stored hash */
 export function verifyAdminPassword(password: string, storedHash: string): boolean {
+  if (!password || !storedHash) return false;
+
   // Try PBKDF2 hash comparison
   if (storedHash.startsWith('pbkdf2_sha512$')) {
     const parts = storedHash.split('$');
     const salt = parts[2];
     const expectedHash = parts[3];
+    if (!salt || !expectedHash) return false;
     const actualHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-    if (actualHash === expectedHash) return true;
+    return actualHash === expectedHash;
   }
   // Try bcrypt hash comparison (used by seed.mjs)
   if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$') || storedHash.startsWith('$2y$')) {
     try {
-      if (bcrypt.compareSync(password, storedHash)) return true;
+      return bcrypt.compareSync(password, storedHash);
     } catch {
-      // fallback
+      return false;
     }
   }
-  // Fallback: master password direct match
-  if (password === ADMIN_MASTER_PASSWORD) return true;
-  if (password === storedHash) return true;
+
+  // Strict: Disallow all plaintext and master password bypasses
   return false;
 }
 

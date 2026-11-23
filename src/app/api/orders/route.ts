@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 function generateTrackingCode(): string {
   const min = 1000000000000;
@@ -13,18 +14,18 @@ function generateTrackingCode(): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
-    const sellerId = req.headers.get('x-seller-id');
+    const auth = getAuthenticatedUser(req);
+    if (!auth) return NextResponse.json([]);
 
-    if (!userId && !sellerId) return NextResponse.json([]);
+    const isSeller = auth.role === 'SELLER';
 
-    if (sellerId) {
+    if (isSeller) {
       const orders = await db.order.findMany({
         where: {
           items: {
             some: {
               product: {
-                sellerId: sellerId,
+                sellerId: auth.userId,
               },
             },
           },
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     }
 
     const orders = await db.order.findMany({
-      where: { userId: userId! },
+      where: { userId: auth.userId },
       orderBy: { createdAt: 'desc' },
       include: { items: true, tracking: { orderBy: { timestamp: 'asc' } } },
     });
@@ -52,7 +53,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const user = await db.user.findUnique({ where: { id: userId } });
@@ -270,15 +272,16 @@ export async function POST(req: NextRequest) {
 
     // Atomic transaction for order creation and inventory decrement
     const order = await db.$transaction(async (tx) => {
-      // Decrement stock and update sales count
+      // SEC-FIND-11: Atomic inventory decrement preventing race-condition overselling
       for (const item of verifiedOrderItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: { decrement: item.quantity },
-            salesCount: { increment: item.quantity },
-          },
-        });
+        const rowsUpdated = await tx.$executeRaw`
+          UPDATE "Product"
+          SET stock = stock - ${item.quantity}, "salesCount" = "salesCount" + ${item.quantity}
+          WHERE id = ${item.productId} AND stock >= ${item.quantity}
+        `;
+        if (rowsUpdated === 0) {
+          throw new Error(`Insufficient stock for "${item.productName}". Please adjust quantity.`);
+        }
       }
 
       // If coupon used, increment coupon usedCount
@@ -348,8 +351,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(order, { status: 201 });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  } catch (e: any) {
+    console.error('Order creation error:', e);
+    if (e?.message?.includes('Insufficient stock')) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Failed to create order: ' + String(e?.message || e) }, { status: 500 });
   }
 }

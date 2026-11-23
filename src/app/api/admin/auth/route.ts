@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { tryAdminLogin, verifyAdminToken, verifyAdminPassword, hashPassword, sessions, ADMIN_MASTER_PASSWORD } from '@/lib/admin-auth';
+import { tryAdminLogin, verifyAdminToken, verifyAdminPassword, hashPassword, sessions } from '@/lib/admin-auth';
+import { adminAuthLimiter, getClientIp } from '@/lib/rate-limit';
 
 export { sessions };
+
+const DEFAULT_RESET_PASSWORD = process.env.ADMIN_INITIAL_PASSWORD || 'ChangeMeNow!2026';
 
 /** Verify admin token — re-exported for other routes */
 export const verifyAdmin = verifyAdminToken;
@@ -27,6 +30,13 @@ export async function GET(req: NextRequest) {
 // POST: Login
 export async function POST(req: NextRequest) {
   try {
+    // SEC-FIND-07: Rate limiting on admin logins (5 per 15 min per IP)
+    const ip = getClientIp(req);
+    const limit = adminAuthLimiter.check(ip);
+    if (!limit.success) {
+      return NextResponse.json({ error: limit.message }, { status: 429 });
+    }
+
     let body: Record<string, unknown>;
     try { body = await req.json(); } catch {
       return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
@@ -92,7 +102,7 @@ export async function PUT(req: NextRequest) {
     // Default / reset: only allowed during initial bootstrap if no admin exists, or by authenticated super admin
     const admin = await db.admin.findFirst();
     if (!admin) {
-      const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
+      const newHash = hashPassword(DEFAULT_RESET_PASSWORD);
       const created = await db.admin.create({
         data: { email: 'admin@laxpixel.com', password: newHash, name: 'Admin', role: 'SUPER_ADMIN' },
       });
@@ -105,7 +115,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const newHash = hashPassword(ADMIN_MASTER_PASSWORD);
+    const newHash = hashPassword(DEFAULT_RESET_PASSWORD);
     await db.admin.update({ where: { id: admin.id }, data: { password: newHash } });
     return NextResponse.json({ success: true, message: 'Password reset successfully.', email: admin.email });
   } catch (error) {

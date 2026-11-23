@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 const VALID_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
@@ -14,7 +15,8 @@ const STATUS_DESCRIPTIONS: Record<string, string> = {
 // PATCH: Update order status by seller
 export async function PATCH(req: NextRequest) {
   try {
-    const sellerId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const sellerId = auth?.userId;
     if (!sellerId) {
       return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
     }
@@ -48,6 +50,22 @@ export async function PATCH(req: NextRequest) {
     if (!orderItem) {
       return NextResponse.json({
         error: 'Order not found or you do not have permission to manage this order.',
+      }, { status: 403 });
+    }
+
+    // SEC-FIND-09: Multi-Vendor Order Cancellation & Global Payment State Tampering Prevention
+    // Check if the order contains products fulfilled by other sellers
+    const allOrderItems = await db.orderItem.findMany({
+      where: { orderId },
+      include: { product: true },
+    });
+    const otherSellersItems = allOrderItems.filter(
+      (item) => item.product?.sellerId && item.product.sellerId !== sellerId
+    );
+
+    if (otherSellersItems.length > 0 && (upperStatus === 'CANCELLED' || upperStatus === 'DELIVERED')) {
+      return NextResponse.json({
+        error: `This order contains items belonging to other sellers. Only an administrator can globally change this multi-vendor order to ${upperStatus}.`,
       }, { status: 403 });
     }
 

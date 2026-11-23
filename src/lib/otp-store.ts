@@ -15,14 +15,26 @@ export interface PendingRegistrationPayload {
   companyDescription?: string;
 }
 
+interface MemoryOtpEntry {
+  code: string;
+  payload: PendingRegistrationPayload;
+  expiresAt: number;
+}
+
 // In-memory fallback
-const memoryOtpMap = new Map<string, { code: string; payload: PendingRegistrationPayload; expiresAt: number }>();
+const memoryOtpMap = new Map<string, MemoryOtpEntry>();
+// SEC-FIND-06: Failed attempts tracking and 15-minute lockout
+const failedAttemptsMap = new Map<string, { count: number; lockedUntil: number }>();
+const MAX_ATTEMPTS = 5;
 
 export async function saveOtp(email: string, code: string, payload: PendingRegistrationPayload): Promise<void> {
   const normalizedEmail = email.toLowerCase().trim();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   const payloadStr = JSON.stringify(payload);
   const id = crypto.randomUUID();
+
+  // Reset failed attempt count upon issuance of fresh OTP
+  failedAttemptsMap.delete(normalizedEmail);
 
   // Save to memory
   memoryOtpMap.set(normalizedEmail, {
@@ -31,20 +43,10 @@ export async function saveOtp(email: string, code: string, payload: PendingRegis
     expiresAt: expiresAt.getTime(),
   });
 
-  // Save to PostgreSQL table `email_otps`
+  // SEC-FIND-15: Use parameterized tagged template literals instead of raw unsafe SQL
   try {
-    await db.$executeRawUnsafe(
-      `DELETE FROM email_otps WHERE LOWER(email) = LOWER($1)`,
-      normalizedEmail
-    );
-    await db.$executeRawUnsafe(
-      `INSERT INTO email_otps (id, email, code, payload, expires_at) VALUES ($1, $2, $3, $4, $5)`,
-      id,
-      normalizedEmail,
-      code,
-      payloadStr,
-      expiresAt
-    );
+    await db.$executeRaw`DELETE FROM email_otps WHERE LOWER(email) = LOWER(${normalizedEmail})`;
+    await db.$executeRaw`INSERT INTO email_otps (id, email, code, payload, expires_at) VALUES (${id}, ${normalizedEmail}, ${code}, ${payloadStr}, ${expiresAt})`;
   } catch (err) {
     console.warn('[OTP-DB-WARN] Could not persist to PostgreSQL table, memory fallback active:', err);
   }
@@ -57,54 +59,95 @@ export async function verifyAndConsumeOtp(
   const normalizedEmail = email.toLowerCase().trim();
   const inputCode = code.trim();
 
-  // 1. Try DB lookup
+  // SEC-FIND-06: Check if email is currently locked due to too many failed attempts
+  const lockInfo = failedAttemptsMap.get(normalizedEmail);
+  if (lockInfo && lockInfo.lockedUntil > Date.now()) {
+    const minutesLeft = Math.ceil((lockInfo.lockedUntil - Date.now()) / (60 * 1000));
+    return {
+      valid: false,
+      error: `Too many failed attempts. Verification for this account is locked for ${minutesLeft} more minute(s).`,
+    };
+  }
+
+  // 1. Try DB lookup using parameterized tagged template query
+  let foundRecord: { code: string; payload: any; expires_at: Date | string } | null = null;
   try {
-    const rows = await db.$queryRawUnsafe<any[]>(
-      `SELECT * FROM email_otps WHERE LOWER(email) = LOWER($1) ORDER BY created_at DESC LIMIT 1`,
-      normalizedEmail
-    );
-
+    const rows = await db.$queryRaw<any[]>`
+      SELECT * FROM email_otps WHERE LOWER(email) = LOWER(${normalizedEmail}) ORDER BY created_at DESC LIMIT 1
+    `;
     if (rows && rows.length > 0) {
-      const row = rows[0];
-      const expiresAt = new Date(row.expires_at).getTime();
-
-      if (Date.now() > expiresAt) {
-        await db.$executeRawUnsafe(`DELETE FROM email_otps WHERE LOWER(email) = LOWER($1)`, normalizedEmail);
-        memoryOtpMap.delete(normalizedEmail);
-        return { valid: false, error: 'Verification code has expired. Please request a new one.' };
-      }
-
-      if (row.code !== inputCode) {
-        return { valid: false, error: 'Invalid 6-digit code. Please check and try again.' };
-      }
-
-      // Valid! Delete from DB and memory
-      await db.$executeRawUnsafe(`DELETE FROM email_otps WHERE LOWER(email) = LOWER($1)`, normalizedEmail);
-      memoryOtpMap.delete(normalizedEmail);
-
-      const parsedPayload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
-      return { valid: true, payload: parsedPayload };
+      foundRecord = rows[0];
     }
   } catch (err) {
     console.warn('[OTP-DB-WARN] DB query failed, checking memory store:', err);
   }
 
-  // 2. Fallback to memory store
-  const mem = memoryOtpMap.get(normalizedEmail);
-  if (!mem) {
+  // 2. Check memory store if DB had no rows
+  if (!foundRecord) {
+    const mem = memoryOtpMap.get(normalizedEmail);
+    if (mem) {
+      foundRecord = {
+        code: mem.code,
+        payload: mem.payload,
+        expires_at: new Date(mem.expiresAt),
+      };
+    }
+  }
+
+  if (!foundRecord) {
     return { valid: false, error: 'No verification code found for this email. Please sign up again.' };
   }
 
-  if (Date.now() > mem.expiresAt) {
+  const expiresAtMs = new Date(foundRecord.expires_at).getTime();
+  if (Date.now() > expiresAtMs) {
+    try {
+      await db.$executeRaw`DELETE FROM email_otps WHERE LOWER(email) = LOWER(${normalizedEmail})`;
+    } catch {}
     memoryOtpMap.delete(normalizedEmail);
     return { valid: false, error: 'Verification code has expired. Please request a new one.' };
   }
 
-  if (mem.code !== inputCode) {
-    return { valid: false, error: 'Invalid 6-digit code. Please check and try again.' };
+  // Check code match
+  if (foundRecord.code !== inputCode) {
+    const currentCount = (lockInfo?.count || 0) + 1;
+    if (currentCount >= MAX_ATTEMPTS) {
+      // Invalidate and delete OTP immediately
+      try {
+        await db.$executeRaw`DELETE FROM email_otps WHERE LOWER(email) = LOWER(${normalizedEmail})`;
+      } catch {}
+      memoryOtpMap.delete(normalizedEmail);
+      failedAttemptsMap.set(normalizedEmail, {
+        count: currentCount,
+        lockedUntil: Date.now() + 15 * 60 * 1000, // 15-minute lockout
+      });
+
+      return {
+        valid: false,
+        error: 'Too many incorrect attempts (5/5). Your verification code has been invalidated for security. Please request a new code.',
+      };
+    }
+
+    failedAttemptsMap.set(normalizedEmail, {
+      count: currentCount,
+      lockedUntil: 0,
+    });
+    const remaining = MAX_ATTEMPTS - currentCount;
+    return {
+      valid: false,
+      error: `Invalid 6-digit code. ${remaining} attempt(s) remaining before this code is invalidated.`,
+    };
   }
 
+  // Successful verification! Clean up DB, memory, and lock state
+  try {
+    await db.$executeRaw`DELETE FROM email_otps WHERE LOWER(email) = LOWER(${normalizedEmail})`;
+  } catch {}
   memoryOtpMap.delete(normalizedEmail);
-  return { valid: true, payload: mem.payload };
-}
+  failedAttemptsMap.delete(normalizedEmail);
 
+  const parsedPayload = typeof foundRecord.payload === 'string'
+    ? JSON.parse(foundRecord.payload)
+    : foundRecord.payload;
+
+  return { valid: true, payload: parsedPayload };
+}

@@ -3,9 +3,17 @@ import { compare } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { tryAdminLogin } from '@/lib/admin-auth';
 import { generateUserToken } from '@/lib/user-auth';
+import { authLimiter, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // SEC-FIND-07: Rate limiting on authentication attempts (10 per 15 min per IP)
+    const ip = getClientIp(req);
+    const limit = authLimiter.check(ip);
+    if (!limit.success) {
+      return NextResponse.json({ error: limit.message }, { status: 429 });
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await req.json();

@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { couponValidateLimiter, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // SEC-FIND-07: Rate limit coupon validation to prevent dictionary attacks
+    const ip = getClientIp(req);
+    const limit = couponValidateLimiter.check(ip);
+    if (!limit.success) {
+      return NextResponse.json({ error: limit.message }, { status: 429 });
+    }
+
     const body = await req.json();
     const { code, type = 'PRODUCT', subtotal = 0, items = [] } = body;
 

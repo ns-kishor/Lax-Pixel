@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
-const USER_TOKEN_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ADMIN_MASTER_PASSWORD || 'lax-pixel-user-secret-2026';
+const USER_TOKEN_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'lax-pixel-user-secret-2026-prod';
 const TOKEN_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export interface UserTokenPayload {
@@ -62,19 +62,15 @@ export function verifyUserToken(token: string | null): UserTokenPayload | null {
 
 /**
  * Extract authenticated user identity from request.
- * Supports Authorization header (Bearer usr_...), x-user-token,
- * with graceful fallback to valid x-user-id header for backwards compatibility.
+ * Cryptographically verifies signed user token from Authorization header,
+ * x-user-token header, or lp-token cookie.
+ * Insecure client-supplied x-user-id header is strictly rejected.
  */
 export function getAuthenticatedUser(req: NextRequest): { userId: string; email?: string; role?: string } | null {
-  const authHeader = req.headers.get('authorization') || req.headers.get('x-user-token');
+  const authHeader = req.headers.get('authorization') || req.headers.get('x-user-token') || req.cookies.get('lp-token')?.value;
   if (authHeader) {
     const verified = verifyUserToken(authHeader);
     if (verified) return verified;
-  }
-
-  const headerUserId = req.headers.get('x-user-id');
-  if (headerUserId && headerUserId.trim().length >= 8) {
-    return { userId: headerUserId.trim() };
   }
 
   return null;
