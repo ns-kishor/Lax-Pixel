@@ -38,13 +38,14 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Luxury Brand Palette: Ivory · Warm Beige · Charcoal · Champagne · White */
-  --color-ivory: var(--ivory);
-  --color-warm-beige: var(--warm-beige);
-  --color-charcoal: var(--charcoal);
-  --color-champagne: var(--champagne);
-  --color-champagne-light: var(--champagne-light);
-  --color-champagne-dark: var(--champagne-dark);
+  /* Luxury Brand Palette: Cream · Stone · Muted Gold · Navy · Midnight */
+  --color-cream: var(--cream);
+  --color-stone: var(--stone);
+  --color-muted-gold: var(--muted-gold);
+  --color-muted-gold-light: var(--muted-gold-light);
+  --color-muted-gold-dark: var(--muted-gold-dark);
+  --color-navy: var(--navy);
+  --color-midnight: var(--midnight);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -55,93 +56,95 @@
 
 :root {
   --radius: 0.5rem;
-  /* Ivory · Warm Beige · Charcoal · Champagne · White Theme */
-  --background: #FAF7F2; /* Creamy Ivory Background */
-  --foreground: #1E2224; /* Refined Charcoal Typography */
-  --card: #FFFFFF; /* Pristine White Card Surface */
-  --card-foreground: #1E2224; /* Refined Charcoal */
-  --popover: #FAF6F0; /* Soft Ivory-Beige Popover */
-  --popover-foreground: #1E2224; /* Refined Charcoal */
-  --primary: #1E2224; /* Charcoal CTA */
-  --primary-foreground: #FAF7F2; /* Ivory Text */
-  --secondary: #EFE9DF; /* Warm Beige Surfaces & Badges */
-  --secondary-foreground: #1E2224; /* Refined Charcoal */
-  --muted: #E8E0D2; /* Muted Warm Beige */
-  --muted-foreground: #766D60; /* Warm Taupe-Charcoal Text */
-  --accent: #E5D7C3; /* Champagne-Beige Accent */
-  --accent-foreground: #1E2224; /* Refined Charcoal */
+  /* Cream · Stone · Muted Gold · Navy · Midnight Palette (Light Theme) */
+  --background: #FAF7F0; /* Soft Warm Cream Canvas */
+  --foreground: #121C2B; /* Deep Navy-Midnight Typography */
+  --card: #FFFFFF; /* Crisp Pristine Cream Card Surface */
+  --card-foreground: #121C2B; /* Deep Navy-Midnight */
+  --popover: #F7F3EA; /* Soft Warm Cream Popover */
+  --popover-foreground: #121C2B; /* Deep Navy-Midnight */
+  --primary: #17263C; /* Royal Navy Primary CTA */
+  --primary-foreground: #FAF7F0; /* Cream Text on Navy Button */
+  --secondary: #EAE4DA; /* Natural Warm Stone */
+  --secondary-foreground: #17263C; /* Navy on Stone */
+  --muted: #E2DBD0; /* Muted Stone */
+  --muted-foreground: #637083; /* Stone-Navy Slate */
+  --accent: #E5DAC2; /* Subtle Muted Gold-Stone Accent */
+  --accent-foreground: #121C2B; /* Navy-Midnight */
   --destructive: #ef4444;
-  --border: rgba(100, 85, 65, 0.14); /* Warm Beige Border */
-  --input: rgba(100, 85, 65, 0.16); /* Warm Beige Input Border */
-  --ring: #C5A880; /* Champagne Gold Focus Ring */
+  --border: rgba(23, 38, 60, 0.12); /* Subtle Navy-Stone Tinted Border */
+  --input: rgba(23, 38, 60, 0.14); /* Subtle Navy-Stone Input Border */
+  --ring: #C2A25D; /* Muted Gold Focus Ring */
 
-  /* Dedicated Brand Palette Tokens */
-  --ivory: #FAF7F2;
-  --warm-beige: #EFE9DF;
-  --charcoal: #1E2224;
-  --champagne: #C5A880;
-  --champagne-light: #F4ECE0;
-  --champagne-dark: #9E7D4E;
+  /* Palette Brand Utility Tokens */
+  --cream: #FAF7F0;
+  --stone: #EAE4DA;
+  --muted-gold: #C2A25D;
+  --muted-gold-light: #F4ECDA;
+  --muted-gold-dark: #967A38;
+  --navy: #17263C;
+  --midnight: #0C121E;
 
-  --chart-1: #C5A880;
-  --chart-2: #1E2224;
-  --chart-3: #8C7D6B;
-  --chart-4: #D9C3A5;
-  --chart-5: #5C5245;
+  --chart-1: #C2A25D;
+  --chart-2: #17263C;
+  --chart-3: #637083;
+  --chart-4: #D8CEBE;
+  --chart-5: #0C121E;
 
-  --sidebar: #FAF7F2;
-  --sidebar-foreground: #1E2224;
-  --sidebar-primary: #1E2224;
-  --sidebar-primary-foreground: #FAF7F2;
-  --sidebar-accent: #EFE9DF;
-  --sidebar-accent-foreground: #1E2224;
-  --sidebar-border: rgba(100, 85, 65, 0.14);
-  --sidebar-ring: #C5A880;
+  --sidebar: #FAF7F0;
+  --sidebar-foreground: #121C2B;
+  --sidebar-primary: #17263C;
+  --sidebar-primary-foreground: #FAF7F0;
+  --sidebar-accent: #EAE4DA;
+  --sidebar-accent-foreground: #121C2B;
+  --sidebar-border: rgba(23, 38, 60, 0.12);
+  --sidebar-ring: #C2A25D;
 }
 
 .dark {
-  /* Dark Charcoal & Champagne & Ivory Theme */
-  --background: #14171A; /* Velvet Charcoal Night */
-  --foreground: #F7F4EE; /* Soft Ivory Typography */
-  --card: #1A1E22; /* Rich Charcoal Card Surface */
-  --card-foreground: #F7F4EE; /* Soft Ivory */
-  --popover: #1E2328; /* Charcoal Popover */
-  --popover-foreground: #F7F4EE; /* Soft Ivory */
-  --primary: #E5D2B8; /* Champagne Primary CTA */
-  --primary-foreground: #14171A; /* Charcoal Text */
-  --secondary: #22272E; /* Warm Charcoal-Beige Surface */
-  --secondary-foreground: #F7F4EE; /* Soft Ivory */
-  --muted: #22272E; /* Warm Charcoal Surface */
-  --muted-foreground: #9E9587; /* Warm Taupe-Beige Text */
-  --accent: #2A3038; /* Elevated Charcoal Accent */
-  --accent-foreground: #F7F4EE; /* Soft Ivory */
+  /* Midnight · Navy · Muted Gold · Stone · Cream Palette (Dark Theme) */
+  --background: #0C121E; /* Velvet Midnight Night Background */
+  --foreground: #F5F1E8; /* Soft Cream Typography */
+  --card: #131C2D; /* Midnight Navy Elevated Card Surface */
+  --card-foreground: #F5F1E8; /* Soft Cream */
+  --popover: #182337; /* Midnight Slate Popover */
+  --popover-foreground: #F5F1E8; /* Soft Cream */
+  --primary: #C2A25D; /* Muted Gold CTA Button */
+  --primary-foreground: #0C121E; /* Midnight Text on Gold CTA */
+  --secondary: #1E2B42; /* Deep Navy-Stone Surface */
+  --secondary-foreground: #F5F1E8; /* Soft Cream */
+  --muted: #1E2B42; /* Deep Navy-Stone Surface */
+  --muted-foreground: #97A3B6; /* Stone Blue-Gray Text */
+  --accent: #253550; /* Navy Accent Layer */
+  --accent-foreground: #F5F1E8; /* Soft Cream */
   --destructive: #ef4444;
-  --border: rgba(229, 210, 184, 0.14); /* Subtle Champagne-tinted Border */
-  --input: rgba(229, 210, 184, 0.16); /* Subtle Champagne-tinted Input */
-  --ring: #C5A880; /* Champagne Gold Focus Ring */
+  --border: rgba(194, 162, 93, 0.15); /* Subtle Muted Gold-tinted Border */
+  --input: rgba(194, 162, 93, 0.18); /* Subtle Muted Gold-tinted Input */
+  --ring: #C2A25D; /* Muted Gold Focus Ring */
 
-  /* Dedicated Brand Palette Tokens */
-  --ivory: #F7F4EE;
-  --warm-beige: #22272E;
-  --charcoal: #14171A;
-  --champagne: #D4B982;
-  --champagne-light: #F0E2CA;
-  --champagne-dark: #A88750;
+  /* Palette Brand Utility Tokens */
+  --cream: #F5F1E8;
+  --stone: #1E2B42;
+  --muted-gold: #D1B26F;
+  --muted-gold-light: #F2E5CA;
+  --muted-gold-dark: #A58641;
+  --navy: #1E2B42;
+  --midnight: #0C121E;
 
-  --chart-1: #D4B982;
-  --chart-2: #F7F4EE;
-  --chart-3: #9E9587;
-  --chart-4: #4A5460;
-  --chart-5: #D9C3A5;
+  --chart-1: #D1B26F;
+  --chart-2: #F5F1E8;
+  --chart-3: #97A3B6;
+  --chart-4: #253550;
+  --chart-5: #C2A25D;
 
-  --sidebar: #1A1E22;
-  --sidebar-foreground: #F7F4EE;
-  --sidebar-primary: #D4B982;
-  --sidebar-primary-foreground: #14171A;
-  --sidebar-accent: #22272E;
-  --sidebar-accent-foreground: #F7F4EE;
-  --sidebar-border: rgba(229, 210, 184, 0.14);
-  --sidebar-ring: #C5A880;
+  --sidebar: #131C2D;
+  --sidebar-foreground: #F5F1E8;
+  --sidebar-primary: #D1B26F;
+  --sidebar-primary-foreground: #0C121E;
+  --sidebar-accent: #1E2B42;
+  --sidebar-accent-foreground: #F5F1E8;
+  --sidebar-border: rgba(194, 162, 93, 0.15);
+  --sidebar-ring: #C2A25D;
 }
 
 @layer base {
@@ -163,7 +166,7 @@
 /* Luxury animations */
 @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ring) 15%, transparent); } 50% { box-shadow: 0 0 20px 4px color-mix(in srgb, var(--ring) 10%, transparent); } }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ring) 18%, transparent); } 50% { box-shadow: 0 0 20px 4px color-mix(in srgb, var(--ring) 12%, transparent); } }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
 .animate-fade-in { animation: fade-in 0.4s ease-out; }
@@ -190,15 +193,15 @@
 
 /* Text gradient */
 .text-gradient {
-  background: linear-gradient(135deg, var(--foreground) 0%, var(--champagne-dark) 100%);
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-gold-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Luxury Champagne text gradient */
-.text-champagne-gradient {
-  background: linear-gradient(135deg, #C5A880 0%, #EADBC8 50%, #9E7D4E 100%);
+/* Luxury Muted Gold text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #C2A25D 0%, #E8D5AA 50%, #967A38 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
