@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FolderTree,
   Ticket, ImageIcon, CreditCard, Settings, FileCheck, FootprintsIcon, Store,
-  Shield, LogOut, Menu, ChevronRight, AlertTriangle, RotateCcw,
+  Shield, LogOut, Menu, ChevronRight, AlertTriangle, RotateCcw, Award,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AdminDashboard } from './AdminDashboard';
@@ -21,6 +21,7 @@ import { AdminFooter } from './AdminFooter';
 import { AdminSellers } from './AdminSellers';
 import { AdminSettings } from './AdminSettings';
 import { AdminVerifications } from './AdminVerifications';
+import { AdminLicenses } from './AdminLicenses';
 import { adminHeaders } from '@/lib/admin-utils';
 import { useStore } from '@/lib/store';
 
@@ -57,7 +58,7 @@ class AdminTabErrorBoundary extends Component<
 export type AdminTab =
   | 'dashboard' | 'users' | 'products' | 'orders' | 'categories'
   | 'coupons' | 'hero-slider' | 'payment-methods' | 'payment-proofs'
-  | 'footer' | 'sellers' | 'verifications' | 'settings';
+  | 'footer' | 'sellers' | 'verifications' | 'licenses' | 'settings';
 
 const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -72,6 +73,7 @@ const sidebarItems: { key: AdminTab; label: string; icon: typeof LayoutDashboard
   { key: 'footer', label: 'Footer', icon: FootprintsIcon },
   { key: 'sellers', label: 'Sellers', icon: Store },
   { key: 'verifications', label: 'Verifications', icon: Shield },
+  { key: 'licenses', label: 'Licenses', icon: Award },
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
@@ -170,6 +172,7 @@ export function AdminPanel() {
       case 'footer': return <AdminFooter />;
       case 'sellers': return <AdminSellers />;
       case 'verifications': return <AdminVerifications />;
+      case 'licenses': return <AdminLicenses />;
       case 'settings': return <AdminSettings />;
     }
   };

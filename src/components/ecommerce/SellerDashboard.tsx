@@ -13,7 +13,8 @@ import {
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
   AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
   MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter,
-  Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy, X
+  Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy, X,
+  Award, KeyRound, ChevronLeft, Shield, Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -65,6 +66,24 @@ export function SellerDashboard() {
     trackingNumber: '',
     notes: '',
   });
+
+  // License System State
+  const [licenses, setLicenses] = useState<any[]>([]);
+  const [softCopyLicense, setSoftCopyLicense] = useState<any | null>(null);
+  const [hardCopyLicense, setHardCopyLicense] = useState<any | null>(null);
+  const [licenseFee, setLicenseFee] = useState<number>(1000);
+  const [licensePaymentMethods, setLicensePaymentMethods] = useState<any[]>([]);
+  const [licenseModalOpen, setLicenseModalOpen] = useState(false);
+  const [licenseModalView, setLicenseModalView] = useState<'SELECT' | 'HARD_PAYMENT'>('SELECT');
+  const [selectedLicenseMethod, setSelectedLicenseMethod] = useState<any | null>(null);
+  const [licenseTrxId, setLicenseTrxId] = useState('');
+  const [licenseSenderNum, setLicenseSenderNum] = useState('');
+  const [requestingLicense, setRequestingLicense] = useState(false);
+
+  // Delivery verification modal state (for Hard Copy 7-digit code)
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verificationCodeInput, setVerificationCodeInput] = useState('');
+  const [submittingVerifyCode, setSubmittingVerifyCode] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -437,11 +456,136 @@ export function SellerDashboard() {
           website: data.profile?.website || data.verification?.website || '',
           description: data.profile?.description || data.verification?.description || '',
         });
+
+        if (data.approved) {
+          fetchLicenseData();
+        }
       }
     } catch (e) {
       console.error('Failed to load seller info:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLicenseData = async () => {
+    try {
+      const res = await fetch('/api/seller/license', { headers: authHeaders(useStore.getState) });
+      if (res.ok) {
+        const data = await res.json();
+        setLicenses(data.licenses || []);
+        setSoftCopyLicense(data.softCopy || null);
+        setHardCopyLicense(data.hardCopy || null);
+        if (data.licenseFee) setLicenseFee(data.licenseFee);
+        if (data.paymentMethods && Array.isArray(data.paymentMethods)) {
+          setLicensePaymentMethods(data.paymentMethods);
+          if (data.paymentMethods.length > 0) {
+            setSelectedLicenseMethod(data.paymentMethods[0]);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Fetch license data error:', e);
+    }
+  };
+
+  const handleRequestSoftCopy = async () => {
+    setRequestingLicense(true);
+    try {
+      const res = await fetch('/api/seller/license', {
+        method: 'POST',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'SOFT_COPY' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'সফট কপি লাইসেন্স অর্ডার সফলভাবে পাঠানো হয়েছে।');
+        setLicenseModalOpen(false);
+        fetchLicenseData();
+      } else {
+        showToast(data.error || 'আবেদন সম্পন্ন করা সম্ভব হয়নি', 'error');
+      }
+    } catch {
+      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+    } finally {
+      setRequestingLicense(false);
+    }
+  };
+
+  const handleRequestHardCopy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLicenseMethod) {
+      showToast('অনুগ্রহ করে একটি পেমেন্ট মেথড নির্বাচন করুন', 'error');
+      return;
+    }
+    if (!licenseTrxId.trim()) {
+      showToast('ট্রানজেকশন আইডি (TrxID) দেওয়া আবশ্যক', 'error');
+      return;
+    }
+    if (!licenseSenderNum.trim()) {
+      showToast('প্রেরকের ফোন নম্বর দেওয়া আবশ্যক', 'error');
+      return;
+    }
+
+    setRequestingLicense(true);
+    try {
+      const res = await fetch('/api/seller/license', {
+        method: 'POST',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'HARD_COPY',
+          paymentMethod: selectedLicenseMethod.name,
+          transactionId: licenseTrxId.trim(),
+          senderNumber: licenseSenderNum.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'হার্ড কপি লাইসেন্স অর্ডার সফলভাবে সাবমিট হয়েছে।');
+        setLicenseModalOpen(false);
+        setLicenseTrxId('');
+        setLicenseSenderNum('');
+        fetchLicenseData();
+      } else {
+        showToast(data.error || 'আবেদন সম্পন্ন করা সম্ভব হয়নি', 'error');
+      }
+    } catch {
+      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+    } finally {
+      setRequestingLicense(false);
+    }
+  };
+
+  const handleVerifyDeliveryCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationCodeInput.trim()) {
+      showToast('৭ সংখ্যার ভেরিফিকেশন কোড দেওয়া আবশ্যক', 'error');
+      return;
+    }
+
+    setSubmittingVerifyCode(true);
+    try {
+      const res = await fetch('/api/seller/license/verify', {
+        method: 'POST',
+        headers: { ...authHeaders(useStore.getState), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          licenseId: hardCopyLicense?.id,
+          verificationCode: verificationCodeInput.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'অভিনন্দন! আপনার হার্ড কপি লাইসেন্স সফলভাবে ভেরিফাই হয়েছে।');
+        setVerifyModalOpen(false);
+        setVerificationCodeInput('');
+        fetchLicenseData();
+      } else {
+        showToast(data.error || 'ভেরিফিকেশন কোড মেলেনি', 'error');
+      }
+    } catch {
+      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+    } finally {
+      setSubmittingVerifyCode(false);
     }
   };
 
@@ -933,6 +1077,97 @@ export function SellerDashboard() {
                 শেয়ার প্রোফাইল
               </Button>
             )}
+
+            {/* ─── Business License Header Quick Actions ─── */}
+            {approved && (
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Pending State */}
+                {hardCopyLicense?.status === 'PENDING' ? (
+                  <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs px-3.5 h-10 gap-1.5 flex items-center font-medium shadow-sm">
+                    <Clock className="w-3.5 h-3.5 animate-pulse" />
+                    <span>পেন্ডিং (হার্ড কপি)</span>
+                  </Badge>
+                ) : softCopyLicense?.status === 'PENDING' && !hardCopyLicense ? (
+                  <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs px-3.5 h-10 gap-1.5 flex items-center font-medium shadow-sm">
+                    <Clock className="w-3.5 h-3.5 animate-pulse" />
+                    <span>পেন্ডিং (সফট কপি)</span>
+                  </Badge>
+                ) : null}
+
+                {/* Hard Copy Approved */}
+                {hardCopyLicense?.status === 'APPROVED' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {hardCopyLicense.licenseUrl && (
+                      <Button
+                        variant="outline"
+                        className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium shadow-sm"
+                        onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
+                        title="আপনার অফিসিয়াল লাইসেন্স দেখুন"
+                      >
+                        <ExternalLink className="w-4 h-4" /> ভিউ
+                      </Button>
+                    )}
+
+                    {!hardCopyLicense.isDeliveryVerified ? (
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs tracking-wider h-10 px-4 gap-1.5 font-medium shadow-sm"
+                        onClick={() => {
+                          setVerificationCodeInput('');
+                          setVerifyModalOpen(true);
+                        }}
+                        title="হার্ড কপির সাথে প্রাপ্ত ৭ সংখ্যার কোড দিয়ে ভেরিফাই করুন"
+                      >
+                        <KeyRound className="w-4 h-4" /> ভেরিফাই
+                      </Button>
+                    ) : (
+                      <Badge className="bg-emerald-600 text-white text-xs h-10 px-3.5 gap-1.5 font-medium flex items-center shadow-sm">
+                        <ShieldCheck className="w-4 h-4" /> ভেরিফাইড
+                      </Badge>
+                    )}
+                  </div>
+                ) : softCopyLicense?.status === 'APPROVED' ? (
+                  /* Soft Copy Approved */
+                  <div className="flex flex-wrap items-center gap-2">
+                    {softCopyLicense.licenseUrl && (
+                      <Button
+                        variant="outline"
+                        className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium shadow-sm"
+                        onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
+                        title="আপনার সফট কপি লাইসেন্স দেখুন"
+                      >
+                        <ExternalLink className="w-4 h-4" /> ভিউ
+                      </Button>
+                    )}
+
+                    {(!hardCopyLicense || hardCopyLicense.status === 'REJECTED') && (
+                      <Button
+                        variant="outline"
+                        className="text-xs tracking-wider h-10 px-4 border-primary/40 text-primary hover:bg-primary/10 gap-1.5 font-medium shadow-sm"
+                        onClick={() => {
+                          setLicenseModalView('HARD_PAYMENT');
+                          setLicenseModalOpen(true);
+                        }}
+                        title="অফিসিয়াল হার্ড কপি সার্টিফিকেট অর্ডার করুন"
+                      >
+                        <Award className="w-4 h-4" /> গেট হার্ড কপি
+                      </Button>
+                    )}
+                  </div>
+                ) : (!softCopyLicense && !hardCopyLicense) ? (
+                  /* Initial State: No license yet */
+                  <Button
+                    className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 text-xs tracking-wider h-10 px-4 gap-1.5 font-medium shadow-sm"
+                    onClick={() => {
+                      setLicenseModalView('SELECT');
+                      setLicenseModalOpen(true);
+                    }}
+                  >
+                    <Award className="w-4 h-4" /> গেট লাইসেন্স
+                  </Button>
+                ) : null}
+              </div>
+            )}
+
             {approved ? (
               <Button
                 className="bg-foreground text-background text-xs tracking-wider h-10 px-5"
@@ -1358,6 +1593,200 @@ export function SellerDashboard() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── Official Business License Status Banner ───────────────────────── */}
+        {approved && (
+          <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-secondary/40 border border-border/80 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                  <Award className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 className="text-base font-semibold tracking-wide">অফিসিয়াল মার্চেন্ট ও ব্যবসায়িক লাইসেন্স</h3>
+                    {hardCopyLicense?.isDeliveryVerified ? (
+                      <Badge className="bg-emerald-600 text-white text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
+                        <ShieldCheck className="w-3 h-3" /> ফুল ভেরিফাইড মার্চেন্ট
+                      </Badge>
+                    ) : hardCopyLicense?.status === 'APPROVED' ? (
+                      <Badge className="bg-blue-600 text-white text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
+                        <Sparkles className="w-3 h-3" /> হার্ড কপি অনুমোদিত
+                      </Badge>
+                    ) : softCopyLicense?.status === 'APPROVED' ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
+                        <CheckCircle2 className="w-3 h-3" /> সফট কপি অ্যাক্টিভ
+                      </Badge>
+                    ) : (hardCopyLicense?.status === 'PENDING' || softCopyLicense?.status === 'PENDING') ? (
+                      <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
+                        <Clock className="w-3 h-3 animate-pulse" /> অনুমোদন পর্যালোচনাধীন
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] h-5 px-2 text-muted-foreground border-border">
+                        লাইসেন্স অপশনাল
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+                    Lax Pixel প্ল্যাটফর্মে আপনার স্টোরের ক্রেতাদের সর্বোচ্চ আস্থা ও বিশ্বাসযোগ্যতা নিশ্চিত করতে অফিসিয়াল ব্যবসায়িক লাইসেন্স গ্রহণ করুন।
+                    সফট কপি সম্পূর্ণ ফ্রি এবং হার্ড কপি কুরিয়ারে পেতে নির্দিষ্ট ফি পরিশোধ সাপেক্ষ।
+                  </p>
+
+                  {/* Active Licenses List */}
+                  <div className="flex flex-wrap items-center gap-4 mt-3">
+                    {softCopyLicense && (
+                      <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/60 px-3 py-1.5 rounded-lg">
+                        <span className="text-muted-foreground">সফট কপি:</span>
+                        <span className={`font-medium ${softCopyLicense.status === 'APPROVED' ? 'text-emerald-600 dark:text-emerald-400' : softCopyLicense.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
+                          {softCopyLicense.status === 'APPROVED' ? 'অনুমোদিত' : softCopyLicense.status === 'PENDING' ? 'পেন্ডিং' : 'বাতিল'}
+                        </span>
+                        {softCopyLicense.licenseUrl && softCopyLicense.status === 'APPROVED' && (
+                          <button
+                            type="button"
+                            onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
+                            className="text-primary hover:underline font-medium inline-flex items-center gap-1 ml-1"
+                          >
+                            <Eye className="w-3 h-3" /> ভিউ
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {hardCopyLicense && (
+                      <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/60 px-3 py-1.5 rounded-lg">
+                        <span className="text-muted-foreground">হার্ড কপি:</span>
+                        <span className={`font-medium ${hardCopyLicense.status === 'APPROVED' ? 'text-emerald-600 dark:text-emerald-400' : hardCopyLicense.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
+                          {hardCopyLicense.status === 'APPROVED' ? 'অনুমোদিত' : hardCopyLicense.status === 'PENDING' ? 'পেন্ডিং' : 'বাতিল'}
+                        </span>
+                        {hardCopyLicense.licenseUrl && hardCopyLicense.status === 'APPROVED' && (
+                          <button
+                            type="button"
+                            onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
+                            className="text-primary hover:underline font-medium inline-flex items-center gap-1 ml-1"
+                          >
+                            <Eye className="w-3 h-3" /> ভিউ
+                          </button>
+                        )}
+                        {hardCopyLicense.status === 'APPROVED' && (
+                          hardCopyLicense.isDeliveryVerified ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 ml-1">
+                              <ShieldCheck className="w-3.5 h-3.5" /> ভেরিফাইড
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="h-6 text-[10px] px-2 bg-blue-600 hover:bg-blue-700 text-white ml-1 gap-1"
+                              onClick={() => {
+                                setVerificationCodeInput('');
+                                setVerifyModalOpen(true);
+                              }}
+                            >
+                              <KeyRound className="w-3 h-3" /> কোড ভেরিফাই
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* When no soft copy or hard copy is requested yet */}
+                {!softCopyLicense && !hardCopyLicense && (
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs tracking-wider h-10 px-5 gap-2 font-medium shadow-sm"
+                    onClick={() => {
+                      setLicenseModalView('SELECT');
+                      setLicenseModalOpen(true);
+                    }}
+                  >
+                    <Award className="w-4 h-4" /> গেট লাইসেন্স
+                  </Button>
+                )}
+
+                {/* If soft copy is pending */}
+                {softCopyLicense?.status === 'PENDING' && !hardCopyLicense && (
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs tracking-wider h-10 px-5 gap-2 font-medium"
+                  >
+                    <Clock className="w-4 h-4 animate-pulse" /> পেন্ডিং (পর্যালোচনাধীন)
+                  </Button>
+                )}
+
+                {/* If soft copy is approved, can view soft copy and order hard copy */}
+                {softCopyLicense?.status === 'APPROVED' && !hardCopyLicense && (
+                  <>
+                    {softCopyLicense.licenseUrl && (
+                      <Button
+                        variant="outline"
+                        className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium"
+                        onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4" /> ভিউ লাইসেন্স
+                      </Button>
+                    )}
+                    <Button
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs tracking-wider h-10 px-4 gap-1.5 font-medium shadow-sm"
+                      onClick={() => {
+                        setLicenseModalView('HARD_PAYMENT');
+                        setLicenseModalOpen(true);
+                      }}
+                    >
+                      <Award className="w-4 h-4" /> গেট হার্ড কপি
+                    </Button>
+                  </>
+                )}
+
+                {/* If hard copy is pending */}
+                {hardCopyLicense?.status === 'PENDING' && (
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs tracking-wider h-10 px-5 gap-2 font-medium"
+                  >
+                    <Clock className="w-4 h-4 animate-pulse" /> পেন্ডিং (হার্ড কপি পর্যালোচনাধীন)
+                  </Button>
+                )}
+
+                {/* If hard copy is approved */}
+                {hardCopyLicense?.status === 'APPROVED' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {hardCopyLicense.licenseUrl && (
+                      <Button
+                        variant="outline"
+                        className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium"
+                        onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4" /> ভিউ
+                      </Button>
+                    )}
+                    {!hardCopyLicense.isDeliveryVerified ? (
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs tracking-wider h-10 px-4 gap-1.5 font-medium shadow-sm"
+                        onClick={() => {
+                          setVerificationCodeInput('');
+                          setVerifyModalOpen(true);
+                        }}
+                      >
+                        <KeyRound className="w-4 h-4" /> ভেরিফাই
+                      </Button>
+                    ) : (
+                      <Badge className="bg-emerald-600 text-white text-xs h-10 px-4 gap-1.5 font-medium flex items-center shadow-sm">
+                        <ShieldCheck className="w-4 h-4" /> ভেরিফাইড
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -2674,6 +3103,303 @@ export function SellerDashboard() {
                 >
                   {savingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
                   {editingCoupon ? 'আপডেট করুন' : 'কুপন তৈরি করুন'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* ─── Business License Request Modal (Soft Copy / Hard Copy) ───────── */}
+        <Dialog open={licenseModalOpen} onOpenChange={setLicenseModalOpen}>
+          <DialogContent className="max-w-xl bg-card border-border p-6 max-h-[90vh] overflow-y-auto">
+            {licenseModalView === 'SELECT' ? (
+              <div>
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Award className="w-5 h-5 text-primary" /> ব্যবসায়িক লাইসেন্স নির্বাচন করুন
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    আপনার স্টোরের অফিসিয়াল বৈধতা ও গ্রাহক আস্থা বৃদ্ধির জন্য ডিজিটাল সফট কপি অথবা ডাকযোগে ফিজিক্যাল হার্ড কপি লাইসেন্স গ্রহণ করুন।
+                  </p>
+                </DialogHeader>
+
+                <div className="grid sm:grid-cols-2 gap-4 mt-4">
+                  {/* Option 1: Soft Copy */}
+                  <div className="p-5 rounded-xl border-2 border-border/80 hover:border-primary/60 bg-secondary/30 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-emerald-500" />
+                        </div>
+                        <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-none text-[10px] font-bold">
+                          ফ্রি (Free)
+                        </Badge>
+                      </div>
+                      <h4 className="text-sm font-semibold mb-1">গেট সফট কপি</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        ডিজিটাল পিডিএফ লাইসেন্স। কোনো ফি প্রদান করতে হবে না। এডমিন অনুমোদন দিলে সরাসরি ড্যাশবোর্ড থেকে দেখতে ও ডাউনলোড করতে পারবেন।
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      disabled={requestingLicense}
+                      className="w-full mt-5 bg-foreground text-background hover:opacity-90 text-xs h-10 gap-2 font-medium"
+                      onClick={handleRequestSoftCopy}
+                    >
+                      {requestingLicense ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      গেট সফট কপি
+                    </Button>
+                  </div>
+
+                  {/* Option 2: Hard Copy */}
+                  <div className="p-5 rounded-xl border-2 border-primary/40 hover:border-primary bg-primary/5 transition-all flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2.5 py-0.5 rounded-bl-lg uppercase tracking-wider">
+                      প্রস্তাবিত
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                          <Award className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-primary">
+                          ৳ {licenseFee}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-semibold mb-1">গেট হার্ড কপি</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        অফিসিয়াল সিলমোহর, ফ্রেমযোগ্য প্রিমিয়াম পেপার এবং সিক্রেট ৭-ডিজিট ভেরিফিকেশন কোড যুক্ত ফিজিক্যাল সার্টিফিকেট কুরিয়ারে পৌঁছে দেওয়া হবে।
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      className="w-full mt-5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-10 gap-2 font-medium shadow-sm"
+                      onClick={() => setLicenseModalView('HARD_PAYMENT')}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      গেট হার্ড কপি
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Hard Copy Payment Flow */
+              <form onSubmit={handleRequestHardCopy}>
+                <DialogHeader className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-primary" /> হার্ড কপি লাইসেন্স পেমেন্ট
+                    </DialogTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-8 text-muted-foreground"
+                      onClick={() => setLicenseModalView('SELECT')}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" /> পেছনে যান
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    হার্ড কপি লাইসেন্স ও কুরিয়ার ফি বাবদ মোট <strong className="text-primary font-bold">৳ {licenseFee}</strong> টাকা নিচে উল্লেখিত যেকোনো মাধ্যমে পরিশোধ করুন।
+                  </p>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  {/* Select Payment Method */}
+                  <div>
+                    <Label className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2 block">
+                      পেমেন্ট মেথড নির্বাচন করুন *
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1">
+                      {licensePaymentMethods.map(pm => {
+                        const isSelected = selectedLicenseMethod?.id === pm.id || selectedLicenseMethod?.name === pm.name;
+                        return (
+                          <button
+                            key={pm.id || pm.name}
+                            type="button"
+                            onClick={() => setSelectedLicenseMethod(pm)}
+                            className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                              isSelected
+                                ? 'border-primary bg-primary/10 shadow-sm'
+                                : 'border-border/80 bg-secondary/30 hover:border-border'
+                            }`}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center shrink-0 overflow-hidden relative">
+                              {pm.icon ? (
+                                <Image
+                                  src={pm.icon}
+                                  alt={pm.name}
+                                  width={28}
+                                  height={28}
+                                  className="object-contain"
+                                  onError={(e: any) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                              ) : (
+                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold truncate">{pm.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">
+                                {pm.accountType || 'Personal'}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Payment Details of Selected Method */}
+                  {selectedLicenseMethod && (
+                    <div className="p-3.5 rounded-xl bg-secondary/50 border border-border text-xs space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">পেমেন্ট মেথড:</span>
+                        <span className="font-semibold">{selectedLicenseMethod.name}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">প্রাপক অ্যাকাউন্ট নম্বর:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-primary">
+                            {selectedLicenseMethod.accountNumber || '01XXXXXXXXX'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedLicenseMethod.accountNumber || '');
+                              showToast('অ্যাকাউন্ট নম্বর কপি করা হয়েছে');
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                            title="কপি করুন"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">অ্যাকাউন্ট টাইপ:</span>
+                        <span className="uppercase text-[11px] font-medium">{selectedLicenseMethod.accountType || 'PERSONAL'}</span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                        <span className="text-muted-foreground">পরিশোধযোগ্য টাকার পরিমাণ:</span>
+                        <span className="text-sm font-bold text-primary">৳ {licenseFee}</span>
+                      </div>
+                      {selectedLicenseMethod.instructions && (
+                        <p className="text-[11px] text-muted-foreground pt-1 italic">
+                          নির্দেশনা: {selectedLicenseMethod.instructions}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Payment Proof Inputs */}
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        যে নম্বর থেকে টাকা পাঠিয়েছেন (Sender Phone) *
+                      </Label>
+                      <Input
+                        required
+                        value={licenseSenderNum}
+                        onChange={e => setLicenseSenderNum(e.target.value)}
+                        placeholder="01XXXXXXXXX"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        ট্রানজেকশন আইডি (Transaction ID / TrxID) *
+                      </Label>
+                      <Input
+                        required
+                        value={licenseTrxId}
+                        onChange={e => setLicenseTrxId(e.target.value)}
+                        placeholder="e.g. 9J29AK10M"
+                        className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono uppercase"
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter className="pt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setLicenseModalOpen(false)}
+                      className="text-xs h-9"
+                    >
+                      বাতিল
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={requestingLicense}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-9 px-6 font-medium shadow-sm"
+                    >
+                      {requestingLicense ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                      অর্ডার সাবমিট করুন
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ─── 7-Digit Verification Code Modal (Hard Copy Delivery Verification) ─── */}
+        <Dialog open={verifyModalOpen} onOpenChange={setVerifyModalOpen}>
+          <DialogContent className="max-w-md bg-card border-border p-6">
+            <form onSubmit={handleVerifyDeliveryCode}>
+              <DialogHeader className="mb-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 mx-auto flex items-center justify-center mb-2">
+                  <KeyRound className="w-6 h-6 text-blue-500" />
+                </div>
+                <DialogTitle className="text-base font-semibold">
+                  হার্ড কপি ডেলিভারি ভেরিফিকেশন
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  আপনার প্রাপ্ত হার্ড কপি সার্টিফিকেটের সিকিউরিটি স্টিকার বা ডকুমেন্টে থাকা <strong className="text-foreground">৭ সংখ্যার কোডটি</strong> প্রবেশ করিয়ে নিশ্চিত করুন।
+                </p>
+              </DialogHeader>
+
+              <div className="my-4">
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground text-center block mb-2">
+                  ৭ সংখ্যার সিক্রেট ভেরিফিকেশন কোড *
+                </Label>
+                <Input
+                  required
+                  maxLength={7}
+                  autoFocus
+                  value={verificationCodeInput}
+                  onChange={e => setVerificationCodeInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="• • • • • • •"
+                  className="h-14 text-center text-2xl font-mono tracking-[0.5em] font-bold bg-secondary/50 border-2 border-primary/40 focus:border-primary"
+                />
+                <p className="text-[11px] text-muted-foreground text-center mt-2">
+                  সঠিক কোড সাবমিট করলে আপনার প্রোফাইল ও এডমিন প্যানেলে লাইসেন্সটি &quot;ভেরিফাইড&quot; হিসেবে চিহ্নিত হবে।
+                </p>
+              </div>
+
+              <DialogFooter className="pt-2 sm:justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVerifyModalOpen(false)}
+                  className="text-xs h-10 px-5"
+                >
+                  বাতিল
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submittingVerifyCode || verificationCodeInput.length !== 7}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-10 px-6 font-medium shadow-sm"
+                >
+                  {submittingVerifyCode ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  ভেরিফাই করুন
                 </Button>
               </DialogFooter>
             </form>
