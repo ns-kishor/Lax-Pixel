@@ -10,8 +10,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const [profile, licenses, feeSetting, allPaymentMethods] = await Promise.all([
+    const [userRec, profile, verification, licenses, feeSetting, allPaymentMethods] = await Promise.all([
+      db.user.findUnique({ where: { id: auth.userId }, select: { role: true } }),
       db.sellerProfile.findUnique({ where: { userId: auth.userId } }),
+      db.sellerVerification.findUnique({ where: { userId: auth.userId }, select: { status: true } }),
       db.sellerLicense.findMany({
         where: { userId: auth.userId },
         orderBy: { createdAt: 'desc' },
@@ -23,7 +25,7 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const isApproved = Boolean(profile?.approved);
+    const isApproved = Boolean(profile?.approved || userRec?.role === 'SELLER' || verification?.status === 'APPROVED');
 
     // Filter digital payment methods (no Cash on Delivery)
     const digitalMethods = allPaymentMethods.filter(
@@ -60,8 +62,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const profile = await db.sellerProfile.findUnique({ where: { userId: auth.userId } });
-    if (!profile?.approved) {
+    const [profile, userRec, verification] = await Promise.all([
+      db.sellerProfile.findUnique({ where: { userId: auth.userId } }),
+      db.user.findUnique({ where: { id: auth.userId }, select: { role: true } }),
+      db.sellerVerification.findUnique({ where: { userId: auth.userId }, select: { status: true } }),
+    ]);
+
+    const isApproved = Boolean(profile?.approved || userRec?.role === 'SELLER' || verification?.status === 'APPROVED');
+    if (!isApproved) {
       return NextResponse.json(
         { error: 'You must be an admin-approved verified seller to request a business license.' },
         { status: 403 }

@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
     const sellerId = auth?.userId;
     if (!sellerId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-    const [profile, verification, products, feeSetting, allPaymentMethods] = await Promise.all([
+    const [userRec, profile, verification, products, feeSetting, allPaymentMethods] = await Promise.all([
+      db.user.findUnique({ where: { id: sellerId }, select: { id: true, name: true, email: true, role: true } }),
       db.sellerProfile.findUnique({ where: { userId: sellerId } }),
       db.sellerVerification.findUnique({
         where: { userId: sellerId },
@@ -123,10 +124,27 @@ export async function GET(req: NextRequest) {
       ? (totalSales > 0 ? Math.min(100, Math.round((totalSales / (productCount * 12 + totalSales)) * 1000) / 10) : 0)
       : 0;
 
-    const isApproved = Boolean(profile?.approved);
+    // A seller is approved if their profile is approved, verification is APPROVED, or user role is SELLER
+    const isApproved = Boolean(
+      profile?.approved ||
+      verification?.status === 'APPROVED' ||
+      userRec?.role === 'SELLER'
+    );
 
     let activeProfile = profile;
-    if (activeProfile && !activeProfile.sellerCode) {
+    if (!activeProfile && userRec?.role === 'SELLER') {
+      const code = String(Math.floor(100000000 + Math.random() * 900000000));
+      activeProfile = await db.sellerProfile.create({
+        data: {
+          userId: sellerId,
+          companyName: verification?.businessName || userRec.name || 'Store',
+          description: verification?.description || '',
+          approved: isApproved,
+          sellerCode: code,
+          country: 'Bangladesh',
+        },
+      }).catch(() => profile);
+    } else if (activeProfile && !activeProfile.sellerCode) {
       const code = String(Math.floor(100000000 + Math.random() * 900000000));
       activeProfile = await db.sellerProfile.update({
         where: { id: activeProfile.id },

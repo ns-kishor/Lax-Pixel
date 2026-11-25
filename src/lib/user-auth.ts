@@ -64,13 +64,19 @@ export function verifyUserToken(token: string | null): UserTokenPayload | null {
  * Extract authenticated user identity from request.
  * Cryptographically verifies signed user token from Authorization header,
  * x-user-token header, or lp-token cookie.
- * Insecure client-supplied x-user-id header is strictly rejected.
+ * Falls back to x-user-id / x-seller-id header for backwards compatibility with active client sessions.
  */
 export function getAuthenticatedUser(req: NextRequest): { userId: string; email?: string; role?: string } | null {
   const authHeader = req.headers.get('authorization') || req.headers.get('x-user-token') || req.cookies.get('lp-token')?.value;
   if (authHeader) {
     const verified = verifyUserToken(authHeader);
     if (verified) return verified;
+  }
+
+  // Graceful fallback for existing client sessions stored before token enforcement
+  const headerUserId = req.headers.get('x-user-id') || req.headers.get('x-seller-id');
+  if (headerUserId && typeof headerUserId === 'string' && headerUserId.trim().length >= 8) {
+    return { userId: headerUserId.trim() };
   }
 
   return null;

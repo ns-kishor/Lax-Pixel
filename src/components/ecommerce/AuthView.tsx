@@ -96,7 +96,7 @@ export function AuthView() {
         return;
       }
 
-      setUser(data.user, data.sellerProfile);
+      setUser(data.user, data.sellerProfile, data.token);
       loadUserData(data.user).catch(() => {});
       showToast(`Welcome back, ${data.user.name}`);
 
@@ -150,7 +150,7 @@ export function AuthView() {
         return;
       }
 
-      setUser(data.user, data.sellerProfile);
+      setUser(data.user, data.sellerProfile, data.token);
       showToast(`Welcome to Lax Pixel, ${data.user.name}!`);
 
       if (data.user.role === 'SELLER') {
@@ -184,7 +184,7 @@ export function AuthView() {
         return;
       }
 
-      setUser(data.user, data.sellerProfile);
+      setUser(data.user, data.sellerProfile, data.token);
       showToast(`Account verified! Welcome to Lax Pixel, ${data.user.name}!`);
       setOtpPending(false);
 
@@ -243,7 +243,7 @@ export function AuthView() {
         return;
       }
 
-      setUser(data.user, data.sellerProfile);
+      setUser(data.user, data.sellerProfile, data.token);
       showToast(`Welcome back, ${data.user.name}`);
       if (data.user.role === 'SELLER') {
         setView('seller-dashboard');

@@ -79,7 +79,7 @@ export default function AuthCallbackPage() {
         throw new Error(data.error || 'Failed to sync account with Lax Pixel database');
       }
 
-      useStore.getState().setUser(data.user, data.sellerProfile);
+      useStore.getState().setUser(data.user, data.sellerProfile, data.token);
       useStore.getState().showToast(`Welcome, ${data.user.name}!`);
 
       // Clean redirect to dashboard or home

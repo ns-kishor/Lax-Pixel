@@ -45,7 +45,9 @@ const DEFAULT_METHODS: SellerPaymentConfigItem[] = [
 
 export function SellerDashboard() {
   const { user, sellerStats, sellerProducts, sellerOrders, setSellerData, categories, setView, selectProduct, showToast, sellerProfile } = useStore();
-  const [approved, setApproved] = useState(false);
+  const [approved, setApproved] = useState<boolean>(() => {
+    return Boolean(sellerProfile?.approved || user?.role === 'SELLER');
+  });
   const [verification, setVerification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [addProductOpen, setAddProductOpen] = useState(false);
@@ -373,7 +375,8 @@ export function SellerDashboard() {
         if (data.profile) {
           useStore.getState().setSellerProfile(data.profile);
         }
-        setApproved(Boolean(data.approved));
+        const isUserSellerApproved = Boolean(data.approved || user?.role === 'SELLER' || data.profile?.approved);
+        setApproved(isUserSellerApproved);
         setVerification(data.verification || null);
         if (data.feeAmount !== undefined) {
           setVerificationFee(data.feeAmount);
@@ -457,7 +460,7 @@ export function SellerDashboard() {
           description: data.profile?.description || data.verification?.description || '',
         });
 
-        if (data.approved) {
+        if (isUserSellerApproved) {
           fetchLicenseData();
         }
       }
@@ -592,6 +595,9 @@ export function SellerDashboard() {
   useEffect(() => {
     loadSellerData();
     loadSellerCoupons();
+    if (user?.role === 'SELLER' || sellerProfile?.approved) {
+      fetchLicenseData();
+    }
   }, [user?.id]);
 
   if (!user) {
@@ -1188,7 +1194,7 @@ export function SellerDashboard() {
         </div>
 
         {/* ─── Verification State Banner (When not approved) ───────────────── */}
-        {!approved && (
+        {!approved && !loading && (
           <div className="mb-10">
             {verification?.status === 'PENDING' ? (
               <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20">
