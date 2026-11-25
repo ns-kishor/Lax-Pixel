@@ -19,6 +19,7 @@ import {
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import type { Product } from '@/lib/store';
+import { getSubcategoriesForCategory } from '@/lib/categories';
 
 export interface SellerPaymentConfigItem {
   name: string;
@@ -92,6 +93,7 @@ export function SellerDashboard() {
     price: '',
     comparePrice: '',
     categoryId: '',
+    subcategory: '',
     stock: '',
     description: '',
     tags: '',
@@ -879,7 +881,7 @@ export function SellerDashboard() {
     if (res.ok) {
       showToast('Product created successfully!');
       setAddProductOpen(false);
-      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', stock: '', description: '', tags: '', image: '', images: '', colors: '', sizes: '', specs: [] });
+      setNewProduct({ name: '', price: '', comparePrice: '', categoryId: '', subcategory: '', stock: '', description: '', tags: '', image: '', images: '', colors: '', sizes: '', specs: [] });
       loadSellerData();
     } else {
       showToast(data.error || 'Failed to create product', 'error');
@@ -1841,7 +1843,7 @@ export function SellerDashboard() {
                 <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category *</Label>
                 <select
                   value={newProduct.categoryId}
-                  onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })}
+                  onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value, subcategory: '' })}
                   className="mt-1.5 h-10 w-full px-3 bg-background border border-border rounded-md text-sm"
                 >
                   <option value="">Select Category...</option>
@@ -1850,6 +1852,37 @@ export function SellerDashboard() {
                   ))}
                 </select>
               </div>
+
+              {/* Subcategory selector when Category has subcategories */}
+              {(() => {
+                const selectedCat = (categories || []).find(c => c.id === newProduct.categoryId);
+                const subcats = getSubcategoriesForCategory(selectedCat?.slug || selectedCat?.name);
+                if (subcats.length === 0) return null;
+                return (
+                  <div className="sm:col-span-2 p-3.5 rounded-xl bg-background/80 border border-primary/30">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <Label className="text-[10px] tracking-wider uppercase text-primary font-semibold">
+                        Subcategory (সাব-ক্যাটেগরি) *
+                      </Label>
+                      <span className="text-[10px] text-muted-foreground">
+                        {selectedCat?.name} এর জন্য প্রযোজ্য
+                      </span>
+                    </div>
+                    <select
+                      value={newProduct.subcategory}
+                      onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value })}
+                      className="h-10 w-full px-3 bg-secondary/50 border border-border rounded-md text-sm"
+                    >
+                      <option value="">Select subcategory...</option>
+                      {subcats.map(sc => (
+                        <option key={sc.slug} value={sc.name}>
+                          {sc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
 
               <div>
                 <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Price (৳) *</Label>

@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Search, Trash2, Pencil, Star, StarOff, ChevronLeft, ChevronRight, Package, Plus, X, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore, safeImgSrc } from '@/lib/store';
+import { getSubcategoriesForCategory } from '@/lib/categories';
 
 interface AdminProduct {
   id: string;
@@ -24,6 +25,7 @@ interface AdminProduct {
   images: string;
   description: string;
   categoryId: string;
+  subcategory?: string | null;
   productCode?: string;
   colors?: string;
   sizes?: string;
@@ -38,7 +40,7 @@ interface SpecField { label: string; value: string; }
 
 const emptyForm = {
   name: '', price: '', comparePrice: '', stock: '', description: '',
-  featured: false, categoryId: '', productCode: '', tags: '',
+  featured: false, categoryId: '', subcategory: '', productCode: '', tags: '',
   colors: '', sizes: '',
   images: '' as string, specs: [] as SpecField[],
 };
@@ -95,6 +97,7 @@ export function AdminProducts() {
     setForm({
       name: p.name, price: String(p.price), comparePrice: p.comparePrice ? String(p.comparePrice) : '',
       stock: String(p.stock), description: p.description, featured: p.featured, categoryId: p.categoryId,
+      subcategory: p.subcategory || '',
       productCode: p.productCode || '', tags: '', images: p.images || '',
       colors: p.colors || '', sizes: p.sizes || '',
       specs: (p.specs || []).map(s => ({ label: s.label, value: s.value })),
@@ -142,6 +145,7 @@ export function AdminProducts() {
       const primaryImage = imgList[0] || '/products/hero.png';
       const body: Record<string, unknown> = {
         name: form.name, price: parseFloat(form.price), categoryId: form.categoryId,
+        subcategory: form.subcategory || null,
         description: form.description, featured: form.featured,
         stock: parseInt(form.stock, 10) || 0, tags: form.tags,
         productCode: form.productCode || null,
@@ -318,11 +322,49 @@ export function AdminProducts() {
 
             <div className="space-y-1.5">
               <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Category *</Label>
-              <select value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm">
+              <select
+                value={form.categoryId}
+                onChange={e => {
+                  const newCatId = e.target.value;
+                  setForm({ ...form, categoryId: newCatId, subcategory: '' });
+                }}
+                className="h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm"
+              >
                 <option value="">Select category...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
+
+            {/* Subcategory selector when Category has subcategories */}
+            {(() => {
+              const selectedCat = categories.find(c => c.id === form.categoryId);
+              const subcats = getSubcategoriesForCategory(selectedCat?.slug || selectedCat?.name);
+              if (subcats.length === 0) return null;
+              return (
+                <div className="space-y-1.5 p-3 rounded-lg bg-secondary/60 border border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] tracking-wider uppercase text-primary font-semibold">
+                      Subcategory (সাব-ক্যাটেগরি) *
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground">
+                      {selectedCat?.name} সাব-অপশন
+                    </span>
+                  </div>
+                  <select
+                    value={form.subcategory}
+                    onChange={e => setForm({ ...form, subcategory: e.target.value })}
+                    className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Select subcategory...</option>
+                    {subcats.map(sc => (
+                      <option key={sc.slug} value={sc.name}>
+                        {sc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })()}
             <div className="space-y-1.5">
               <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Description *</Label>
               <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className="bg-secondary border-border text-sm resize-none" />

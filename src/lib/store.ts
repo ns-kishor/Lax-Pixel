@@ -52,6 +52,7 @@ export interface Product {
   image: string;
   images: string;
   categoryId: string;
+  subcategory?: string | null;
   sellerId: string;
   stock: number;
   featured: boolean;
@@ -209,6 +210,8 @@ interface AppState {
   // Shop category filter (shared state for URL sync)
   shopCategory: string;
   setShopCategory: (cat: string) => void;
+  shopSubcategory: string;
+  setShopSubcategory: (subcat: string) => void;
   shopSort: string;
   setShopSort: (sort: string) => void;
 
@@ -417,6 +420,8 @@ export const useStore = create<AppState>((set, get) => ({
   // Shop category filter
   shopCategory: '',
   setShopCategory: (cat) => set({ shopCategory: cat }),
+  shopSubcategory: '',
+  setShopSubcategory: (subcat) => set({ shopSubcategory: subcat }),
   shopSort: 'createdAt',
   setShopSort: (sort) => set({ shopSort: sort }),
 

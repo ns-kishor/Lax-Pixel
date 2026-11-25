@@ -148,6 +148,8 @@ export async function POST(req: NextRequest) {
         }))
       : [];
 
+    const subcategory = body.subcategory !== undefined ? sanitizeInput(body.subcategory) || null : null;
+
     const product = await db.product.create({
       data: {
         name,
@@ -158,6 +160,7 @@ export async function POST(req: NextRequest) {
         image: mainImage,
         images,
         categoryId,
+        subcategory,
         sellerId,
         stock,
         featured,
@@ -198,7 +201,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const data: Record<string, unknown> = {};
-    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'productCode', 'tags', 'colors', 'sizes', 'images', 'image'];
+    const allowedFields = ['name', 'description', 'price', 'comparePrice', 'stock', 'featured', 'categoryId', 'subcategory', 'productCode', 'tags', 'colors', 'sizes', 'images', 'image'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {

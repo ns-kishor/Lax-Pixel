@@ -83,6 +83,7 @@ model Product {
   image         String
   images        String    @default("")
   categoryId    String
+  subcategory   String?
   sellerId      String
   stock         Int       @default(0)
   featured      Boolean   @default(false)

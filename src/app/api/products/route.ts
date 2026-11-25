@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
+    const subcategory = searchParams.get('subcategory');
     const search = searchParams.get('search');
     const sort = searchParams.get('sort') || 'createdAt';
     const featured = searchParams.get('featured');
@@ -14,8 +15,34 @@ export async function GET(req: NextRequest) {
 
     const where: Record<string, unknown> = {};
     if (category) {
-      const cat = await db.category.findUnique({ where: { slug: category } });
+      const cat = await db.category.findFirst({
+        where: {
+          OR: [
+            { slug: category },
+            { slug: category === 'watch' ? 'watches' : category === 'watches' ? 'watch' : category },
+            { name: { equals: category, mode: 'insensitive' } }
+          ]
+        }
+      });
       if (cat) where.categoryId = cat.id;
+    }
+
+    if (subcategory) {
+      const cleanSub = subcategory.trim();
+      const subVariant = cleanSub.replace(/-/g, ' ');
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        {
+          OR: [
+            { subcategory: { contains: cleanSub, mode: 'insensitive' } },
+            { subcategory: { contains: subVariant, mode: 'insensitive' } },
+            { tags: { contains: cleanSub, mode: 'insensitive' } },
+            { tags: { contains: subVariant, mode: 'insensitive' } },
+            { name: { contains: cleanSub, mode: 'insensitive' } },
+            { name: { contains: subVariant, mode: 'insensitive' } },
+          ]
+        }
+      ];
     }
     if (featured === 'true') where.featured = true;
     if (sellerId) where.sellerId = sellerId;
@@ -100,7 +127,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, slug, description, price, comparePrice, image, images, categoryId, sellerId, stock, featured, tags, colors, sizes } = body;
+    const { name, slug, description, price, comparePrice, image, images, categoryId, subcategory, sellerId, stock, featured, tags, colors, sizes } = body;
 
     const trimmedName = String(name || '').trim();
     if (!trimmedName || price === undefined || price === null || !categoryId || !sellerId) {
@@ -171,6 +198,9 @@ export async function POST(req: NextRequest) {
           }))
       : [];
 
+    const cleanSubcategory = subcategory ? String(subcategory).trim() : null;
+    const finalTags = [String(tags || ''), cleanSubcategory || ''].filter(Boolean).join(', ');
+
     const product = await db.product.create({
       data: {
         name: trimmedName,
@@ -181,10 +211,11 @@ export async function POST(req: NextRequest) {
         image: cleanImg || '/products/hero.png',
         images: cleanImgs || cleanImg || '/products/hero.png',
         categoryId,
+        subcategory: cleanSubcategory,
         sellerId,
         stock: validStock,
         featured: Boolean(featured),
-        tags: String(tags || ''),
+        tags: finalTags,
         colors: String(colors || ''),
         sizes: String(sizes || ''),
         aiGenerated: false,

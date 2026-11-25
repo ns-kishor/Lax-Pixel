@@ -4,23 +4,48 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useStore, authHeaders, safeImgSrc } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart, ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2, Store, ShoppingBag, Watch, Shirt, Glasses, Gem, Headphones, Footprints, Smartphone, Layers } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  ArrowRight, Sparkles, Star, TrendingUp, Eye, Truck, Shield, Heart,
+  ChevronLeft, ChevronRight, ArrowLeftRight, Flame, CheckCircle2, Store,
+  ShoppingBag, Watch, Shirt, Glasses, Gem, Headphones, Footprints, Smartphone,
+  Layers, Laptop, Tablet, Camera, Cpu, Clock, Timer, Clock3, AlarmClock, Tv, User
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product, Category } from '@/lib/store';
+import { getSubcategoriesForCategory } from '@/lib/categories';
 import Image from 'next/image';
 
 function getCategoryIcon(name: string, slug?: string) {
   const s = `${name} ${slug || ''}`.toLowerCase();
-  if (s.includes('watch') || s.includes('chron')) return Watch;
+  if (s.includes('watch') || s.includes('clock') || s.includes('chron')) return Watch;
+  if (s.includes('laptop') || s.includes('macbook') || s.includes('computer')) return Laptop;
+  if (s.includes('tablet') || s.includes('ipad')) return Tablet;
+  if (s.includes('camera') || s.includes('photo') || s.includes('lens')) return Camera;
+  if (s.includes('mobile') || s.includes('phone') || s.includes('smartphone')) return Smartphone;
+  if (s.includes('gadget') || s.includes('tech')) return Cpu;
+  if (s.includes('accessori')) return Headphones;
+  if (s.includes('shoe') || s.includes('sneaker') || s.includes('footwear') || s.includes('boot')) return Footprints;
+  if (s.includes('fashion') || s.includes('cloth') || s.includes('shirt') || s.includes('dress') || s.includes('pant') || s.includes('wear')) return Shirt;
   if (s.includes('bag') || s.includes('tote') || s.includes('backpack') || s.includes('leather')) return ShoppingBag;
-  if (s.includes('cloth') || s.includes('shirt') || s.includes('dress') || s.includes('pant') || s.includes('fashion') || s.includes('wear') || s.includes('t-shirt')) return Shirt;
   if (s.includes('glass') || s.includes('eyewear') || s.includes('sunglass') || s.includes('aviator')) return Glasses;
   if (s.includes('jewel') || s.includes('gem') || s.includes('ring') || s.includes('neck') || s.includes('gold') || s.includes('diamond')) return Gem;
   if (s.includes('perfume') || s.includes('fragrance') || s.includes('oud') || s.includes('beauty') || s.includes('scent')) return Sparkles;
-  if (s.includes('headphone') || s.includes('audio') || s.includes('sound') || s.includes('electronic')) return Headphones;
-  if (s.includes('shoe') || s.includes('sneaker') || s.includes('footwear') || s.includes('boot')) return Footprints;
-  if (s.includes('phone') || s.includes('gadget') || s.includes('mobile')) return Smartphone;
+  if (s.includes('headphone') || s.includes('audio') || s.includes('sound')) return Headphones;
+  if (s.includes('electronic')) return Tv;
   return Layers;
+}
+
+function getSubcategoryIcon(subcatSlug: string) {
+  const s = subcatSlug.toLowerCase();
+  if (s.includes('smart')) return Watch;
+  if (s.includes('analog')) return Clock;
+  if (s.includes('digital')) return Timer;
+  if (s.includes('wall')) return Clock3;
+  if (s.includes('table')) return AlarmClock;
+  if (s.includes('women') || s.includes('girl')) return Sparkles;
+  if (s.includes('men') || s.includes('boy')) return User;
+  return Sparkles;
 }
 
 function ProductCard({
@@ -378,6 +403,7 @@ function HeroSlider({ featuredProducts }: { featuredProducts: Product[] }) {
 export function HomeView() {
   const { products, categories, setProducts, setCategories, setView } = useStore();
   const [heroProducts, setHeroProducts] = useState<Product[]>([]);
+  const [selectedModalCategory, setSelectedModalCategory] = useState<Category | null>(null);
 
   // Authoritative Hero Slides fetch from /api/hero (managed in Admin Hero Slider)
   useEffect(() => {
@@ -584,25 +610,37 @@ export function HomeView() {
           </button>
         </div>
 
-        {/* 2-Row Category Blocks Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        {/* Category Blocks Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
           {(categories || []).map((c) => {
             const IconComponent = getCategoryIcon(c.name, c.slug);
             const iconUrl = c.icon || c.image;
+            const subcats = getSubcategoriesForCategory(c.slug || c.name);
+            const hasSubs = subcats.length > 0;
             return (
               <motion.div
                 key={c.id}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  useStore.getState().setSearchQuery('');
-                  useStore.getState().setShopCategory(c.slug);
-                  setView('shop', { category: c.slug });
+                  if (hasSubs) {
+                    setSelectedModalCategory(c);
+                  } else {
+                    useStore.getState().setSearchQuery('');
+                    useStore.getState().setShopCategory(c.slug);
+                    useStore.getState().setShopSubcategory('');
+                    setView('shop', { category: c.slug });
+                  }
                 }}
-                className="group p-4 sm:p-5 rounded-2xl border border-border bg-card hover:bg-secondary/70 hover:border-foreground/30 transition-all duration-300 cursor-pointer flex flex-col items-center text-center justify-between shadow-xs hover:shadow-md"
+                className="group p-4 sm:p-5 rounded-2xl border border-border bg-card hover:bg-secondary/70 hover:border-foreground/30 transition-all duration-300 cursor-pointer flex flex-col items-center text-center justify-between shadow-xs hover:shadow-md relative"
               >
+                {hasSubs && (
+                  <span className="absolute top-2 right-2 text-[9px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                    {subcats.length} অপশন
+                  </span>
+                )}
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center shrink-0 mb-3 transition-transform duration-300 group-hover:scale-110">
-                  {iconUrl ? (
+                  {iconUrl && !['Smartphone', 'Laptop', 'Tablet', 'Camera', 'Watch', 'Cpu', 'Headphones', 'Shirt', 'Footprints'].includes(iconUrl) ? (
                     <img src={safeImgSrc(iconUrl)} alt={c.name} className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
                   ) : (
                     <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
@@ -612,7 +650,7 @@ export function HomeView() {
                   {c.name}
                 </span>
                 <span className="text-[10px] text-muted-foreground mt-0.5">
-                  {c._count?.products !== undefined ? `${c._count.products} Products` : 'Collection'}
+                  {hasSubs ? 'ক্লিক করে অপশন দেখুন' : (c._count?.products !== undefined ? `${c._count.products} Products` : 'Collection')}
                 </span>
               </motion.div>
             );
@@ -706,6 +744,75 @@ export function HomeView() {
           </div>
         </div>
       </section>
+
+      {/* Subcategory Selection Modal Dialog */}
+      <Dialog
+        open={Boolean(selectedModalCategory)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedModalCategory(null);
+        }}
+      >
+        <DialogContent className="max-w-md bg-card border-border p-6">
+          {selectedModalCategory && (() => {
+            const CatIcon = getCategoryIcon(selectedModalCategory.name, selectedModalCategory.slug);
+            const subcats = getSubcategoriesForCategory(selectedModalCategory.slug || selectedModalCategory.name);
+            return (
+              <div>
+                <DialogHeader className="text-center mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-2 text-primary">
+                    <CatIcon className="w-7 h-7" />
+                  </div>
+                  <DialogTitle className="text-xl font-light tracking-tight">
+                    {selectedModalCategory.name}
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    কাঙ্ক্ষিত পণ্য দেখতে নিচের অপশনগুলো থেকে একটি নির্বাচন করুন:
+                  </p>
+                </DialogHeader>
+
+                <div className="space-y-2.5">
+                  {subcats.map((sc) => {
+                    const SubIcon = getSubcategoryIcon(sc.slug);
+                    return (
+                      <motion.button
+                        key={sc.slug}
+                        whileHover={{ scale: 1.01, x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          const catSlug = selectedModalCategory.slug;
+                          setSelectedModalCategory(null);
+                          useStore.getState().setSearchQuery('');
+                          useStore.getState().setShopCategory(catSlug);
+                          useStore.getState().setShopSubcategory(sc.slug);
+                          setView('shop', { category: catSlug, subcategory: sc.slug });
+                        }}
+                        className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/60 bg-secondary/40 hover:bg-secondary flex items-center justify-between text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-background border border-border/70 flex items-center justify-center text-foreground group-hover:text-primary transition-colors">
+                            <SubIcon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                              {sc.name}
+                            </p>
+                            {sc.description && (
+                              <p className="text-[11px] text-muted-foreground line-clamp-1">
+                                {sc.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 ml-2" />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

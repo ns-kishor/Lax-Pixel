@@ -9,23 +9,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SlidersHorizontal, Grid3X3, List, Search, X, Sparkles, Star, Heart, Store, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Product } from '@/lib/store';
+import { getSubcategoriesForCategory } from '@/lib/categories';
 import Image from 'next/image';
 
 export function ShopView() {
-  const { products, categories, setProducts, selectProduct, selectSellerStore, searchQuery, setSearchQuery, shopCategory, setShopCategory, shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist, setJustAddedToCart, setView } = useStore();
+  const {
+    products, categories, setProducts, selectProduct, selectSellerStore,
+    searchQuery, setSearchQuery, shopCategory, setShopCategory,
+    shopSubcategory, setShopSubcategory,
+    shopSort, setShopSort, user, showToast, wishlistIds, toggleWishlist,
+    setJustAddedToCart, setView
+  } = useStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [fetching, setFetching] = useState(false);
   const initializedRef = useRef(false);
 
-  // Sync shopCategory and searchQuery from URL on mount
+  // Sync shopCategory, shopSubcategory, and searchQuery from URL on mount
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
       const params = new URLSearchParams(window.location.search);
       if (params.has('category') && !shopCategory) {
         setShopCategory(params.get('category')!);
+      }
+      if (params.has('subcategory') && !shopSubcategory) {
+        setShopSubcategory(params.get('subcategory')!);
       }
       if (params.has('sort')) {
         setShopSort(params.get('sort')!);
@@ -36,7 +46,7 @@ export function ShopView() {
         setSearchQuery(params.get('search')!);
       }
     }
-  }, [shopCategory, setShopCategory, setShopSort, searchQuery, setSearchQuery]);
+  }, [shopCategory, setShopCategory, shopSubcategory, setShopSubcategory, setShopSort, searchQuery, setSearchQuery]);
 
   useEffect(() => {
     let active = true;
@@ -44,6 +54,7 @@ export function ShopView() {
       setFetching(true);
       const params = new URLSearchParams();
       if (shopCategory) params.set('category', shopCategory);
+      if (shopSubcategory) params.set('subcategory', shopSubcategory);
       if (searchQuery) params.set('search', searchQuery);
       params.set('sort', shopSort);
       try {
@@ -62,15 +73,25 @@ export function ShopView() {
       active = false;
       clearTimeout(timer);
     };
-  }, [shopCategory, shopSort, searchQuery, setProducts]);
+  }, [shopCategory, shopSubcategory, shopSort, searchQuery, setProducts]);
 
   // Push history entry when category changes (within shop view)
   const handleCategoryChange = (slug: string) => {
     setShopCategory(slug);
+    setShopSubcategory('');
     if (slug) {
       useStore.getState().setView('shop', { category: slug });
     } else {
       useStore.getState().setView('shop');
+    }
+  };
+
+  const handleSubcategoryChange = (subcatSlug: string) => {
+    setShopSubcategory(subcatSlug);
+    if (subcatSlug) {
+      useStore.getState().setView('shop', { category: shopCategory, subcategory: subcatSlug });
+    } else {
+      useStore.getState().setView('shop', { category: shopCategory });
     }
   };
 
@@ -104,13 +125,21 @@ export function ShopView() {
         {/* Header */}
         <div className="mb-6">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-2xl sm:text-3xl font-light tracking-tight">
-            {searchQuery ? `Results for "${searchQuery}"` : shopCategory ? categories.find(c => c.slug === shopCategory)?.name || 'Shop' : 'All Products'}
+            {searchQuery
+              ? `Results for "${searchQuery}"`
+              : shopCategory
+                ? `${categories.find(c => c.slug === shopCategory)?.name || 'Shop'}${
+                    shopSubcategory
+                      ? ` · ${getSubcategoriesForCategory(shopCategory).find(s => s.slug === shopSubcategory)?.name || shopSubcategory}`
+                      : ''
+                  }`
+                : 'All Products'}
           </motion.h1>
           <p className="text-xs text-muted-foreground mt-1">{filtered.length} {filtered.length === 1 ? 'item' : 'items'} available</p>
         </div>
 
         {/* Quick Category Story Pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-4 mb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-3 mb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => handleCategoryChange('')}
             className={`shrink-0 px-4 py-2 rounded-full text-xs uppercase tracking-wider font-medium border transition-all active:scale-95 ${
@@ -135,6 +164,50 @@ export function ShopView() {
             </button>
           ))}
         </div>
+
+        {/* Quick Subcategory Pills when category has subcategories */}
+        {(() => {
+          const activeSubcats = getSubcategoriesForCategory(shopCategory);
+          if (activeSubcats.length === 0) return null;
+          const currentCatName = categories.find(c => c.slug === shopCategory)?.name || '';
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-3 mb-3 -mx-4 px-4 sm:mx-0 sm:px-0 bg-secondary/30 p-2.5 rounded-xl border border-primary/20"
+            >
+              <span className="text-[11px] font-semibold text-primary uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> সাব-ক্যাটেগরি:
+              </span>
+              <button
+                onClick={() => handleSubcategoryChange('')}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                  !shopSubcategory
+                    ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                    : 'bg-background/80 text-muted-foreground border-border hover:text-foreground hover:bg-secondary'
+                }`}
+              >
+                সব {currentCatName}
+              </button>
+              {activeSubcats.map((sc) => {
+                const isActive = shopSubcategory === sc.slug || shopSubcategory.toLowerCase() === sc.name.toLowerCase();
+                return (
+                  <button
+                    key={sc.slug}
+                    onClick={() => handleSubcategoryChange(sc.slug)}
+                    className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 ${
+                      isActive
+                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                        : 'bg-background/80 text-foreground border-border hover:bg-secondary'
+                    }`}
+                  >
+                    {sc.name}
+                  </button>
+                );
+              })}
+            </motion.div>
+          );
+        })()}
 
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
