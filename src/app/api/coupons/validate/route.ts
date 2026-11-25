@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!coupon) {
-      return NextResponse.json({ error: 'Invalid coupon code (সঠিক কুপন কোড দিন)' }, { status: 404 });
+      return NextResponse.json({ error: 'Invalid coupon code.' }, { status: 404 });
     }
 
     if (!coupon.active || coupon.banned) {
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (coupon.endDate && now > new Date(coupon.endDate)) {
-      return NextResponse.json({ error: 'This coupon has expired (কুপনের মেয়াদ শেষ হয়ে গেছে).' }, { status: 400 });
+      return NextResponse.json({ error: 'This coupon has expired.' }, { status: 400 });
     }
 
     if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         const sellerItems = orderItems.filter((i: any) => i.sellerId === coupon.sellerId);
         if (sellerItems.length === 0) {
           return NextResponse.json({
-            error: 'এই কুপনটি শুধুমাত্র নির্দিষ্ট বিক্রেতার প্রোডাক্টের ক্ষেত্রে প্রযোজ্য।',
+            error: 'This coupon is only valid for products from a specific seller.',
           }, { status: 400 });
         }
         eligibleAmount = sellerItems.reduce((sum: number, i: any) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
         const matchedItems = orderItems.filter((i: any) => targetIds.includes(i.productId));
         if (matchedItems.length === 0) {
           return NextResponse.json({
-            error: 'এই কুপনটি নির্বাচিত প্রোডাক্টের জন্য প্রযোজ্য নয়।',
+            error: 'This coupon is not applicable to the selected products.',
           }, { status: 400 });
         }
         eligibleAmount = matchedItems.reduce((sum: number, i: any) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
       if (coupon.minOrderAmount > 0 && eligibleAmount < coupon.minOrderAmount) {
         return NextResponse.json({
-          error: `এই কুপনটি ব্যবহারের জন্য ন্যূনতম ৳${coupon.minOrderAmount} টাকার প্রোডাক্ট অর্ডার করতে হবে।`,
+          error: `Minimum order amount of ৳${coupon.minOrderAmount} is required to use this coupon.`,
         }, { status: 400 });
       }
     }

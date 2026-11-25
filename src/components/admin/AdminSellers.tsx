@@ -597,7 +597,7 @@ export function AdminSellers() {
                     <div className="space-y-2 pt-2 border-t border-border">
                       <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-medium flex items-center gap-1.5">
                         <CreditCard className="w-3.5 h-3.5 text-foreground" />
-                        বিক্রেতার প্রোডাক্ট পেমেন্ট মেথড ({active.length}টি সক্রিয়)
+                        Seller Product Payment Methods ({active.length} active)
                       </h4>
                       <div className="grid sm:grid-cols-2 gap-2">
                         {active.map((m: any, idx: number) => {

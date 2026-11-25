@@ -365,10 +365,10 @@ export function CheckoutView() {
                   {!isCod && (
                     <Badge variant="outline" className="text-[10px] uppercase font-semibold border-primary/30 text-primary bg-primary/5">
                       {currentAccountType === 'PERSONAL'
-                        ? 'Personal (পার্সোনাল)'
+                        ? 'Personal'
                         : currentAccountType === 'AGENT'
-                        ? 'Agent (এজেন্ট)'
-                        : 'Merchant (মার্চেন্ট)'}
+                        ? 'Agent'
+                        : 'Merchant'}
                     </Badge>
                   )}
                 </div>
@@ -377,30 +377,30 @@ export function CheckoutView() {
                 {!isCod && currentAccountNumber && (
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground font-medium">অ্যাকাউন্ট নাম্বার:</span>
+                      <span className="text-muted-foreground font-medium">Account Number:</span>
                       <span className="font-mono font-bold text-sm text-foreground bg-background px-2 py-0.5 rounded border border-border select-all inline-flex items-center gap-1.5">
                         {currentAccountNumber}
                         <button
                           type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(currentAccountNumber);
-                            showToast('অ্যাকাউন্ট নাম্বার কপি হয়েছে', 'success');
+                            showToast('Account number copied', 'success');
                           }}
                           className="text-[10px] text-primary hover:underline font-sans font-normal"
-                          title="নাম্বার কপি করুন"
+                          title="Copy Number"
                         >
-                          কপি
+                          Copy
                         </button>
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground font-medium">অ্যাকাউন্টের ধরণ:</span>
+                      <span className="text-muted-foreground font-medium">Account Type:</span>
                       <span className="font-semibold text-foreground">
                         {currentAccountType === 'PERSONAL'
-                          ? 'Personal (পার্সোনাল)'
+                          ? 'Personal'
                           : currentAccountType === 'AGENT'
-                          ? 'Agent (এজেন্ট)'
-                          : 'Merchant (মার্চেন্ট)'}
+                          ? 'Agent'
+                          : 'Merchant'}
                       </span>
                     </div>
                   </div>
@@ -411,7 +411,7 @@ export function CheckoutView() {
                 )}
                 {selectedMethod?.sellerName && (
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    পণ্য বিক্রেতা: <span className="text-foreground font-medium">{selectedMethod.sellerName}</span>
+                    Product Seller: <span className="text-foreground font-medium">{selectedMethod.sellerName}</span>
                   </p>
                 )}
               </div>
@@ -423,10 +423,10 @@ export function CheckoutView() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="space-y-0.5">
                     <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                      টাকা পাঠানোর নাম্বার ({currentAccountType === 'MERCHANT' ? 'Make Payment' : 'Send Money'}):
+                      Recipient Number ({currentAccountType === 'MERCHANT' ? 'Make Payment' : 'Send Money'}):
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      নিচের নাম্বারে টাকা পাঠিয়ে Transaction ID এবং প্রেরক নাম্বার দিন
+                      Send payment to the number below and provide your Transaction ID and Sender Number
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -439,23 +439,23 @@ export function CheckoutView() {
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(currentAccountNumber);
-                        showToast('অ্যাকাউন্ট নাম্বার কপি হয়েছে!', 'success');
+                        showToast('Account number copied!', 'success');
                       }}
                       className="h-8 px-2.5 text-xs gap-1 border-primary/40 text-primary hover:bg-primary/10 font-medium"
                     >
-                      <Copy className="w-3.5 h-3.5" /> কপি করুন
+                      <Copy className="w-3.5 h-3.5" /> Copy
                     </Button>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs pt-2.5 border-t border-border">
-                  <span className="text-muted-foreground">অ্যাকাউন্টের ধরণ (Account Type):</span>
+                  <span className="text-muted-foreground">Account Type:</span>
                   <span className="font-semibold text-foreground bg-secondary px-2.5 py-1 rounded text-xs border border-border">
                     {currentAccountType === 'PERSONAL'
-                      ? 'Personal (পার্সোনাল - Send Money অপশন ব্যবহার করুন)'
+                      ? 'Personal (Use Send Money option)'
                       : currentAccountType === 'AGENT'
-                      ? 'Agent (এজেন্ট - Cash Out অপশন ব্যবহার করুন)'
-                      : 'Merchant (মার্চেন্ট - Make Payment অপশন ব্যবহার করুন)'}
+                      ? 'Agent (Use Cash Out option)'
+                      : 'Merchant (Use Make Payment option)'}
                   </span>
                 </div>
               </div>
@@ -474,17 +474,17 @@ export function CheckoutView() {
           {/* Payment Proof Requirements */}
           {isCod ? (
             <div className="p-6 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 mb-6 text-sm">
-              <p className="font-medium mb-1">ক্যাশ অন ডেলিভারি (Cash on Delivery)</p>
+              <p className="font-medium mb-1">Cash on Delivery</p>
               <p className="text-xs text-muted-foreground">
-                অগ্রিম কোনো টাকা বা ট্রানজেকশন আইডি প্রদান করতে হবে না। পণ্য হাতে পেয়ে ডেলিভারি ম্যানকে ক্যাশ পরিশোধ করুন।
+                No advance payment or transaction ID required. Pay cash to the courier upon receiving your parcel.
               </p>
             </div>
           ) : (
             <div className="p-6 rounded-xl bg-secondary border border-border mb-6 space-y-4">
               <div>
-                <h3 className="text-sm font-medium tracking-wide">পেমেন্ট ভেরিফিকেশন তথ্য</h3>
+                <h3 className="text-sm font-medium tracking-wide">Payment Verification Details</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  কোনো স্ক্রিনশট আপলোড করার প্রয়োজন নেই। শুধুমাত্র টাকা পাঠানোর ট্রানজেকশন আইডি (TrxID) এবং আপনার প্রেরক মোবাইল নাম্বার প্রদান করুন।
+                  No screenshot upload needed. Simply provide the Transaction ID (TrxID) and sender mobile number.
                 </p>
               </div>
 
@@ -500,12 +500,12 @@ export function CheckoutView() {
                     className="mt-1.5 h-10 bg-background border-border font-mono text-xs uppercase"
                     required
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">পেমেন্ট সম্পন্ন হওয়ার পর পাওয়া Transaction ID দিন</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Enter the Transaction ID received after payment</p>
                 </div>
 
                 <div>
                   <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                    Sender Phone Number * (যে নাম্বার থেকে টাকা পাঠিয়েছেন)
+                    Sender Phone Number *
                   </Label>
                   <Input
                     value={senderNumber}
@@ -514,7 +514,7 @@ export function CheckoutView() {
                     className="mt-1.5 h-10 bg-background border-border font-mono text-xs"
                     required
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">টাকা প্রেরকের মোবাইল নাম্বার</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Phone number used to send the payment</p>
                 </div>
               </div>
             </div>
@@ -584,7 +584,7 @@ export function CheckoutView() {
                     className="mt-1.5 h-10 bg-background border-border text-sm"
                     placeholder="e.g. +880 1XXXXXXXXX"
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">অর্ডার সংক্রান্ত যোগাযোগের জন্য আপনার সক্রিয় ফোন নাম্বার দিন</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Provide your active phone number for delivery updates</p>
                 </div>
 
                 <div>
@@ -637,7 +637,7 @@ export function CheckoutView() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-secondary border border-border">
               <div className="flex items-center gap-2 mb-5">
                 <CreditCard className="w-4 h-4" />
-                <h2 className="text-sm font-medium tracking-wide">Select Payment Method (পেমেন্ট মাধ্যম)</h2>
+                <h2 className="text-sm font-medium tracking-wide">Select Payment Method</h2>
               </div>
               {paymentMethods.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No payment methods available.</p>
@@ -717,7 +717,7 @@ export function CheckoutView() {
               {/* Coupon Code Input */}
               <div className="space-y-2">
                 <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1">
-                  <Ticket className="w-3 h-3" /> Apply Coupon (কুপন কোড)
+                  <Ticket className="w-3 h-3" /> Apply Coupon
                 </Label>
                 <div className="flex gap-2">
                   <Input

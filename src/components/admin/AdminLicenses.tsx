@@ -92,7 +92,7 @@ export function AdminLicenses() {
   const handleSaveFee = async () => {
     const num = parseFloat(feeInput);
     if (isNaN(num) || num < 0) {
-      alert('সঠিক টাকার পরিমাণ দিন');
+      alert('Please enter a valid amount');
       return;
     }
     setSavingFee(true);
@@ -119,7 +119,7 @@ export function AdminLicenses() {
   const handleApprove = async () => {
     if (!approvingLicense) return;
     if (!licenseUrlInput.trim()) {
-      alert('লাইসেন্স এর লিংক প্রদান করা আবশ্যক!');
+      alert('License URL is required!');
       return;
     }
 
@@ -223,9 +223,9 @@ export function AdminLicenses() {
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-medium">বিক্রেতা লাইসেন্স ম্যানেজমেন্ট (Seller Licenses)</h2>
+              <h2 className="text-lg font-medium">Seller License Management</h2>
               <p className="text-xs text-muted-foreground">
-                অনুমোদিত বিক্রেতাদের সফট কপি ও হার্ড কপি লাইসেন্স অর্ডার পর্যালোচনা, অনুমোদন ও ভেরিফিকেশন কোড ট্র্যাকিং
+                Review, approve, and track verification codes for approved sellers&apos; soft and hard copy licenses.
               </p>
             </div>
           </div>
@@ -234,7 +234,7 @@ export function AdminLicenses() {
         {/* Hard copy fee customizer */}
         <div className="flex items-center gap-3 bg-secondary/60 px-4 py-2.5 rounded-xl border border-border">
           <div className="text-xs">
-            <span className="text-muted-foreground block text-[10px]">হার্ড কপি লাইসেন্স ফি</span>
+            <span className="text-muted-foreground block text-[10px]">Hard Copy License Fee</span>
             {editingFee ? (
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-xs font-semibold">৳</span>
@@ -250,7 +250,7 @@ export function AdminLicenses() {
                   onClick={handleSaveFee}
                   disabled={savingFee}
                 >
-                  <Save className="w-3.5 h-3.5 mr-1" /> সেভ
+                  <Save className="w-3.5 h-3.5 mr-1" /> Save
                 </Button>
                 <Button
                   size="sm"
@@ -258,7 +258,7 @@ export function AdminLicenses() {
                   className="h-7 px-2 text-xs"
                   onClick={() => { setEditingFee(false); setFeeInput(String(licenseFee)); }}
                 >
-                  বাতিল
+                  Cancel
                 </Button>
               </div>
             ) : (
@@ -274,7 +274,7 @@ export function AdminLicenses() {
               className="h-7 text-xs px-2.5 gap-1 ml-2"
               onClick={() => setEditingFee(true)}
             >
-              <Edit3 className="w-3.5 h-3.5" /> ফি পরিবর্তন
+              <Edit3 className="w-3.5 h-3.5" /> Edit Fee
             </Button>
           )}
         </div>
@@ -283,26 +283,26 @@ export function AdminLicenses() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         <div className="p-4 rounded-xl border border-border bg-card">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট আবেদন</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Applications</p>
           <p className="text-2xl font-light mt-1">{totalCount}</p>
         </div>
         <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
           <p className="text-[11px] text-amber-500 uppercase tracking-wider flex items-center gap-1">
-            <Clock className="w-3 h-3" /> পেন্ডিং রিভিউ
+            <Clock className="w-3 h-3" /> Pending Review
           </p>
           <p className="text-2xl font-light mt-1 text-amber-600 dark:text-amber-400">{pendingCount}</p>
         </div>
         <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5">
-          <p className="text-[11px] text-blue-500 uppercase tracking-wider">হার্ড কপি অর্ডার</p>
+          <p className="text-[11px] text-blue-500 uppercase tracking-wider">Hard Copy Orders</p>
           <p className="text-2xl font-light mt-1 text-blue-600 dark:text-blue-400">{hardCopyCount}</p>
         </div>
         <div className="p-4 rounded-xl border border-border bg-card">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">সফট কপি অর্ডার</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Soft Copy Orders</p>
           <p className="text-2xl font-light mt-1">{softCopyCount}</p>
         </div>
         <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
           <p className="text-[11px] text-emerald-500 uppercase tracking-wider flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> হাতে পাওয়া ভেরিফাইড
+            <CheckCircle2 className="w-3 h-3" /> Delivery Verified
           </p>
           <p className="text-2xl font-light mt-1 text-emerald-600 dark:text-emerald-400">{verifiedCount}</p>
         </div>
@@ -313,7 +313,7 @@ export function AdminLicenses() {
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="বিক্রেতার নাম, স্টোরের নাম, ফোন বা TrxID খুঁজুন..."
+            placeholder="Search seller name, store, phone, or TrxID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9 text-xs"
@@ -323,12 +323,12 @@ export function AdminLicenses() {
         <div className="flex flex-wrap items-center gap-1.5">
           {(
             [
-              { key: 'ALL', label: 'সবগুলো' },
-              { key: 'PENDING', label: `পেন্ডিং (${pendingCount})` },
-              { key: 'APPROVED', label: 'অনুমোদিত' },
-              { key: 'HARD_COPY', label: 'হার্ড কপি' },
-              { key: 'SOFT_COPY', label: 'সফট কপি' },
-              { key: 'VERIFIED', label: `ভেরিফাইড (${verifiedCount})` },
+              { key: 'ALL', label: 'All' },
+              { key: 'PENDING', label: `Pending (${pendingCount})` },
+              { key: 'APPROVED', label: 'Approved' },
+              { key: 'HARD_COPY', label: 'Hard Copy' },
+              { key: 'SOFT_COPY', label: 'Soft Copy' },
+              { key: 'VERIFIED', label: `Verified (${verifiedCount})` },
             ] as const
           ).map((tab) => (
             <Button
@@ -346,7 +346,7 @@ export function AdminLicenses() {
             variant="ghost"
             className="h-8 w-8 p-0"
             onClick={fetchLicenses}
-            title="রিফ্রেশ করুন"
+            title="Refresh"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
@@ -358,24 +358,24 @@ export function AdminLicenses() {
         {loading ? (
           <div className="py-20 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
             <RefreshCw className="w-5 h-5 animate-spin" />
-            লাইসেন্স ডাটা লোড হচ্ছে...
+            Loading license data...
           </div>
         ) : filteredLicenses.length === 0 ? (
           <div className="py-16 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
             <Award className="w-8 h-8 opacity-40 text-muted-foreground" />
-            কোনো লাইসেন্স অর্ডার পাওয়া যায়নি
+            No license orders found
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-secondary/50 text-muted-foreground border-b border-border text-[11px] uppercase tracking-wider font-medium">
                 <tr>
-                  <th className="py-3 px-4">বিক্রেতা / স্টোর</th>
-                  <th className="py-3 px-4">লাইসেন্স ধরণ</th>
-                  <th className="py-3 px-4">পেমেন্ট বিবরণ (হার্ড কপি)</th>
-                  <th className="py-3 px-4">৭ সংখ্যার ভেরিফিকেশন কোড</th>
-                  <th className="py-3 px-4">স্ট্যাটাস ও ভেরিফিকেশন</th>
-                  <th className="py-3 px-4 text-right">অ্যাকশন</th>
+                  <th className="py-3 px-4">Seller / Store</th>
+                  <th className="py-3 px-4">License Type</th>
+                  <th className="py-3 px-4">Payment Details (Hard Copy)</th>
+                  <th className="py-3 px-4">7-Digit Verification Code</th>
+                  <th className="py-3 px-4">Status & Verification</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -393,7 +393,7 @@ export function AdminLicenses() {
                           {sellerName} • {lic.user.phone || lic.user.email}
                         </div>
                         <div className="text-[10px] text-muted-foreground/80 mt-0.5">
-                          আবেদনের তারিখ: {new Date(lic.createdAt).toLocaleDateString('bn-BD', { dateStyle: 'medium' })}
+                          Applied: {new Date(lic.createdAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}
                         </div>
                       </td>
 
@@ -401,11 +401,11 @@ export function AdminLicenses() {
                       <td className="py-3.5 px-4">
                         {isHardCopy ? (
                           <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-[11px] gap-1 px-2.5 py-0.5">
-                            <CreditCard className="w-3 h-3" /> হার্ড কপি (Paid)
+                            <CreditCard className="w-3 h-3" /> Hard Copy (Paid)
                           </Badge>
                         ) : (
                           <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 text-[11px] gap-1 px-2.5 py-0.5">
-                            <FileText className="w-3 h-3" /> সফট কপি (Free)
+                            <FileText className="w-3 h-3" /> Soft Copy (Free)
                           </Badge>
                         )}
                         {lic.licenseUrl && (
@@ -416,7 +416,7 @@ export function AdminLicenses() {
                               rel="noreferrer"
                               className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 font-medium"
                             >
-                              ভিউ লিংক <ExternalLink className="w-3 h-3" />
+                              View Link <ExternalLink className="w-3 h-3" />
                             </a>
                           </div>
                         )}
@@ -440,7 +440,7 @@ export function AdminLicenses() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-[11px]">— প্রযোজ্য নয় —</span>
+                          <span className="text-muted-foreground text-[11px]">— Not Applicable —</span>
                         )}
                       </td>
 
@@ -457,7 +457,7 @@ export function AdminLicenses() {
                                 variant="ghost"
                                 className="h-6 w-6 p-0"
                                 onClick={() => copyCode(lic.verificationCode!, lic.id)}
-                                title="কোড কপি করুন (হার্ড কপিতে লেখার জন্য)"
+                                title="Copy code"
                               >
                                 {copiedCodeId === lic.id ? (
                                   <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -468,11 +468,11 @@ export function AdminLicenses() {
                             </div>
                           ) : (
                             <span className="text-[11px] text-muted-foreground italic">
-                              অনুমোদনের পর জেনারেট হবে
+                              Generated upon approval
                             </span>
                           )
                         ) : (
-                          <span className="text-muted-foreground text-[11px]">— প্রযোজ্য নয় —</span>
+                          <span className="text-muted-foreground text-[11px]">— Not Applicable —</span>
                         )}
                       </td>
 
@@ -481,17 +481,17 @@ export function AdminLicenses() {
                         <div className="space-y-1.5">
                           {lic.status === 'PENDING' && (
                             <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[11px] gap-1 px-2.5">
-                              <Clock className="w-3 h-3" /> পেন্ডিং রিভিউ
+                              <Clock className="w-3 h-3" /> Pending Review
                             </Badge>
                           )}
                           {lic.status === 'APPROVED' && (
                             <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[11px] gap-1 px-2.5">
-                              <CheckCircle2 className="w-3 h-3" /> অনুমোদিত
+                              <CheckCircle2 className="w-3 h-3" /> Approved
                             </Badge>
                           )}
                           {lic.status === 'REJECTED' && (
                             <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-[11px] gap-1 px-2.5">
-                              <XCircle className="w-3 h-3" /> বাতিলকৃত
+                              <XCircle className="w-3 h-3" /> Rejected
                             </Badge>
                           )}
 
@@ -500,11 +500,11 @@ export function AdminLicenses() {
                             <div>
                               {lic.isDeliveryVerified ? (
                                 <Badge className="bg-emerald-600 text-white font-medium gap-1 text-[11px] px-2.5 py-0.5 shadow-sm">
-                                  <ShieldCheck className="w-3 h-3" /> ভেরিফাইড (হাতে পেয়েছে)
+                                  <ShieldCheck className="w-3 h-3" /> Verified (Received)
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="text-muted-foreground text-[10px] gap-1 border-dashed">
-                                  <Clock className="w-2.5 h-2.5" /> বিক্রেতা এখনো কোড সাবমিট করেনি
+                                  <Clock className="w-2.5 h-2.5" /> Seller has not submitted code yet
                                 </Badge>
                               )}
                             </div>
@@ -525,7 +525,7 @@ export function AdminLicenses() {
                                   setLicenseUrlInput(lic.licenseUrl || '');
                                 }}
                               >
-                                <CheckCircle2 className="w-3.5 h-3.5" /> এপ্রুভ করুন
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
                               </Button>
                               <Button
                                 size="sm"
@@ -536,7 +536,7 @@ export function AdminLicenses() {
                                   setRejectReasonInput('');
                                 }}
                               >
-                                <XCircle className="w-3.5 h-3.5" /> বাতিল
+                                <XCircle className="w-3.5 h-3.5" /> Reject
                               </Button>
                             </>
                           )}
@@ -550,9 +550,9 @@ export function AdminLicenses() {
                                 setApprovingLicense(lic);
                                 setLicenseUrlInput(lic.licenseUrl || '');
                               }}
-                              title="লিংক এডিট করুন"
+                              title="Edit Link"
                             >
-                              <Edit3 className="w-3 h-3" /> লিংক এডিট
+                              <Edit3 className="w-3 h-3" /> Edit Link
                             </Button>
                           )}
                         </div>
@@ -571,7 +571,7 @@ export function AdminLicenses() {
         <DialogContent className="max-w-md p-6">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
-              <Award className="w-5 h-5 text-primary" /> লাইসেন্স অনুমোদন ও লিংক প্রদান
+              <Award className="w-5 h-5 text-primary" /> License Approval & Link
             </DialogTitle>
           </DialogHeader>
 
@@ -579,20 +579,20 @@ export function AdminLicenses() {
             <div className="space-y-4 py-2">
               <div className="p-3.5 rounded-xl bg-secondary/50 border border-border text-xs space-y-1">
                 <div>
-                  <span className="text-muted-foreground">স্টোর / শপ: </span>
+                  <span className="text-muted-foreground">Store / Shop: </span>
                   <span className="font-semibold text-foreground">
                     {approvingLicense.user.sellerProfile?.companyName || approvingLicense.user.name}
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">লাইসেন্স ধরণ: </span>
+                  <span className="text-muted-foreground">License Type: </span>
                   <span className="font-medium">
-                    {approvingLicense.type === 'HARD_COPY' ? 'হার্ড কপি (Hard Copy)' : 'সফট কপি (Soft Copy)'}
+                    {approvingLicense.type === 'HARD_COPY' ? 'Hard Copy' : 'Soft Copy'}
                   </span>
                 </div>
                 {approvingLicense.type === 'HARD_COPY' && (
                   <div>
-                    <span className="text-muted-foreground">পেমেন্ট মেথড ও TrxID: </span>
+                    <span className="text-muted-foreground">Payment Method & TrxID: </span>
                     <span className="font-mono text-primary font-medium">
                       {approvingLicense.paymentMethod} • {approvingLicense.transactionId}
                     </span>
@@ -602,28 +602,28 @@ export function AdminLicenses() {
 
               <div className="space-y-2">
                 <Label htmlFor="licenseUrl" className="text-xs font-medium">
-                  লাইসেন্স এর লিংক (URL) <span className="text-destructive">*</span>
+                  License Link (URL) <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="licenseUrl"
-                  placeholder="https://drive.google.com/... বা লাইসেন্স সার্টিফিকেটের লিংক দিন"
+                  placeholder="https://drive.google.com/... or license certificate URL"
                   value={licenseUrlInput}
                   onChange={(e) => setLicenseUrlInput(e.target.value)}
                   className="text-xs h-9"
                   autoFocus
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  এই লিংকটি বিক্রেতার ড্যাশবোর্ডে "ভিউ" বাটনের মাধ্যমে সরাসরি প্রদর্শিত হবে।
+                  This link will be directly accessible to the seller via the &quot;View&quot; button in their dashboard.
                 </p>
               </div>
 
               {approvingLicense.type === 'HARD_COPY' && (
                 <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-600 dark:text-blue-400 space-y-1">
                   <p className="font-semibold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> হার্ড কপি ভেরিফিকেশন কোড
+                    <ShieldCheck className="w-3.5 h-3.5" /> Hard Copy Verification Code
                   </p>
                   <p>
-                    অনুমোদন বাটনে ক্লিক করলে সিস্টেম স্বয়ংক্রিয়ভাবে একটি ৭ সংখ্যার কোড তৈরি করবে। সেই কোডটি কুরিয়ারে পাঠানো ফিজিক্যাল লাইসেন্সের সাথে অন্তর্ভুক্ত করুন।
+                    Upon clicking approve, the system will automatically generate a 7-digit code. Please include this code on the physical certificate sent via courier.
                   </p>
                 </div>
               )}
@@ -637,7 +637,7 @@ export function AdminLicenses() {
               onClick={() => setApprovingLicense(null)}
               disabled={approvalLoading}
             >
-              বাতিল
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -646,7 +646,7 @@ export function AdminLicenses() {
               disabled={approvalLoading || !licenseUrlInput.trim()}
             >
               <Send className="w-3.5 h-3.5" />
-              {approvalLoading ? 'পাঠানো হচ্ছে...' : 'সেন্ড ও অনুমোদন করুন'}
+              {approvalLoading ? 'Sending...' : 'Send & Approve'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -657,16 +657,16 @@ export function AdminLicenses() {
         <DialogContent className="max-w-sm p-6">
           <DialogHeader>
             <DialogTitle className="text-sm flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-4 h-4" /> লাইসেন্স আবেদন বাতিল করুন
+              <AlertCircle className="w-4 h-4" /> Reject License Application
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             <p className="text-xs text-muted-foreground">
-              বাতিল করার কারণ উল্লেখ করুন (বিক্রেতা এই কারণটি দেখতে পারবে):
+              Specify reason for rejection (seller will be able to see this reason):
             </p>
             <Input
-              placeholder="যেমন: ভুল ট্রানজেকশন আইডি বা পেমেন্ট পাওয়া যায়নি"
+              placeholder="e.g. Invalid transaction ID or payment not received"
               value={rejectReasonInput}
               onChange={(e) => setRejectReasonInput(e.target.value)}
               className="text-xs h-9"
@@ -680,7 +680,7 @@ export function AdminLicenses() {
               onClick={() => setRejectingLicense(null)}
               disabled={rejectLoading}
             >
-              ফিরে যান
+              Go Back
             </Button>
             <Button
               variant="destructive"
@@ -688,7 +688,7 @@ export function AdminLicenses() {
               onClick={handleReject}
               disabled={rejectLoading}
             >
-              {rejectLoading ? 'বাতিল হচ্ছে...' : 'আবেদন বাতিল নিশ্চিত করুন'}
+              {rejectLoading ? 'Rejecting...' : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>

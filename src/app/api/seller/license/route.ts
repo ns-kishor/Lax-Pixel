@@ -92,12 +92,12 @@ export async function POST(req: NextRequest) {
       if (existingSoft) {
         if (existingSoft.status === 'PENDING') {
           return NextResponse.json(
-            { error: 'আপনার সফট কপি লাইসেন্সের আবেদন বর্তমানে রিভিউতে পেন্ডিং রয়েছে।' },
+            { error: 'Your soft copy license request is currently pending review.' },
             { status: 400 }
           );
         }
         return NextResponse.json(
-          { error: 'আপনার সফট কপি লাইসেন্স ইতিমধ্যে অনুমোদিত হয়েছে।' },
+          { error: 'Your soft copy license has already been approved.' },
           { status: 400 }
         );
       }
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'সফট কপি লাইসেন্সের রিকোয়েস্ট সফলভাবে এডমিনের কাছে পাঠানো হয়েছে।',
+        message: 'Soft copy license request submitted successfully.',
         license: newLicense,
       }, { status: 201 });
     }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     const { paymentMethod, transactionId, senderNumber } = body;
     if (!paymentMethod || !transactionId || !senderNumber) {
       return NextResponse.json(
-        { error: 'পেমেন্ট মেথড, ট্রানজেকশন আইডি এবং যে নাম্বার থেকে টাকা পাঠিয়েছেন তা দেওয়া আবশ্যক।' },
+        { error: 'Payment method, transaction ID, and sender phone number are required.' },
         { status: 400 }
       );
     }
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
 
     if (existingPendingHard) {
       return NextResponse.json(
-        { error: 'আপনার হার্ড কপি লাইসেন্সের একটি অর্ডার ইতিমধ্যে পেন্ডিং রয়েছে।' },
+        { error: 'You already have a hard copy license order pending review.' },
         { status: 400 }
       );
     }
@@ -162,11 +162,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'হার্ড কপি লাইসেন্সের আবেদন ও পেমেন্ট প্রুফ সফলভাবে এডমিনের কাছে সাবমিট করা হয়েছে।',
+      message: 'Hard copy license application and payment proof submitted successfully.',
       license: newLicense,
     }, { status: 201 });
   } catch (error) {
     console.error('Request license error:', error);
-    return NextResponse.json({ error: 'লাইসেন্স আবেদন প্রক্রিয়াকরণে ব্যর্থ হয়েছে: ' + String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process license request: ' + String(error) }, { status: 500 });
   }
 }

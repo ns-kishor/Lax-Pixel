@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const code = String(verificationCode || '').trim();
     if (!code) {
-      return NextResponse.json({ error: '৭ সংখ্যার ভেরিফিকেশন কোড দেওয়া আবশ্যক।' }, { status: 400 });
+      return NextResponse.json({ error: '7-digit verification code is required.' }, { status: 400 });
     }
 
     // Lookup target license
@@ -31,29 +31,29 @@ export async function POST(req: NextRequest) {
         });
 
     if (!license || license.userId !== auth.userId) {
-      return NextResponse.json({ error: 'লাইসেন্স রেকর্ড পাওয়া যায়নি।' }, { status: 404 });
+      return NextResponse.json({ error: 'License record not found.' }, { status: 404 });
     }
 
     if (license.type !== 'HARD_COPY') {
-      return NextResponse.json({ error: 'শুধুমাত্র হার্ড কপি লাইসেন্স ভেরিফাই করা সম্ভব।' }, { status: 400 });
+      return NextResponse.json({ error: 'Only physical hard copy licenses can be verified.' }, { status: 400 });
     }
 
     if (license.status !== 'APPROVED') {
-      return NextResponse.json({ error: 'লাইসেন্সটি এখনো এডমিন দ্বারা অনুমোদিত হয়নি।' }, { status: 400 });
+      return NextResponse.json({ error: 'This license has not been approved by admin yet.' }, { status: 400 });
     }
 
     if (license.isDeliveryVerified) {
       return NextResponse.json({
         success: true,
         alreadyVerified: true,
-        message: 'এই হার্ড কপি লাইসেন্স ইতিমধ্যে ভেরিফাই করা হয়েছে।',
+        message: 'This hard copy license has already been verified.',
       });
     }
 
     // Match 7-digit verification code (case-insensitive)
     if (!license.verificationCode || license.verificationCode.trim().toUpperCase() !== code.toUpperCase()) {
       return NextResponse.json({
-        error: 'ভেরিফিকেশন কোডটি সঠিক নয়। হার্ড কপির সাথে থাকা ৭ সংখ্যার কোডটি মিলিয়ে পুনরায় চেষ্টা করুন।',
+        error: 'Invalid verification code. Please check the 7-digit code provided on your physical certificate.',
       }, { status: 400 });
     }
 
@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'অভিনন্দন! আপনার হার্ড কপি লাইসেন্স সফলভাবে ভেরিফাই হয়েছে।',
+      message: 'Congratulations! Your hard copy license has been verified successfully.',
       license: updated,
     });
   } catch (error) {
     console.error('Verify license delivery error:', error);
-    return NextResponse.json({ error: 'ভেরিফিকেশন সম্পন্ন করা সম্ভব হয়নি: ' + String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to complete verification: ' + String(error) }, { status: 500 });
   }
 }

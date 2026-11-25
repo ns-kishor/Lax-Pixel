@@ -371,7 +371,7 @@ export function CartView() {
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-background/60 text-[11px] text-muted-foreground">
                   <Sparkles className="w-3.5 h-3.5 shrink-0 text-foreground" />
                   <span>
-                    সারাদেশে হোম ডেলিভারি ও দ্রুত শিপিং সুবিধা
+                    Nationwide home delivery & express shipping available
                   </span>
                 </div>
               )}

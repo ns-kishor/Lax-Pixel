@@ -403,7 +403,7 @@ export function AdminPaymentMethods() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Number / টাকা পাঠানোর নম্বর</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Number / Recipient Number</Label>
                 <Input
                   value={form.accountNumber}
                   onChange={e => setForm({ ...form, accountNumber: e.target.value })}
@@ -412,15 +412,15 @@ export function AdminPaymentMethods() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Type / অ্যাকাউন্টের ধরণ</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Account Type</Label>
                 <select
                   value={form.accountType}
                   onChange={e => setForm({ ...form, accountType: e.target.value })}
                   className="h-9 w-full bg-secondary border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="PERSONAL">Personal (পার্সোনাল)</option>
-                  <option value="MERCHANT">Merchant (মার্চেন্ট)</option>
-                  <option value="AGENT">Agent (এজেন্ট)</option>
+                  <option value="PERSONAL">Personal</option>
+                  <option value="MERCHANT">Merchant</option>
+                  <option value="AGENT">Agent</option>
                 </select>
               </div>
             </div>

@@ -636,7 +636,7 @@ export function HomeView() {
               >
                 {hasSubs && (
                   <span className="absolute top-2 right-2 text-[9px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
-                    {subcats.length} অপশন
+                    {subcats.length} options
                   </span>
                 )}
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-secondary/80 border border-border group-hover:border-foreground/30 flex items-center justify-center shrink-0 mb-3 transition-transform duration-300 group-hover:scale-110">
@@ -650,7 +650,7 @@ export function HomeView() {
                   {c.name}
                 </span>
                 <span className="text-[10px] text-muted-foreground mt-0.5">
-                  {hasSubs ? 'ক্লিক করে অপশন দেখুন' : (c._count?.products !== undefined ? `${c._count.products} Products` : 'Collection')}
+                  {hasSubs ? 'Click to view options' : (c._count?.products !== undefined ? `${c._count.products} Products` : 'Collection')}
                 </span>
               </motion.div>
             );
@@ -766,7 +766,7 @@ export function HomeView() {
                     {selectedModalCategory.name}
                   </DialogTitle>
                   <p className="text-xs text-muted-foreground mt-1">
-                    কাঙ্ক্ষিত পণ্য দেখতে নিচের অপশনগুলো থেকে একটি নির্বাচন করুন:
+                    Select an option below to view products:
                   </p>
                 </DialogHeader>
 

@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest) {
     if (action === 'UPDATE_FEE') {
       const numFee = parseFloat(String(feeAmount));
       if (isNaN(numFee) || numFee < 0) {
-        return NextResponse.json({ error: 'সঠিক টাকার পরিমাণ দিন।' }, { status: 400 });
+        return NextResponse.json({ error: 'Please enter a valid fee amount.' }, { status: 400 });
       }
 
       await db.siteSetting.upsert({
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'হার্ড কপি লাইসেন্স ফি সফলভাবে আপডেট হয়েছে।',
+        message: 'Hard copy license fee updated successfully.',
         feeAmount: Math.round(numFee),
       });
     }
@@ -97,7 +97,7 @@ export async function PUT(req: NextRequest) {
     if (action === 'APPROVE') {
       const cleanUrl = String(licenseUrl || '').trim();
       if (!cleanUrl) {
-        return NextResponse.json({ error: 'লাইসেন্স এর লিংক প্রদান করা আবশ্যক।' }, { status: 400 });
+        return NextResponse.json({ error: 'License URL is required.' }, { status: 400 });
       }
 
       // Generate 7-digit verification code for Hard Copy if not already assigned
@@ -131,8 +131,8 @@ export async function PUT(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: `লাইসেন্স সফলভাবে অনুমোদিত হয়েছে এবং লিংক বিক্রেতার কাছে পাঠানো হয়েছে।${
-          license.type === 'HARD_COPY' ? ` (৭ সংখ্যার কোড: ${verificationCode})` : ''
+        message: `License approved successfully and link sent to seller.${
+          license.type === 'HARD_COPY' ? ` (7-digit code: ${verificationCode})` : ''
         }`,
         license: updated,
       });
@@ -145,7 +145,7 @@ export async function PUT(req: NextRequest) {
         data: {
           status: 'REJECTED',
           paymentStatus: 'REJECTED',
-          rejectReason: String(rejectReason || 'আবেদনটি বাতিল করা হয়েছে।'),
+          rejectReason: String(rejectReason || 'Application was rejected by administrator.'),
           reviewedAt: new Date(),
           reviewedBy: admin.adminId,
         },
@@ -153,7 +153,7 @@ export async function PUT(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'লাইসেন্স আবেদন বাতিল করা হয়েছে।',
+        message: 'License application rejected.',
         license: updated,
       });
     }

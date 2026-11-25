@@ -204,9 +204,9 @@ export function AdminVerifications() {
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs tracking-wider uppercase text-muted-foreground flex items-center gap-2">
                           <CreditCard className="w-3.5 h-3.5 text-foreground" />
-                          সেলার প্রোডাক্ট পেমেন্ট মেথড ({active.length}টি সক্রিয়)
+                          Seller Product Payment Methods ({active.length} active)
                         </h4>
-                        <span className="text-[10px] text-muted-foreground">প্রোডাক্ট চেকআউটে প্রদর্শিত হবে</span>
+                        <span className="text-[10px] text-muted-foreground">Displayed at product checkout</span>
                       </div>
                       <div className="grid sm:grid-cols-2 gap-2.5">
                         {active.map((m: any, idx: number) => {
@@ -230,7 +230,7 @@ export function AdminVerifications() {
                                     No: <span className="text-foreground font-semibold">{m.accountNumber}</span>
                                   </p>
                                 ) : isCod ? (
-                                  <p className="text-[10px] text-green-600 dark:text-green-400">ক্যাশ অন ডেলিভারি প্রযোজ্য</p>
+                                  <p className="text-[10px] text-green-600 dark:text-green-400">Cash on Delivery eligible</p>
                                 ) : null}
                                 {m.instructions && (
                                   <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{m.instructions}</p>

@@ -177,7 +177,7 @@ export function ShopView() {
               className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-3 mb-3 -mx-4 px-4 sm:mx-0 sm:px-0 bg-secondary/30 p-2.5 rounded-xl border border-primary/20"
             >
               <span className="text-[11px] font-semibold text-primary uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> সাব-ক্যাটেগরি:
+                <Sparkles className="w-3 h-3" /> Subcategory:
               </span>
               <button
                 onClick={() => handleSubcategoryChange('')}
@@ -187,7 +187,7 @@ export function ShopView() {
                     : 'bg-background/80 text-muted-foreground border-border hover:text-foreground hover:bg-secondary'
                 }`}
               >
-                সব {currentCatName}
+                All {currentCatName}
               </button>
               {activeSubcats.map((sc) => {
                 const isActive = shopSubcategory === sc.slug || shopSubcategory.toLowerCase() === sc.name.toLowerCase();

@@ -44,40 +44,40 @@ export function SupportView() {
 
   const faqs = [
     {
-      category: 'ডেলিভারি ও ট্র্যাকিং',
+      category: 'Delivery & Tracking',
       icon: Truck,
-      q: 'অর্ডার করার পর ডেলিভারি পেতে কতদিন সময় লাগে এবং কীভাবে ট্র্যাক করব?',
-      a: 'আমরা সমগ্র বাংলাদেশের ৬৪টি জেলাতেই নির্ভরযোগ্য এক্সপ্রেস হোম ডেলিভারি দিয়ে থাকি। সাধারণত ঢাকা সিটির মধ্যে ২৪ থেকে ৪৮ ঘণ্টা এবং ঢাকার বাইরে ২ থেকে ৩ কার্যদিবসের মধ্যে ডেলিভারি সম্পন্ন হয়। অর্ডার প্লেস করার পর আপনি একটি অর্ডার নম্বর পাবেন। আমাদের ওয়েবসাইটের "Track Order" পেজে গিয়ে অর্ডার নম্বর ইনপুট দিয়ে মুহূর্তেই লাইভ স্ট্যাটাস দেখতে পারবেন।',
+      q: 'How long does delivery take after ordering, and how do I track it?',
+      a: 'We provide reliable express home delivery across all 64 districts in Bangladesh. Typically, delivery is completed within 24 to 48 hours within Dhaka city and within 2 to 3 business days outside Dhaka. After placing your order, you will receive an order number. Simply visit the "Track Order" page on our website and enter your order number to view real-time status.',
     },
     {
-      category: 'পেমেন্ট ও ভেরিফিকেশন',
+      category: 'Payment & Verification',
       icon: CreditCard,
-      q: 'বিকাশ, নগদ বা রকেটে পেমেন্ট করার পর ট্রানজেকশন আইডি কীভাবে সাবমিট করব?',
-      a: 'চেকআউট পেজে আপনার পছন্দের মোবাইল ব্যাংকিং মেথড (bKash, Nagad, Rocket, Upay, Cellfin ইত্যাদি) সিলেক্ট করুন। স্ক্রিনে দেওয়া মার্চেন্ট/পার্সোনাল নম্বরে সেন্ড মানি বা পেমেন্ট সম্পন্ন করুন। এরপর যে নম্বর থেকে টাকা পাঠিয়েছেন সেই নম্বর এবং প্রাপ্ত ট্রানজেকশন আইডি (TrxID) নির্দিষ্ট বক্সে লিখে অর্ডার সাবমিট করুন। Cash on Delivery সিলেক্ট করলে কোনো ট্রানজেকশন আইডি প্রয়োজন নেই।',
+      q: 'How do I submit my Transaction ID after paying via bKash, Nagad, or Rocket?',
+      a: 'Select your preferred mobile payment method (bKash, Nagad, Rocket, Upay, Cellfin, etc.) on the checkout page. Complete the payment or send money to the displayed account number. Then enter the phone number you paid from and the Transaction ID (TrxID) in the respective fields and submit. If you choose Cash on Delivery, no transaction ID is needed.',
     },
     {
-      category: 'এক্সচেঞ্জ ও রিপ্লেসমেন্ট',
+      category: 'Exchange & Replacement',
       icon: RotateCcw,
-      q: 'প্রোডাক্ট হাতে পাওয়ার পর সাইজ বা কালার না মিললে কীভাবে এক্সচেঞ্জ করব?',
-      a: 'Lax Pixel দিচ্ছে সহজ ৭ দিনের এক্সচেঞ্জ পলিসি (7-Day Easy Exchange Policy)। ডেলিভারি পাওয়ার ৭ দিনের মধ্যে সাইজ বা ফিটিংয়ের সমস্যা হলে নির্দ্বিধায় আমাদের কাস্টমার কেয়ারে (WhatsApp বা ইমেইল) মেসেজ করুন। কোনো প্রকার ঝামেলা ছাড়াই আমরা দ্রুততম সময়ে আপনার প্রোডাক্টটি এক্সচেঞ্জ করে পৌঁছে দেব।',
+      q: 'How do I exchange a product if the size or color does not fit?',
+      a: 'Lax Pixel offers a hassle-free 7-Day Easy Exchange Policy. If you experience any size or fitting issues within 7 days of delivery, simply message our customer support on WhatsApp or email. We will quickly exchange and deliver your replacement item without hassle.',
     },
     {
-      category: 'লগইন ও ওটিপি',
+      category: 'Login & Verification',
       icon: ShieldAlert,
-      q: 'অ্যাকাউন্ট ভেরিফিকেশনের জন্য ইমেইলে ওটিপি কোড না আসলে করণীয় কী?',
-      a: 'ম্যানুয়ালি অ্যাকাউন্ট খোলার সময় আপনার জিমেইলে স্বয়ংক্রিয়ভাবে ৬ সংখ্যার কোড পাঠানো হয়। কোডটি না পেলে অনুগ্রহ করে আপনার জিমেইলের "Spam" বা "Promotions" ফোল্ডার চেক করুন। ১ মিনিট অপেক্ষা করার পর স্ক্রিনে "Resend Code" বাটন ভেসে উঠবে, সেখানে ক্লিক করে নতুন ওটিপি কোড নিতে পারেন।',
+      q: 'What should I do if I do not receive the email OTP code for verification?',
+      a: 'A 6-digit verification code is automatically sent to your registered Gmail address. If you do not see it in your inbox, please check your Spam or Promotions folder. After waiting 1 minute, a "Resend Code" button will appear on the screen to request a fresh code.',
     },
     {
-      category: 'সেলার অ্যাকাউন্ট',
+      category: 'Seller Account',
       icon: UserCheck,
-      q: 'বিক্রেতা (Seller) হিসেবে রেজিস্ট্রেশন ও এপ্রুভাল পাওয়ার নিয়ম কী?',
-      a: 'আমাদের ফুটার বা অ্যাকাউন্ট সেকশন থেকে "Become a Seller" অপশনে যান। আপনার প্রতিষ্ঠানের নাম, যোগাযোগের নম্বর, ট্রেড লাইসেন্স বা প্রয়োজনীয় তথ্য দিয়ে ফর্ম ফিলাপ করুন এবং এডমিন নির্ধারিত ভেরিফিকেশন ফি প্রদান করে সাবমিট করুন। আমাদের এডমিন টিম ১২-২৪ ঘণ্টার মধ্যে তথ্য যাচাই করে আপনার সেলার অ্যাকাউন্টটি ভেরিফাই ও সক্রিয় করে দিবে।',
+      q: 'What are the rules and procedure for seller registration and approval?',
+      a: 'Navigate to "Become a Seller" from our footer or account section. Fill in your business name, contact details, trade license, or requested info, and submit the verification fee. Our admin team will verify and activate your seller account within 12-24 hours.',
     },
     {
-      category: 'অর্ডার বাতিল ও রিফান্ড',
+      category: 'Cancellation & Refund',
       icon: HelpCircle,
-      q: 'প্লেস করা অর্ডার কীভাবে বাতিল করব এবং টাকা কীভাবে রিফান্ড পাব?',
-      a: 'আপনার অর্ডারটি কুরিয়ারে ডিসপ্যাচ হওয়ার পূর্বে আমাদের কাস্টমার সাপোর্টে (WhatsApp / Gmail) জানালে তা সাথে সাথে বাতিল করা সম্ভব। প্রিপেইড অর্ডারের ক্ষেত্রে যে মেথডে টাকা পরিশোধ করেছিলেন সেখানে ২৪ থেকে ৪৮ ঘণ্টার মধ্যে ১০০% রিফান্ড পাঠিয়ে দেওয়া হবে।',
+      q: 'How do I cancel a placed order and receive a refund?',
+      a: 'If your order has not yet been dispatched to the courier, contact our customer support on WhatsApp or Gmail to cancel it immediately. For prepaid orders, a 100% refund will be issued to your payment source within 24 to 48 hours.',
     },
   ];
 
@@ -91,7 +91,7 @@ export function SupportView() {
   const contactChannels = [
     {
       name: 'WhatsApp Support',
-      subtitle: 'সরাসরি কাস্টমার কেয়ার এজেন্টের সাথে দ্রুত চ্যাট করুন',
+      subtitle: 'Chat directly with a customer care agent for quick help',
       badge: 'Fastest Response',
       color: 'hover:border-foreground/40',
       actionLabel: 'Chat on WhatsApp',
@@ -104,7 +104,7 @@ export function SupportView() {
     },
     {
       name: 'Telegram Support',
-      subtitle: 'টেলিগ্রাম সাপোর্টে বা চ্যানেলে যোগাযোগ করুন',
+      subtitle: 'Contact us via Telegram support or channel',
       badge: 'Direct Message',
       color: 'hover:border-foreground/40',
       actionLabel: 'Open Telegram',
@@ -117,7 +117,7 @@ export function SupportView() {
     },
     {
       name: 'Gmail Support',
-      subtitle: 'অফিশিয়াল ইমেইল করুন: nextstep1199@gmail.com',
+      subtitle: 'Official Email: nextstep1199@gmail.com',
       badge: 'Official Email',
       color: 'hover:border-foreground/40',
       actionLabel: 'Send Email',
@@ -130,7 +130,7 @@ export function SupportView() {
     },
     {
       name: 'Messenger Support',
-      subtitle: 'ফেসবুক পেজ ইনবক্সে সরাসরি মেসেজ পাঠান',
+      subtitle: 'Direct message us on our Facebook page inbox',
       badge: 'Page Inbox',
       color: 'hover:border-foreground/40',
       actionLabel: 'Open Messenger',
@@ -155,7 +155,7 @@ export function SupportView() {
             Get Support
           </h1>
           <p className="text-sm text-muted-foreground font-light leading-relaxed">
-            সাধারণ সমস্যার সমাধান খুঁজুন অথবা যেকোনো সহযোগিতা ও অনুসন্ধানের জন্য সরাসরি আমাদের কাস্টমার কেয়ার প্রতিনিধির সাথে যোগাযোগ করুন।
+            Find answers to common questions or reach out directly to our customer care team for assistance and inquiries.
           </p>
 
           {/* Search Bar for FAQs */}
@@ -163,7 +163,7 @@ export function SupportView() {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 translate-y-[-50%] text-muted-foreground" />
             <Input
               type="text"
-              placeholder="আপনার সমস্যা খুঁজুন (যেমন: ডেলিভারি, এক্সচেঞ্জ, পেমেন্ট)..."
+              placeholder="Search your issue (e.g. delivery, exchange, payment)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-11 bg-card/80 border-border text-xs rounded-xl"
@@ -178,8 +178,8 @@ export function SupportView() {
               <Clock className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-foreground">দ্রুত রেসপন্স টাইম</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">অফিস চলাকালীন দ্রুততম সময়ে রিপ্লাই প্রদান</p>
+              <h4 className="text-sm font-medium text-foreground">Fast Response Time</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Quick replies during standard support hours</p>
             </div>
           </div>
 
@@ -188,8 +188,8 @@ export function SupportView() {
               <Truck className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-foreground">৬৪ জেলায় ডেলিভারি সাপোর্ট</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">সরাসরি অর্ডার ট্র্যাকিং ও কুরিয়ার তথ্য</p>
+              <h4 className="text-sm font-medium text-foreground">Nationwide Delivery</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Direct order tracking and express courier support</p>
             </div>
           </div>
 
@@ -198,8 +198,8 @@ export function SupportView() {
               <ShieldCheck className="w-6 h-6 text-foreground" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-foreground">৭ দিনের এক্সচেঞ্জ গ্যারান্টি</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">সহজ ও নির্ভরযোগ্য রিপ্লেসমেন্ট পলিসি</p>
+              <h4 className="text-sm font-medium text-foreground">7-Day Exchange Policy</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Hassle-free, reliable replacement guarantee</p>
             </div>
           </div>
         </div>
@@ -207,9 +207,9 @@ export function SupportView() {
         {/* ─── Direct Contact Channels (4 Options) ─────────────── */}
         <div>
           <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-light tracking-tight">সরাসরি কাস্টমার কেয়ারে যোগাযোগ</h2>
+            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Direct Customer Care</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              যেকোনো প্রশ্ন বা সহযোগিতার জন্য নিচের পছন্দের মাধ্যমে সরাসরি যোগাযোগ করুন
+              Connect with us instantly through your preferred channel below
             </p>
           </div>
 
@@ -252,9 +252,9 @@ export function SupportView() {
         {/* ─── Common Problems & Solutions (FAQ Accordion) ──────── */}
         <div>
           <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-light tracking-tight">সাধারণ সমস্যা ও সমাধান</h2>
+            <h2 className="text-xl sm:text-2xl font-light tracking-tight">Frequently Asked Questions</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              অর্ডার, পেমেন্ট, ডেলিভারি ও রিটার্ন সংক্রান্ত বহুল জিজ্ঞাসিত প্রশ্নাবলী
+              Helpful answers regarding orders, payments, delivery, and returns
             </p>
           </div>
 
@@ -310,7 +310,7 @@ export function SupportView() {
 
           {filteredFaqs.length === 0 && (
             <div className="text-center py-8 text-muted-foreground text-xs">
-              আপনার সার্চ করা বিষয়ের সাথে কোনো প্রশ্ন মেলেনি। অনুগ্রহ করে সরাসরি আমাদের WhatsApp বা Gmail এ যোগাযোগ করুন।
+              No questions match your search query. Please contact us directly via WhatsApp or Gmail.
             </div>
           )}
         </div>

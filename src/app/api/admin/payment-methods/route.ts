@@ -20,7 +20,7 @@ const SEED_METHODS = [
   { name: 'Mukto-Pay', description: 'Mukto-Pay Digital Payment', icon: '/payment-methods/muktopay.webp', proofRequired: 'TRANSACTION_ID', instructions: 'Pay via Mukto-Pay. Enter the Transaction ID and your sender phone number below.', active: true, sortOrder: 8 },
   { name: 'Nexus-Pay', description: 'Dutch-Bangla Bank NexusPay', icon: '/payment-methods/nexuspay.png', proofRequired: 'TRANSACTION_ID', instructions: 'Send money / payment via NexusPay. Enter the Reference / Transaction ID and your sender number below.', active: true, sortOrder: 9 },
   { name: 'Pathao-Pay', description: 'Pathao Pay Digital Payment', icon: '/payment-methods/pathaopay.png', proofRequired: 'TRANSACTION_ID', instructions: 'Send money via Pathao Pay. Enter the Transaction ID and your sender phone number below.', active: true, sortOrder: 10 },
-  { name: 'cash_on_delivery', description: 'Cash on Delivery (ক্যাশ অন ডেলিভারি)', icon: '/payment-methods/cash_on_delivery.jpg', proofRequired: null, instructions: 'Pay cash when you receive the order at your doorstep. No advance payment required.', active: true, sortOrder: 11 },
+  { name: 'cash_on_delivery', description: 'Cash on Delivery', icon: '/payment-methods/cash_on_delivery.jpg', proofRequired: null, instructions: 'Pay cash when you receive the order at your doorstep. No advance payment required.', active: true, sortOrder: 11 },
 ];
 
 // GET: List payment methods

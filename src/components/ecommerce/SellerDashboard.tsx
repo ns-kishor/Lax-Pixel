@@ -41,7 +41,7 @@ const DEFAULT_METHODS: SellerPaymentConfigItem[] = [
   { name: 'Mukto-Pay', icon: '/payment-methods/muktopay.webp', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
   { name: 'Nexus-Pay', icon: '/payment-methods/nexuspay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
   { name: 'Pathao-Pay', icon: '/payment-methods/pathaopay.png', active: false, accountNumber: '', accountType: 'PERSONAL', instructions: '' },
-  { name: 'cash_on_delivery', icon: '/payment-methods/cash_on_delivery.jpg', active: true, accountNumber: '', accountType: 'PERSONAL', instructions: 'ক্যাশ অন ডেলিভারি প্রযোজ্য' },
+  { name: 'cash_on_delivery', icon: '/payment-methods/cash_on_delivery.jpg', active: true, accountNumber: '', accountType: 'PERSONAL', instructions: 'Cash on delivery applicable' },
 ];
 
 export function SellerDashboard() {
@@ -195,7 +195,7 @@ export function SellerDashboard() {
   const copyShareProfileLink = () => {
     if (!shareProfileUrl) return;
     navigator.clipboard.writeText(shareProfileUrl);
-    showToast('প্রোফাইল লিংক কপি করা হয়েছে! (Profile link copied)');
+    showToast('Profile link copied!', 'success');
   };
 
   const loadSellerCoupons = async () => {
@@ -417,7 +417,7 @@ export function SellerDashboard() {
             active: saved ? Boolean(saved.active) : (pm.name === 'bKash' || isCod),
             accountNumber: saved?.accountNumber || (isCod ? '' : (data.verification?.phone || user.phone || '')),
             accountType: (saved?.accountType as any) || 'PERSONAL',
-            instructions: saved?.instructions || (isCod ? 'ক্যাশ অন ডেলিভারি প্রযোজ্য' : ''),
+            instructions: saved?.instructions || (isCod ? 'Cash on delivery applicable' : ''),
           };
         });
 
@@ -504,14 +504,14 @@ export function SellerDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'সফট কপি লাইসেন্স অর্ডার সফলভাবে পাঠানো হয়েছে।');
+        showToast(data.message || 'Soft copy license request submitted successfully.');
         setLicenseModalOpen(false);
         fetchLicenseData();
       } else {
-        showToast(data.error || 'আবেদন সম্পন্ন করা সম্ভব হয়নি', 'error');
+        showToast(data.error || 'Failed to submit request', 'error');
       }
     } catch {
-      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+      showToast('Server error, please try again', 'error');
     } finally {
       setRequestingLicense(false);
     }
@@ -520,15 +520,15 @@ export function SellerDashboard() {
   const handleRequestHardCopy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLicenseMethod) {
-      showToast('অনুগ্রহ করে একটি পেমেন্ট মেথড নির্বাচন করুন', 'error');
+      showToast('Please select a payment method', 'error');
       return;
     }
     if (!licenseTrxId.trim()) {
-      showToast('ট্রানজেকশন আইডি (TrxID) দেওয়া আবশ্যক', 'error');
+      showToast('Transaction ID is required', 'error');
       return;
     }
     if (!licenseSenderNum.trim()) {
-      showToast('প্রেরকের ফোন নম্বর দেওয়া আবশ্যক', 'error');
+      showToast('Sender phone number is required', 'error');
       return;
     }
 
@@ -546,16 +546,16 @@ export function SellerDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'হার্ড কপি লাইসেন্স অর্ডার সফলভাবে সাবমিট হয়েছে।');
+        showToast(data.message || 'Hard copy license order submitted successfully.');
         setLicenseModalOpen(false);
         setLicenseTrxId('');
         setLicenseSenderNum('');
         fetchLicenseData();
       } else {
-        showToast(data.error || 'আবেদন সম্পন্ন করা সম্ভব হয়নি', 'error');
+        showToast(data.error || 'Failed to submit request', 'error');
       }
     } catch {
-      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+      showToast('Server error, please try again', 'error');
     } finally {
       setRequestingLicense(false);
     }
@@ -564,7 +564,7 @@ export function SellerDashboard() {
   const handleVerifyDeliveryCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!verificationCodeInput.trim()) {
-      showToast('৭ সংখ্যার ভেরিফিকেশন কোড দেওয়া আবশ্যক', 'error');
+      showToast('7-digit verification code is required', 'error');
       return;
     }
 
@@ -580,15 +580,15 @@ export function SellerDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || 'অভিনন্দন! আপনার হার্ড কপি লাইসেন্স সফলভাবে ভেরিফাই হয়েছে।');
+        showToast(data.message || 'Congratulations! Your hard copy license has been verified successfully.');
         setVerifyModalOpen(false);
         setVerificationCodeInput('');
         fetchLicenseData();
       } else {
-        showToast(data.error || 'ভেরিফিকেশন কোড মেলেনি', 'error');
+        showToast(data.error || 'Verification code does not match', 'error');
       }
     } catch {
-      showToast('সার্ভার এরর, পুনরায় চেষ্টা করুন', 'error');
+      showToast('Server error, please try again', 'error');
     } finally {
       setSubmittingVerifyCode(false);
     }
@@ -932,14 +932,14 @@ export function SellerDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
           <div>
             <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /> আপনার প্রোডাক্টের পেমেন্ট মেথড নির্ধারণ করুন
+              <CreditCard className="w-4 h-4" /> Configure Product Payment Methods
             </h4>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-              আপনার আপলোড করা প্রডাক্টের ক্ষেত্রে ক্রেতা কোন কোন মাধ্যমে টাকা পাঠাবে তা নির্ধারণ করুন। নির্বাচিত মেথডের নাম্বার ও ধরণ (Personal / Agent) সঠিকভাবে দিন।
+              Specify how customers can pay for your products. Ensure your account number and type (Personal / Agent) are correct.
             </p>
           </div>
           <Badge variant="secondary" className="self-start sm:self-auto text-[10px] font-mono">
-            {sellerPaymentMethods.filter(m => m.active).length}টি মেথড সক্রিয়
+            {sellerPaymentMethods.filter(m => m.active).length} methods active
           </Badge>
         </div>
 
@@ -979,7 +979,7 @@ export function SellerDashboard() {
                       className="w-4 h-4 rounded text-foreground accent-foreground cursor-pointer"
                     />
                     <span className="text-[11px] font-medium text-foreground">
-                      {m.active ? 'সক্রিয়' : 'বন্ধ'}
+                      {m.active ? 'Active' : 'Inactive'}
                     </span>
                   </label>
                 </div>
@@ -989,14 +989,14 @@ export function SellerDashboard() {
                   <div className="space-y-2 pt-2 border-t border-border/60">
                     {isCod ? (
                       <p className="text-[11px] text-green-600 dark:text-green-400 font-medium">
-                        ✓ ক্যাশ অন ডেলিভারি সক্রিয় (ক্রেতা সরাসরি হোম ডেলিভারির সময় মূল্য পরিশোধ করবেন)
+                        ✓ Cash on Delivery active (Customer pays cash upon delivery)
                       </p>
                     ) : (
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
                             <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                              অ্যাকাউন্ট নাম্বার *
+                              Account Number *
                             </Label>
                             <Input
                               required={m.active}
@@ -1009,28 +1009,28 @@ export function SellerDashboard() {
 
                           <div>
                             <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                              অ্যাকাউন্টের ধরণ *
+                              Account Type *
                             </Label>
                             <select
                               value={m.accountType}
                               onChange={e => updateSellerMethod(idx, { accountType: e.target.value as any })}
                               className="mt-1 h-8 w-full px-2 bg-secondary/60 border border-border rounded-md text-xs font-medium"
                             >
-                              <option value="PERSONAL">Personal (পার্সোনাল)</option>
-                              <option value="AGENT">Agent (এজেন্ট)</option>
-                              <option value="MERCHANT">Merchant (মার্চেন্ট)</option>
+                              <option value="PERSONAL">Personal</option>
+                              <option value="AGENT">Agent</option>
+                              <option value="MERCHANT">Merchant</option>
                             </select>
                           </div>
                         </div>
 
                         <div>
                           <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                            বিশেষ নির্দেশনা (ঐচ্ছিক)
+                            Special Instructions (Optional)
                           </Label>
                           <Input
                             value={m.instructions}
                             onChange={e => updateSellerMethod(idx, { instructions: e.target.value })}
-                            placeholder={`e.g. ${m.name} নাম্বারে সেন্ড মানি করুন...`}
+                            placeholder={`e.g. Send money to ${m.name} number...`}
                             className="mt-1 h-8 bg-secondary/60 border-border text-xs"
                           />
                         </div>
@@ -1079,10 +1079,10 @@ export function SellerDashboard() {
                 variant="outline"
                 className="text-xs tracking-wider h-10 px-4 border-foreground/30 hover:border-foreground"
                 onClick={copyShareProfileLink}
-                title="শেয়ার প্রোফাইল লিংক কপি করুন"
+                title="Copy share profile link"
               >
                 <Share2 className="w-4 h-4 mr-2" />
-                শেয়ার প্রোফাইল
+                Share Profile
               </Button>
             )}
 
@@ -1093,12 +1093,12 @@ export function SellerDashboard() {
                 {hardCopyLicense?.status === 'PENDING' ? (
                   <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs px-3.5 h-10 gap-1.5 flex items-center font-medium shadow-sm">
                     <Clock className="w-3.5 h-3.5 animate-pulse" />
-                    <span>পেন্ডিং (হার্ড কপি)</span>
+                    <span>Pending (Hard Copy)</span>
                   </Badge>
                 ) : softCopyLicense?.status === 'PENDING' && !hardCopyLicense ? (
                   <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs px-3.5 h-10 gap-1.5 flex items-center font-medium shadow-sm">
                     <Clock className="w-3.5 h-3.5 animate-pulse" />
-                    <span>পেন্ডিং (সফট কপি)</span>
+                    <span>Pending (Soft Copy)</span>
                   </Badge>
                 ) : null}
 
@@ -1110,9 +1110,9 @@ export function SellerDashboard() {
                         variant="outline"
                         className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium shadow-sm"
                         onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
-                        title="আপনার অফিসিয়াল লাইসেন্স দেখুন"
+                        title="View your official license"
                       >
-                        <ExternalLink className="w-4 h-4" /> ভিউ
+                        <ExternalLink className="w-4 h-4" /> View
                       </Button>
                     )}
 
@@ -1123,13 +1123,13 @@ export function SellerDashboard() {
                           setVerificationCodeInput('');
                           setVerifyModalOpen(true);
                         }}
-                        title="হার্ড কপির সাথে প্রাপ্ত ৭ সংখ্যার কোড দিয়ে ভেরিফাই করুন"
+                        title="Verify with 7-digit code from hard copy certificate"
                       >
-                        <KeyRound className="w-4 h-4" /> ভেরিফাই
+                        <KeyRound className="w-4 h-4" /> Verify
                       </Button>
                     ) : (
                       <Badge className="bg-emerald-600 text-white text-xs h-10 px-3.5 gap-1.5 font-medium flex items-center shadow-sm">
-                        <ShieldCheck className="w-4 h-4" /> ভেরিফাইড
+                        <ShieldCheck className="w-4 h-4" /> Verified
                       </Badge>
                     )}
                   </div>
@@ -1141,9 +1141,9 @@ export function SellerDashboard() {
                         variant="outline"
                         className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium shadow-sm"
                         onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
-                        title="আপনার সফট কপি লাইসেন্স দেখুন"
+                        title="View your soft copy license"
                       >
-                        <ExternalLink className="w-4 h-4" /> ভিউ
+                        <ExternalLink className="w-4 h-4" /> View
                       </Button>
                     )}
 
@@ -1155,9 +1155,9 @@ export function SellerDashboard() {
                           setLicenseModalView('HARD_PAYMENT');
                           setLicenseModalOpen(true);
                         }}
-                        title="অফিসিয়াল হার্ড কপি সার্টিফিকেট অর্ডার করুন"
+                        title="Order official hard copy certificate"
                       >
-                        <Award className="w-4 h-4" /> গেট হার্ড কপি
+                        <Award className="w-4 h-4" /> Get Hard Copy
                       </Button>
                     )}
                   </div>
@@ -1170,7 +1170,7 @@ export function SellerDashboard() {
                       setLicenseModalOpen(true);
                     }}
                   >
-                    <Award className="w-4 h-4" /> গেট লাইসেন্স
+                    <Award className="w-4 h-4" /> Get License
                   </Button>
                 ) : null}
               </div>
@@ -1206,10 +1206,10 @@ export function SellerDashboard() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-base font-medium text-foreground">
-                      ভেরিফিকেশন রিকোয়েস্ট সফলভাবে জমা হয়েছে (Under Review)
+                      Verification Request Submitted (Under Review)
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      আপনার ব্যবসায়ের তথ্যাদি ও নির্বাচিত প্রোডাক্ট পেমেন্ট মেথড অ্যাডমিনের কাছে পৌঁছানো হয়েছে। অ্যাডমিন তথ্যগুলো যাচাই করে এপ্রুভ করলেই আপনি সরাসরি প্রোডাক্ট আপলোড ও সেল শুরু করতে পারবেন।
+                      Your business details and product payment methods have been submitted for admin review. Once approved, you can start uploading products and selling immediately.
                     </p>
 
                     <div className="mt-4 p-4 rounded-xl bg-secondary/50 border border-border grid sm:grid-cols-3 gap-3 text-xs">
@@ -1244,7 +1244,7 @@ export function SellerDashboard() {
 
                       {/* Display summary of chosen seller payment methods */}
                       <div className="sm:col-span-3 pt-2 border-t border-border/60">
-                        <span className="text-muted-foreground block text-[10px] uppercase mb-1.5">আপনার প্রোডাক্টের জন্য নির্বাচিত পেমেন্ট মেথড</span>
+                        <span className="text-muted-foreground block text-[10px] uppercase mb-1.5">Selected Payment Methods For Your Products</span>
                         <div className="flex flex-wrap gap-2">
                           {sellerPaymentMethods.filter(m => m.active).map(m => (
                             <Badge key={m.name} variant="secondary" className="text-[10px] px-2 py-0.5">
@@ -1279,16 +1279,16 @@ export function SellerDashboard() {
                 <div className="max-w-4xl">
                   <div className="flex items-center gap-2 mb-2">
                     <ShieldCheck className="w-5 h-5 text-foreground" />
-                    <h2 className="text-lg font-medium">সেলার অ্যাকাউন্ট ভেরিফিকেশন ও প্রোফাইল ফর্ম (Seller Verification & Profile)</h2>
+                    <h2 className="text-lg font-medium">Seller Account Verification & Profile Form</h2>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                    ল্যাক্স পিক্সেলে সফলভাবে বিক্রেতা হতে আপনার যোগাযোগের তথ্য, ব্যবসার সঠিক বিবরণ এবং আপনার প্রোডাক্ট বিক্রির টাকা গ্রহণের জন্য পছন্দসই পেমেন্ট মেথডগুলো সেট করুন।
+                    To become a verified seller on Lax Pixel, please complete your contact information, store details, and payment collection methods.
                   </p>
 
                   {verification?.status === 'REJECTED' && (
                     <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-xs text-destructive">
-                      <p className="font-semibold mb-1">পূর্বের আবেদনটি রিজেক্ট করা হয়েছিল:</p>
-                      <p>{verification.rejectReason || 'প্রদত্ত তথ্যসমূহ সঠিক ছিল না। অনুগ্রহ করে সঠিক তথ্য দিয়ে পুনরায় জমা দিন।'}</p>
+                      <p className="font-semibold mb-1">Previous Application Was Rejected:</p>
+                      <p>{verification.rejectReason || 'Provided information was not verified. Please submit with valid details.'}</p>
                     </div>
                   )}
 
@@ -1297,7 +1297,7 @@ export function SellerDashboard() {
                     <div className="p-5 rounded-xl bg-background border border-border space-y-4">
                       <div className="flex items-center gap-2 pb-2 border-b border-border">
                         <Phone className="w-4 h-4 text-foreground" />
-                        <h3 className="text-sm font-medium">১. বিক্রেতা যোগাযোগের তথ্য (Seller Contact Information)</h3>
+                        <h3 className="text-sm font-medium">1. Seller Contact Information</h3>
                       </div>
                       <div className="grid sm:grid-cols-3 gap-4">
                         <div>
@@ -1309,7 +1309,7 @@ export function SellerDashboard() {
                             placeholder="e.g. 017XXXXXXXX"
                             className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
                           />
-                          <p className="text-[10px] text-muted-foreground mt-1">সরাসরি কল যোগাযোগের জন্য ফোন নাম্বার</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Phone number for direct phone calls</p>
                         </div>
 
                         <div>
@@ -1323,7 +1323,7 @@ export function SellerDashboard() {
                             placeholder="e.g. 017XXXXXXXX"
                             className="mt-1.5 h-10 bg-secondary/50 border-border text-xs font-mono"
                           />
-                          <p className="text-[10px] text-muted-foreground mt-1">গ্রাহক ও অ্যাডমিনের সাথে হোয়াটসঅ্যাপ চ্যাটের জন্য</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">WhatsApp number for customer and admin chats</p>
                         </div>
 
                         <div>
@@ -1338,7 +1338,7 @@ export function SellerDashboard() {
                             placeholder="seller@example.com"
                             className="mt-1.5 h-10 bg-secondary/50 border-border text-xs"
                           />
-                          <p className="text-[10px] text-muted-foreground mt-1">অর্ডার নোটিফিকেশন ও যোগাযোগ ইমেইল</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Email for notifications and correspondence</p>
                         </div>
                       </div>
                     </div>
@@ -1347,7 +1347,7 @@ export function SellerDashboard() {
                     <div className="p-5 rounded-xl bg-background border border-border space-y-4">
                       <div className="flex items-center gap-2 pb-2 border-b border-border">
                         <Store className="w-4 h-4 text-foreground" />
-                        <h3 className="text-sm font-medium">২. ব্যবসায় ও স্টোর সংক্রান্ত তথ্য (Store Details)</h3>
+                        <h3 className="text-sm font-medium">2. Store & Business Details</h3>
                       </div>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div>
@@ -1367,11 +1367,11 @@ export function SellerDashboard() {
                             onChange={e => setVerificationForm({ ...verificationForm, businessType: e.target.value })}
                             className="mt-1.5 h-10 w-full px-3 bg-secondary/50 border border-border rounded-md text-xs font-medium"
                           >
-                            <option value="Retailer">Retailer (খুচরা বিক্রেতা)</option>
-                            <option value="Wholesaler">Wholesaler (পাইকারি বিক্রেতা)</option>
-                            <option value="Brand / Manufacturer">Brand / Manufacturer (ব্র্যান্ড বা প্রস্তুতকারক)</option>
-                            <option value="Artisan / Designer">Artisan / Designer (শিল্পী বা ডিজাইনার)</option>
-                            <option value="Individual Seller">Individual Seller (ব্যক্তিগত বিক্রেতা)</option>
+                            <option value="Retailer">Retailer</option>
+                            <option value="Wholesaler">Wholesaler</option>
+                            <option value="Brand / Manufacturer">Brand / Manufacturer</option>
+                            <option value="Artisan / Designer">Artisan / Designer</option>
+                            <option value="Individual Seller">Individual Seller</option>
                           </select>
                         </div>
 
@@ -1451,9 +1451,9 @@ export function SellerDashboard() {
                     <div className="p-5 rounded-xl bg-background border border-border space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
                         <div>
-                          <h3 className="text-sm font-medium text-foreground">৪. প্ল্যাটফর্ম ভেরিফিকেশন ও অনুমোদন ফি (Approval Fee)</h3>
+                          <h3 className="text-sm font-medium text-foreground">4. Platform Verification & Approval Fee</h3>
                           <p className="text-[11px] text-muted-foreground mt-0.5">
-                            সেলার অ্যাকাউন্ট ভেরিফিকেশনের জন্য নির্ধারিত ফি প্রদান করে নিচে ট্রানজেকশন আইডি ও আপনার সেন্ডার নাম্বার দিন।
+                            Please pay the verification fee and enter the Transaction ID and your sender number below.
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1466,7 +1466,7 @@ export function SellerDashboard() {
                             </div>
                           ) : (
                             <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm self-start sm:self-auto shrink-0">
-                              ফি: ৳ {verificationFee}
+                              Fee: ৳ {verificationFee}
                             </div>
                           )}
                         </div>
@@ -1475,7 +1475,7 @@ export function SellerDashboard() {
                       {/* Coupon input for verification fee */}
                       <div className="p-3 rounded-lg bg-secondary/50 border border-border space-y-2">
                         <Label className="text-[10px] tracking-wider uppercase text-muted-foreground flex items-center gap-1.5">
-                          <Ticket className="w-3.5 h-3.5" /> ভেরিফিকেশন ফি কুপন (Coupon Code)
+                          <Ticket className="w-3.5 h-3.5" /> Verification Fee Coupon
                         </Label>
                         {appliedVerificationCoupon ? (
                           <div className="flex items-center justify-between p-2 rounded-md bg-green-500/10 border border-green-500/30">
@@ -1497,7 +1497,7 @@ export function SellerDashboard() {
                             <Input
                               value={verificationCouponInput}
                               onChange={e => setVerificationCouponInput(e.target.value.toUpperCase())}
-                              placeholder="কুপন কোড লিখুন..."
+                              placeholder="Enter coupon code..."
                               className="h-9 bg-background border-border text-xs font-mono uppercase"
                             />
                             <Button
@@ -1515,7 +1515,7 @@ export function SellerDashboard() {
 
                       {/* Payment Method Selector Grid */}
                       <div className="space-y-2 mb-4">
-                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">অ্যাডমিন ফি পেমেন্ট মেথড সিলেক্ট করুন *</Label>
+                        <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Select Admin Fee Payment Method *</Label>
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                           {digitalPaymentMethods.map((m) => {
                             const isSelected = verificationForm.paymentMethod === m.name;
@@ -1547,7 +1547,7 @@ export function SellerDashboard() {
                         const activeMethod = digitalPaymentMethods.find(m => m.name === verificationForm.paymentMethod);
                         return activeMethod?.instructions ? (
                           <div className="p-3 rounded-lg bg-secondary/80 border border-border text-xs text-muted-foreground mb-4">
-                            <p className="font-medium text-foreground mb-1">{activeMethod.name} পেমেন্ট নির্দেশনা:</p>
+                            <p className="font-medium text-foreground mb-1">{activeMethod.name} Payment Instructions:</p>
                             <p className="leading-relaxed">{activeMethod.instructions}</p>
                           </div>
                         ) : null;
@@ -1566,11 +1566,11 @@ export function SellerDashboard() {
                             placeholder="e.g. 9J8B7C6D5E"
                             className="mt-1.5 h-10 bg-secondary/50 border-border font-mono text-xs uppercase"
                           />
-                          <p className="text-[10px] text-muted-foreground mt-1">পেমেন্ট সফল হওয়ার পর প্রাপ্ত ট্রানজেকশন আইডি দিন</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Enter the Transaction ID received after payment</p>
                         </div>
                         <div>
                           <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                            Sender Phone Number * (প্রেরকের নাম্বার)
+                            Sender Phone Number *
                           </Label>
                           <Input
                             required
@@ -1579,7 +1579,7 @@ export function SellerDashboard() {
                             placeholder="e.g. 017XXXXXXXX"
                             className="mt-1.5 h-10 bg-secondary/50 border-border font-mono text-xs"
                           />
-                          <p className="text-[10px] text-muted-foreground mt-1">যে মোবাইল নাম্বার থেকে ফি পাঠিয়েছেন</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Phone number from which you paid the fee</p>
                         </div>
                       </div>
                     </div>
@@ -1616,41 +1616,41 @@ export function SellerDashboard() {
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-base font-semibold tracking-wide">অফিসিয়াল মার্চেন্ট ও ব্যবসায়িক লাইসেন্স</h3>
+                    <h3 className="text-base font-semibold tracking-wide">Official Merchant & Business License</h3>
                     {hardCopyLicense?.isDeliveryVerified ? (
                       <Badge className="bg-emerald-600 text-white text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
-                        <ShieldCheck className="w-3 h-3" /> ফুল ভেরিফাইড মার্চেন্ট
+                        <ShieldCheck className="w-3 h-3" /> Fully Verified Merchant
                       </Badge>
                     ) : hardCopyLicense?.status === 'APPROVED' ? (
                       <Badge className="bg-blue-600 text-white text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
-                        <Sparkles className="w-3 h-3" /> হার্ড কপি অনুমোদিত
+                        <Sparkles className="w-3 h-3" /> Hard Copy Approved
                       </Badge>
                     ) : softCopyLicense?.status === 'APPROVED' ? (
                       <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
-                        <CheckCircle2 className="w-3 h-3" /> সফট কপি অ্যাক্টিভ
+                        <CheckCircle2 className="w-3 h-3" /> Soft Copy Active
                       </Badge>
                     ) : (hardCopyLicense?.status === 'PENDING' || softCopyLicense?.status === 'PENDING') ? (
                       <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] h-5 px-2 gap-1 font-medium flex items-center">
-                        <Clock className="w-3 h-3 animate-pulse" /> অনুমোদন পর্যালোচনাধীন
+                        <Clock className="w-3 h-3 animate-pulse" /> Under Review
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-[10px] h-5 px-2 text-muted-foreground border-border">
-                        লাইসেন্স অপশনাল
+                        License Optional
                       </Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-                    Lax Pixel প্ল্যাটফর্মে আপনার স্টোরের ক্রেতাদের সর্বোচ্চ আস্থা ও বিশ্বাসযোগ্যতা নিশ্চিত করতে অফিসিয়াল ব্যবসায়িক লাইসেন্স গ্রহণ করুন।
-                    সফট কপি সম্পূর্ণ ফ্রি এবং হার্ড কপি কুরিয়ারে পেতে নির্দিষ্ট ফি পরিশোধ সাপেক্ষ।
+                    Obtain an official business license to maximize customer trust and credibility on Lax Pixel.
+                    Digital soft copy is completely free. Physical hard copy delivered via courier requires certification fee.
                   </p>
 
                   {/* Active Licenses List */}
                   <div className="flex flex-wrap items-center gap-4 mt-3">
                     {softCopyLicense && (
                       <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/60 px-3 py-1.5 rounded-lg">
-                        <span className="text-muted-foreground">সফট কপি:</span>
+                        <span className="text-muted-foreground">Soft Copy:</span>
                         <span className={`font-medium ${softCopyLicense.status === 'APPROVED' ? 'text-emerald-600 dark:text-emerald-400' : softCopyLicense.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
-                          {softCopyLicense.status === 'APPROVED' ? 'অনুমোদিত' : softCopyLicense.status === 'PENDING' ? 'পেন্ডিং' : 'বাতিল'}
+                          {softCopyLicense.status === 'APPROVED' ? 'Approved' : softCopyLicense.status === 'PENDING' ? 'Pending' : 'Rejected'}
                         </span>
                         {softCopyLicense.licenseUrl && softCopyLicense.status === 'APPROVED' && (
                           <button
@@ -1658,7 +1658,7 @@ export function SellerDashboard() {
                             onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
                             className="text-primary hover:underline font-medium inline-flex items-center gap-1 ml-1"
                           >
-                            <Eye className="w-3 h-3" /> ভিউ
+                            <Eye className="w-3 h-3" /> View
                           </button>
                         )}
                       </div>
@@ -1666,9 +1666,9 @@ export function SellerDashboard() {
 
                     {hardCopyLicense && (
                       <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/60 px-3 py-1.5 rounded-lg">
-                        <span className="text-muted-foreground">হার্ড কপি:</span>
+                        <span className="text-muted-foreground">Hard Copy:</span>
                         <span className={`font-medium ${hardCopyLicense.status === 'APPROVED' ? 'text-emerald-600 dark:text-emerald-400' : hardCopyLicense.status === 'PENDING' ? 'text-amber-500' : 'text-rose-500'}`}>
-                          {hardCopyLicense.status === 'APPROVED' ? 'অনুমোদিত' : hardCopyLicense.status === 'PENDING' ? 'পেন্ডিং' : 'বাতিল'}
+                          {hardCopyLicense.status === 'APPROVED' ? 'Approved' : hardCopyLicense.status === 'PENDING' ? 'Pending' : 'Rejected'}
                         </span>
                         {hardCopyLicense.licenseUrl && hardCopyLicense.status === 'APPROVED' && (
                           <button
@@ -1676,13 +1676,13 @@ export function SellerDashboard() {
                             onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
                             className="text-primary hover:underline font-medium inline-flex items-center gap-1 ml-1"
                           >
-                            <Eye className="w-3 h-3" /> ভিউ
+                            <Eye className="w-3 h-3" /> View
                           </button>
                         )}
                         {hardCopyLicense.status === 'APPROVED' && (
                           hardCopyLicense.isDeliveryVerified ? (
                             <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 ml-1">
-                              <ShieldCheck className="w-3.5 h-3.5" /> ভেরিফাইড
+                              <ShieldCheck className="w-3.5 h-3.5" /> Verified
                             </span>
                           ) : (
                             <Button
@@ -1693,7 +1693,7 @@ export function SellerDashboard() {
                                 setVerifyModalOpen(true);
                               }}
                             >
-                              <KeyRound className="w-3 h-3" /> কোড ভেরিফাই
+                              <KeyRound className="w-3 h-3" /> Verify Code
                             </Button>
                           )
                         )}
@@ -1714,7 +1714,7 @@ export function SellerDashboard() {
                       setLicenseModalOpen(true);
                     }}
                   >
-                    <Award className="w-4 h-4" /> গেট লাইসেন্স
+                    <Award className="w-4 h-4" /> Get License
                   </Button>
                 )}
 
@@ -1725,7 +1725,7 @@ export function SellerDashboard() {
                     variant="outline"
                     className="border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs tracking-wider h-10 px-5 gap-2 font-medium"
                   >
-                    <Clock className="w-4 h-4 animate-pulse" /> পেন্ডিং (পর্যালোচনাধীন)
+                    <Clock className="w-4 h-4 animate-pulse" /> Pending (Under Review)
                   </Button>
                 )}
 
@@ -1738,7 +1738,7 @@ export function SellerDashboard() {
                         className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium"
                         onClick={() => window.open(softCopyLicense.licenseUrl, '_blank')}
                       >
-                        <ExternalLink className="w-4 h-4" /> ভিউ লাইসেন্স
+                        <ExternalLink className="w-4 h-4" /> View License
                       </Button>
                     )}
                     <Button
@@ -1748,7 +1748,7 @@ export function SellerDashboard() {
                         setLicenseModalOpen(true);
                       }}
                     >
-                      <Award className="w-4 h-4" /> গেট হার্ড কপি
+                      <Award className="w-4 h-4" /> Get Hard Copy
                     </Button>
                   </>
                 )}
@@ -1760,7 +1760,7 @@ export function SellerDashboard() {
                     variant="outline"
                     className="border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs tracking-wider h-10 px-5 gap-2 font-medium"
                   >
-                    <Clock className="w-4 h-4 animate-pulse" /> পেন্ডিং (হার্ড কপি পর্যালোচনাধীন)
+                    <Clock className="w-4 h-4 animate-pulse" /> Pending (Hard Copy Review)
                   </Button>
                 )}
 
@@ -1773,7 +1773,7 @@ export function SellerDashboard() {
                         className="text-xs tracking-wider h-10 px-4 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 font-medium"
                         onClick={() => window.open(hardCopyLicense.licenseUrl, '_blank')}
                       >
-                        <ExternalLink className="w-4 h-4" /> ভিউ
+                        <ExternalLink className="w-4 h-4" /> View
                       </Button>
                     )}
                     {!hardCopyLicense.isDeliveryVerified ? (
@@ -1784,11 +1784,11 @@ export function SellerDashboard() {
                           setVerifyModalOpen(true);
                         }}
                       >
-                        <KeyRound className="w-4 h-4" /> ভেরিফাই
+                        <KeyRound className="w-4 h-4" /> Verify
                       </Button>
                     ) : (
                       <Badge className="bg-emerald-600 text-white text-xs h-10 px-4 gap-1.5 font-medium flex items-center shadow-sm">
-                        <ShieldCheck className="w-4 h-4" /> ভেরিফাইড
+                        <ShieldCheck className="w-4 h-4" /> Verified
                       </Badge>
                     )}
                   </div>
@@ -1862,10 +1862,10 @@ export function SellerDashboard() {
                   <div className="sm:col-span-2 p-3.5 rounded-xl bg-background/80 border border-primary/30">
                     <div className="flex items-center justify-between mb-1.5">
                       <Label className="text-[10px] tracking-wider uppercase text-primary font-semibold">
-                        Subcategory (সাব-ক্যাটেগরি) *
+                        Subcategory *
                       </Label>
                       <span className="text-[10px] text-muted-foreground">
-                        {selectedCat?.name} এর জন্য প্রযোজ্য
+                        Applicable for {selectedCat?.name}
                       </span>
                     </div>
                     <select
@@ -2275,10 +2275,10 @@ export function SellerDashboard() {
                 <div>
                   <h3 className="text-base font-medium text-foreground flex items-center gap-2">
                     <FileCheck className="w-5 h-5 text-foreground" />
-                    ক্রেতাদের পেমেন্ট প্রুফ ভেরিফিকেশন (Payment Proofs)
+                    Customer Payment Proof Verification
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    আপনার প্রোডাক্ট কেনার সময় ক্রেতাদের দেওয়া Transaction ID ও প্রেরক নাম্বার যাচাই করে এপ্রুভ বা রিজেক্ট করুন।
+                    Review Transaction IDs and sender numbers submitted by customers and approve or reject payment.
                   </p>
                 </div>
 
@@ -2380,7 +2380,7 @@ export function SellerDashboard() {
                                 <Input
                                   value={rejectNotes}
                                   onChange={e => setRejectNotes(e.target.value)}
-                                  placeholder="রিজেক্ট করার কারণ (যেমন: ফেক TrxID / টাকা আসেনি)..."
+                                  placeholder="Rejection reason (e.g. invalid TrxID / payment not received)..."
                                   className="h-8 text-xs bg-background"
                                 />
                                 <div className="flex gap-2">
@@ -2434,12 +2434,12 @@ export function SellerDashboard() {
                                 {p.status === 'VERIFIED' ? (
                                   <>
                                     <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                                    পেমেন্ট ভেরিফাইড ও এপ্রুভড
+                                    Payment Verified & Approved
                                   </>
                                 ) : (
                                   <>
                                     <XCircle className="w-3.5 h-3.5 text-red-500" />
-                                    পেমেন্ট রিজেক্টেড
+                                    Payment Rejected
                                   </>
                                 )}
                               </span>
@@ -2461,10 +2461,10 @@ export function SellerDashboard() {
                 <div>
                   <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
                     <Ticket className="w-5 h-5 text-foreground" />
-                    আপনার স্টোরের প্রডাক্ট কুপনসমূহ (Store Coupons)
+                    Store Product Coupons
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    এই কুপনগুলো ক্রেতারা শুধুমাত্র আপনার স্টোরের পণ্যসমূহ ক্রয়ের সময় চেকআউটে ব্যবহার করতে পারবেন।
+                    These coupons can only be applied by customers to products from your store at checkout.
                   </p>
                 </div>
                 <Button
@@ -2472,27 +2472,27 @@ export function SellerDashboard() {
                   disabled={!approved}
                   className="bg-foreground text-background text-xs tracking-wider h-10 px-5 shrink-0"
                 >
-                  <Plus className="w-4 h-4 mr-2" /> নতুন কুপন তৈরি করুন
+                  <Plus className="w-4 h-4 mr-2" /> Create New Coupon
                 </Button>
               </div>
 
               {!approved && (
                 <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
-                  সেলার অ্যাকাউন্ট অনুমোদনের পর আপনি আপনার প্রোডাক্টের জন্য ডিসকাউন্ট কুপন তৈরি করতে পারবেন।
+                  Once your seller account is approved, you can create discount coupons for your products.
                 </div>
               )}
 
               {loadingSellerCoupons ? (
                 <div className="py-12 text-center text-muted-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                  <p className="text-xs">কুপন লোড হচ্ছে...</p>
+                  <p className="text-xs">Loading coupons...</p>
                 </div>
               ) : sellerCoupons.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-border rounded-xl">
                   <Ticket className="w-8 h-8 mx-auto text-muted-foreground mb-2 opacity-50" />
-                  <p className="text-sm font-medium">কোনো কুপন তৈরি করা হয়নি</p>
+                  <p className="text-sm font-medium">No coupons created yet</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    আপনার ক্রেতাদের বিশেষ ছাড় দিতে &quot;নতুন কুপন তৈরি করুন&quot; বাটনে ক্লিক করুন।
+                    Click &quot;Create New Coupon&quot; to offer special discounts to your buyers.
                   </p>
                 </div>
               ) : (
@@ -2501,13 +2501,13 @@ export function SellerDashboard() {
                     <table className="w-full text-xs">
                       <thead className="bg-secondary/60 text-muted-foreground uppercase text-[10px] tracking-wider border-b border-border">
                         <tr>
-                          <th className="p-3 text-left">কুপন কোড</th>
-                          <th className="p-3 text-left">ডিসকাউন্ট</th>
-                          <th className="p-3 text-left">মিনিমাম অর্ডার</th>
-                          <th className="p-3 text-left">ব্যবহার</th>
-                          <th className="p-3 text-left">মেয়াদ</th>
-                          <th className="p-3 text-left">স্ট্যাটাস</th>
-                          <th className="p-3 text-right">অ্যাকশন</th>
+                          <th className="p-3 text-left">Coupon Code</th>
+                          <th className="p-3 text-left">Discount</th>
+                          <th className="p-3 text-left">Min Order</th>
+                          <th className="p-3 text-left">Usage</th>
+                          <th className="p-3 text-left">Validity</th>
+                          <th className="p-3 text-left">Status</th>
+                          <th className="p-3 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -2520,19 +2520,19 @@ export function SellerDashboard() {
                               {c.discountType === 'PERCENTAGE' ? `${c.discountValue}% OFF` : `৳${c.discountValue} OFF`}
                             </td>
                             <td className="p-3 text-muted-foreground">
-                              {c.minOrderAmount ? `৳${c.minOrderAmount}` : 'কোনো শর্ত নেই'}
+                              {c.minOrderAmount ? `৳${c.minOrderAmount}` : 'No minimum'}
                             </td>
                             <td className="p-3 text-muted-foreground font-mono">
-                              {c.usedCount || 0} {c.maxUses ? `/ ${c.maxUses}` : 'বার'}
+                              {c.usedCount || 0} {c.maxUses ? `/ ${c.maxUses}` : 'uses'}
                             </td>
                             <td className="p-3 text-muted-foreground">
                               {c.startDate || c.endDate ? (
                                 <span className="text-[11px]">
-                                  {c.startDate ? new Date(c.startDate).toLocaleDateString() : '—'} হতে{' '}
-                                  {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'সীমাহীন'}
+                                  {c.startDate ? new Date(c.startDate).toLocaleDateString() : '—'} to{' '}
+                                  {c.endDate ? new Date(c.endDate).toLocaleDateString() : 'Unlimited'}
                                 </span>
                               ) : (
-                                'আজীবন'
+                                'Lifetime'
                               )}
                             </td>
                             <td className="p-3">
@@ -2558,7 +2558,7 @@ export function SellerDashboard() {
                                   disabled={c.banned}
                                   onClick={() => handleToggleSellerCouponActive(c)}
                                   className="h-8 w-8 p-0"
-                                  title={c.active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
+                                  title={c.active ? 'Deactivate' : 'Activate'}
                                 >
                                   {c.active ? <Power className="w-3.5 h-3.5 text-amber-500" /> : <PowerOff className="w-3.5 h-3.5 text-muted-foreground" />}
                                 </Button>
@@ -2568,7 +2568,7 @@ export function SellerDashboard() {
                                   disabled={c.banned}
                                   onClick={() => openEditCouponDialog(c)}
                                   className="h-8 w-8 p-0"
-                                  title="এডিট করুন"
+                                  title="Edit"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
                                 </Button>
@@ -2577,7 +2577,7 @@ export function SellerDashboard() {
                                   variant="ghost"
                                   onClick={() => handleDeleteSellerCoupon(c.id)}
                                   className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                  title="মুছে ফেলুন"
+                                  title="Delete"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
@@ -2599,10 +2599,10 @@ export function SellerDashboard() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Settings className="w-5 h-5 text-foreground" />
-                  <h3 className="text-lg font-medium text-foreground">স্টোর প্রোফাইল ও পেমেন্ট মেথড সেটিংস</h3>
+                  <h3 className="text-lg font-medium text-foreground">Store Profile & Payment Method Settings</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  আপনার যোগাযোগের নাম্বারসমূহ, স্টোরের তথ্যাদি এবং আপনার প্রোডাক্ট চেকআউটে প্রদর্শিত পেমেন্ট মেথডগুলো এখান থেকে যেকোনো সময় আপডেট করতে পারবেন।
+                  Update your contact details, store information, and the payment methods shown at checkout anytime.
                 </p>
               </div>
 
@@ -2612,7 +2612,7 @@ export function SellerDashboard() {
                   <div>
                     <div className="flex items-center gap-2">
                       <Share2 className="w-4 h-4 text-foreground" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">আপনার পাবলিক স্টোর লিংক (Share Profile Link)</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider">Your Public Store Link (Share Profile Link)</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-1 font-mono break-all">{shareProfileUrl}</p>
                   </div>
@@ -2623,7 +2623,7 @@ export function SellerDashboard() {
                     onClick={copyShareProfileLink}
                     className="shrink-0 text-xs h-9 gap-1.5"
                   >
-                    <Copy className="w-3.5 h-3.5" /> লিংক কপি করুন
+                    <Copy className="w-3.5 h-3.5" /> Copy Link
                   </Button>
                 </div>
               )}
@@ -2633,7 +2633,7 @@ export function SellerDashboard() {
                 <div className="p-5 rounded-xl bg-background border border-border space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-border">
                     <Phone className="w-4 h-4 text-foreground" />
-                    <h4 className="text-sm font-medium">যোগাযোগের তথ্য (Contact Information)</h4>
+                    <h4 className="text-sm font-medium">Contact Information</h4>
                   </div>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div>
@@ -2680,7 +2680,7 @@ export function SellerDashboard() {
                 <div className="p-5 rounded-xl bg-background border border-border space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-border">
                     <Store className="w-4 h-4 text-foreground" />
-                    <h4 className="text-sm font-medium">স্টোর তথ্য (Store Details)</h4>
+                    <h4 className="text-sm font-medium">Store Details</h4>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
@@ -2792,7 +2792,7 @@ export function SellerDashboard() {
                 <div className="p-3.5 bg-background border border-border rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-[11px] tracking-wider uppercase text-foreground font-semibold flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" /> অর্ডারের স্ট্যাটাস পরিবর্তন করুন (Update Status)
+                      <Clock className="w-3.5 h-3.5" /> Update Order Status
                     </h4>
                     <span className="text-[10px] text-muted-foreground font-mono">
                       Current: <span className="font-semibold text-foreground">{selectedSellerOrder.status}</span>
@@ -2807,12 +2807,12 @@ export function SellerDashboard() {
                         onChange={e => setStatusChangeState({ ...statusChangeState, status: e.target.value })}
                         className="mt-1 h-9 w-full px-2.5 bg-secondary border border-border rounded-lg text-xs font-medium"
                       >
-                        <option value="PENDING">PENDING (অপেক্ষমাণ)</option>
-                        <option value="CONFIRMED">CONFIRMED (কনফার্মড)</option>
-                        <option value="PROCESSING">PROCESSING (প্রসেসিং)</option>
-                        <option value="SHIPPED">SHIPPED (শিপড / কুরিয়ারে প্রেরিত)</option>
-                        <option value="DELIVERED">DELIVERED (ডেলিভার্ড সম্পন্ন)</option>
-                        <option value="CANCELLED">CANCELLED (বাতিল)</option>
+                        <option value="PENDING">PENDING (Pending)</option>
+                        <option value="CONFIRMED">CONFIRMED (Confirmed)</option>
+                        <option value="PROCESSING">PROCESSING (Processing)</option>
+                        <option value="SHIPPED">SHIPPED (Shipped)</option>
+                        <option value="DELIVERED">DELIVERED (Delivered)</option>
+                        <option value="CANCELLED">CANCELLED (Cancelled)</option>
                       </select>
                     </div>
 
@@ -2829,7 +2829,7 @@ export function SellerDashboard() {
 
                   <div className="flex items-center justify-between pt-1">
                     <p className="text-[10px] text-muted-foreground">
-                      স্ট্যাটাস পরিবর্তন করলে ক্রেতা সরাসরি তার ট্র্যাকিং পেজে আপডেট দেখতে পাবেন।
+                      Changing the status immediately updates the customer's tracking page.
                     </p>
                     <Button
                       size="sm"
@@ -2886,7 +2886,7 @@ export function SellerDashboard() {
                 <div className="p-3.5 bg-secondary/50 rounded-xl space-y-2 border border-border">
                   <div className="flex items-center justify-between">
                     <h4 className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5" /> পেমেন্ট ভেরিফিকেশন (Payment Proof)
+                      <CreditCard className="w-3.5 h-3.5" /> Payment Verification (Payment Proof)
                     </h4>
                     <span className="font-medium text-foreground">
                       Method: <span className="font-semibold">{selectedSellerOrder.paymentMethod}</span>
@@ -2933,7 +2933,7 @@ export function SellerDashboard() {
                                 ) : (
                                   <CheckCheck className="w-3.5 h-3.5" />
                                 )}
-                                Approve Payment (এপ্রুভ করুন)
+                                Approve Payment
                               </Button>
                               <Button
                                 size="sm"
@@ -2941,7 +2941,7 @@ export function SellerDashboard() {
                                 disabled={isProcessing}
                                 className="text-destructive hover:bg-destructive/10 text-xs h-8 border-destructive/30"
                                 onClick={() => {
-                                  const reason = prompt('পেমেন্ট রিজেক্ট করার কারণ লিখুন:');
+                                  const reason = prompt('Enter reason for payment rejection:');
                                   if (reason !== null) {
                                     handlePaymentProofAction(p.id, 'REJECT', reason);
                                   }
@@ -2963,10 +2963,10 @@ export function SellerDashboard() {
                     <div className="p-3 bg-background rounded-lg border border-border text-muted-foreground">
                       {selectedSellerOrder.paymentMethod?.toLowerCase().includes('cash') || selectedSellerOrder.paymentMethod?.toLowerCase().includes('cod') ? (
                         <p className="text-green-600 dark:text-green-400 font-medium">
-                          ক্যাশ অন ডেলিভারি অর্ডার — অগ্রিম পেমেন্ট প্রুফের প্রয়োজন নেই। পণ্য ডেলিভারির পর স্ট্যাটাস DELIVERED করে দিন।
+                          Cash on Delivery order — no advance payment proof required. Update status to DELIVERED once delivered.
                         </p>
                       ) : (
-                        <p>এই অর্ডারের জন্য এখনও কোনো পেমেন্ট প্রুফ জমা পড়েনি।</p>
+                        <p>No payment proof has been submitted for this order yet.</p>
                       )}
                     </div>
                   )}
@@ -3029,7 +3029,7 @@ export function SellerDashboard() {
             <DialogHeader>
               <DialogTitle className="text-base font-medium flex items-center gap-2">
                 <Ticket className="w-4 h-4" />
-                {editingCoupon ? 'কুপন এডিট করুন' : 'নতুন স্টোর কুপন তৈরি করুন'}
+                {editingCoupon ? 'Edit Coupon' : 'Create New Store Coupon'}
               </DialogTitle>
             </DialogHeader>
             <form
@@ -3040,7 +3040,7 @@ export function SellerDashboard() {
               className="space-y-4 text-xs mt-2"
             >
               <div>
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">কুপন কোড (Coupon Code) *</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Coupon Code *</Label>
                 <Input
                   required
                   value={couponForm.code}
@@ -3052,7 +3052,7 @@ export function SellerDashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">ডিসকাউন্টের ধরণ *</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Discount Type *</Label>
                   <select
                     value={couponForm.discountType}
                     onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}
@@ -3064,7 +3064,7 @@ export function SellerDashboard() {
                 </div>
                 <div>
                   <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                    পরিমাণ {couponForm.discountType === 'PERCENTAGE' ? '(%)' : '(৳)'} *
+                    Amount {couponForm.discountType === 'PERCENTAGE' ? '(%)' : '(৳)'} *
                   </Label>
                   <Input
                     required
@@ -3081,7 +3081,7 @@ export function SellerDashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মিনিমাম অর্ডার (৳)</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Minimum Order (৳)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -3093,7 +3093,7 @@ export function SellerDashboard() {
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">সর্বোচ্চ ব্যবহার (Uses)</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Max Uses</Label>
                   <Input
                     type="number"
                     min="1"
@@ -3107,7 +3107,7 @@ export function SellerDashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">শুরুর তারিখ</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Start Date</Label>
                   <Input
                     type="date"
                     value={couponForm.startDate}
@@ -3116,7 +3116,7 @@ export function SellerDashboard() {
                   />
                 </div>
                 <div>
-                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">মেয়াদ শেষের তারিখ</Label>
+                  <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">End Date</Label>
                   <Input
                     type="date"
                     value={couponForm.endDate}
@@ -3133,7 +3133,7 @@ export function SellerDashboard() {
                   onClick={() => setCouponDialogOpen(false)}
                   className="text-xs h-9"
                 >
-                  বাতিল
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
@@ -3141,7 +3141,7 @@ export function SellerDashboard() {
                   className="bg-foreground text-background text-xs h-9 px-5"
                 >
                   {savingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-                  {editingCoupon ? 'আপডেট করুন' : 'কুপন তৈরি করুন'}
+                  {editingCoupon ? 'Update Coupon' : 'Create Coupon'}
                 </Button>
               </DialogFooter>
             </form>
@@ -3155,10 +3155,10 @@ export function SellerDashboard() {
               <div>
                 <DialogHeader className="mb-4">
                   <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Award className="w-5 h-5 text-primary" /> ব্যবসায়িক লাইসেন্স নির্বাচন করুন
+                    <Award className="w-5 h-5 text-primary" /> Select Business License
                   </DialogTitle>
                   <p className="text-xs text-muted-foreground mt-1">
-                    আপনার স্টোরের অফিসিয়াল বৈধতা ও গ্রাহক আস্থা বৃদ্ধির জন্য ডিজিটাল সফট কপি অথবা ডাকযোগে ফিজিক্যাল হার্ড কপি লাইসেন্স গ্রহণ করুন।
+                    Enhance your store's authenticity and customer trust by getting an official soft copy or physical hard copy license.
                   </p>
                 </DialogHeader>
 
@@ -3171,12 +3171,12 @@ export function SellerDashboard() {
                           <FileText className="w-5 h-5 text-emerald-500" />
                         </div>
                         <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-none text-[10px] font-bold">
-                          ফ্রি (Free)
+                          Free
                         </Badge>
                       </div>
-                      <h4 className="text-sm font-semibold mb-1">গেট সফট কপি</h4>
+                      <h4 className="text-sm font-semibold mb-1">Get Soft Copy</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        ডিজিটাল পিডিএফ লাইসেন্স। কোনো ফি প্রদান করতে হবে না। এডমিন অনুমোদন দিলে সরাসরি ড্যাশবোর্ড থেকে দেখতে ও ডাউনলোড করতে পারবেন।
+                        Digital PDF certificate. Completely free of charge. View and download directly from your dashboard once approved.
                       </p>
                     </div>
 
@@ -3191,14 +3191,14 @@ export function SellerDashboard() {
                       ) : (
                         <Check className="w-4 h-4" />
                       )}
-                      গেট সফট কপি
+                      Get Soft Copy
                     </Button>
                   </div>
 
                   {/* Option 2: Hard Copy */}
                   <div className="p-5 rounded-xl border-2 border-primary/40 hover:border-primary bg-primary/5 transition-all flex flex-col justify-between relative overflow-hidden">
                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2.5 py-0.5 rounded-bl-lg uppercase tracking-wider">
-                      প্রস্তাবিত
+                      Recommended
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -3209,9 +3209,9 @@ export function SellerDashboard() {
                           ৳ {licenseFee}
                         </span>
                       </div>
-                      <h4 className="text-sm font-semibold mb-1">গেট হার্ড কপি</h4>
+                      <h4 className="text-sm font-semibold mb-1">Get Hard Copy</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        অফিসিয়াল সিলমোহর, ফ্রেমযোগ্য প্রিমিয়াম পেপার এবং সিক্রেট ৭-ডিজিট ভেরিফিকেশন কোড যুক্ত ফিজিক্যাল সার্টিফিকেট কুরিয়ারে পৌঁছে দেওয়া হবে।
+                        Physical certificate on premium cardstock with an official seal and secret 7-digit verification code delivered via courier.
                       </p>
                     </div>
 
@@ -3221,7 +3221,7 @@ export function SellerDashboard() {
                       onClick={() => setLicenseModalView('HARD_PAYMENT')}
                     >
                       <CreditCard className="w-4 h-4" />
-                      গেট হার্ড কপি
+                      Get Hard Copy
                     </Button>
                   </div>
                 </div>
@@ -3232,7 +3232,7 @@ export function SellerDashboard() {
                 <DialogHeader className="mb-4">
                   <div className="flex items-center justify-between">
                     <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-primary" /> হার্ড কপি লাইসেন্স পেমেন্ট
+                      <CreditCard className="w-5 h-5 text-primary" /> Hard Copy License Payment
                     </DialogTitle>
                     <Button
                       type="button"
@@ -3241,11 +3241,11 @@ export function SellerDashboard() {
                       className="text-xs h-8 text-muted-foreground"
                       onClick={() => setLicenseModalView('SELECT')}
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" /> পেছনে যান
+                      <ChevronLeft className="w-4 h-4 mr-1" /> Go Back
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    হার্ড কপি লাইসেন্স ও কুরিয়ার ফি বাবদ মোট <strong className="text-primary font-bold">৳ {licenseFee}</strong> টাকা নিচে উল্লেখিত যেকোনো মাধ্যমে পরিশোধ করুন।
+                    Please pay a total of <strong className="text-primary font-bold">৳ {licenseFee}</strong> for hard copy certification and courier delivery via any method below.
                   </p>
                 </DialogHeader>
 
@@ -3253,7 +3253,7 @@ export function SellerDashboard() {
                   {/* Select Payment Method */}
                   <div>
                     <Label className="text-[10px] tracking-wider uppercase text-muted-foreground mb-2 block">
-                      পেমেন্ট মেথড নির্বাচন করুন *
+                      Select Payment Method *
                     </Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1">
                       {licensePaymentMethods.map(pm => {
@@ -3299,11 +3299,11 @@ export function SellerDashboard() {
                   {selectedLicenseMethod && (
                     <div className="p-3.5 rounded-xl bg-secondary/50 border border-border text-xs space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">পেমেন্ট মেথড:</span>
+                        <span className="text-muted-foreground">Payment Method:</span>
                         <span className="font-semibold">{selectedLicenseMethod.name}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">প্রাপক অ্যাকাউন্ট নম্বর:</span>
+                        <span className="text-muted-foreground">Recipient Account Number:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-primary">
                             {selectedLicenseMethod.accountNumber || '01XXXXXXXXX'}
@@ -3312,26 +3312,26 @@ export function SellerDashboard() {
                             type="button"
                             onClick={() => {
                               navigator.clipboard.writeText(selectedLicenseMethod.accountNumber || '');
-                              showToast('অ্যাকাউন্ট নম্বর কপি করা হয়েছে');
+                              showToast('Account number copied', 'success');
                             }}
                             className="text-muted-foreground hover:text-foreground"
-                            title="কপি করুন"
+                            title="Copy"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">অ্যাকাউন্ট টাইপ:</span>
+                        <span className="text-muted-foreground">Account Type:</span>
                         <span className="uppercase text-[11px] font-medium">{selectedLicenseMethod.accountType || 'PERSONAL'}</span>
                       </div>
                       <div className="flex items-center justify-between pt-1 border-t border-border/60">
-                        <span className="text-muted-foreground">পরিশোধযোগ্য টাকার পরিমাণ:</span>
+                        <span className="text-muted-foreground">Amount Payable:</span>
                         <span className="text-sm font-bold text-primary">৳ {licenseFee}</span>
                       </div>
                       {selectedLicenseMethod.instructions && (
                         <p className="text-[11px] text-muted-foreground pt-1 italic">
-                          নির্দেশনা: {selectedLicenseMethod.instructions}
+                          Instructions: {selectedLicenseMethod.instructions}
                         </p>
                       )}
                     </div>
@@ -3341,7 +3341,7 @@ export function SellerDashboard() {
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
                       <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                        যে নম্বর থেকে টাকা পাঠিয়েছেন (Sender Phone) *
+                        Sender Phone Number *
                       </Label>
                       <Input
                         required
@@ -3353,7 +3353,7 @@ export function SellerDashboard() {
                     </div>
                     <div>
                       <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
-                        ট্রানজেকশন আইডি (Transaction ID / TrxID) *
+                        Transaction ID (TrxID) *
                       </Label>
                       <Input
                         required
@@ -3372,7 +3372,7 @@ export function SellerDashboard() {
                       onClick={() => setLicenseModalOpen(false)}
                       className="text-xs h-9"
                     >
-                      বাতিল
+                      Cancel
                     </Button>
                     <Button
                       type="submit"
@@ -3380,7 +3380,7 @@ export function SellerDashboard() {
                       className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-9 px-6 font-medium shadow-sm"
                     >
                       {requestingLicense ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-                      অর্ডার সাবমিট করুন
+                      Submit Order
                     </Button>
                   </DialogFooter>
                 </div>
@@ -3398,16 +3398,16 @@ export function SellerDashboard() {
                   <KeyRound className="w-6 h-6 text-blue-500" />
                 </div>
                 <DialogTitle className="text-base font-semibold">
-                  হার্ড কপি ডেলিভারি ভেরিফিকেশন
+                  Hard Copy Delivery Verification
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  আপনার প্রাপ্ত হার্ড কপি সার্টিফিকেটের সিকিউরিটি স্টিকার বা ডকুমেন্টে থাকা <strong className="text-foreground">৭ সংখ্যার কোডটি</strong> প্রবেশ করিয়ে নিশ্চিত করুন।
+                  Confirm receipt by entering the <strong className="text-foreground">7-digit code</strong> found on your physical certificate document.
                 </p>
               </DialogHeader>
 
               <div className="my-4">
                 <Label className="text-[10px] tracking-wider uppercase text-muted-foreground text-center block mb-2">
-                  ৭ সংখ্যার সিক্রেট ভেরিফিকেশন কোড *
+                  7-Digit Secret Verification Code *
                 </Label>
                 <Input
                   required
@@ -3419,7 +3419,7 @@ export function SellerDashboard() {
                   className="h-14 text-center text-2xl font-mono tracking-[0.5em] font-bold bg-secondary/50 border-2 border-primary/40 focus:border-primary"
                 />
                 <p className="text-[11px] text-muted-foreground text-center mt-2">
-                  সঠিক কোড সাবমিট করলে আপনার প্রোফাইল ও এডমিন প্যানেলে লাইসেন্সটি &quot;ভেরিফাইড&quot; হিসেবে চিহ্নিত হবে।
+                  Upon submitting the valid code, your license will be marked as &quot;Verified&quot; on your profile and admin panel.
                 </p>
               </div>
 
@@ -3430,7 +3430,7 @@ export function SellerDashboard() {
                   onClick={() => setVerifyModalOpen(false)}
                   className="text-xs h-10 px-5"
                 >
-                  বাতিল
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
@@ -3438,7 +3438,7 @@ export function SellerDashboard() {
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-10 px-6 font-medium shadow-sm"
                 >
                   {submittingVerifyCode ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-                  ভেরিফাই করুন
+                  Verify License
                 </Button>
               </DialogFooter>
             </form>

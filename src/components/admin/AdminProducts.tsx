@@ -344,10 +344,10 @@ export function AdminProducts() {
                 <div className="space-y-1.5 p-3 rounded-lg bg-secondary/60 border border-primary/20">
                   <div className="flex items-center justify-between">
                     <Label className="text-[10px] tracking-wider uppercase text-primary font-semibold">
-                      Subcategory (সাব-ক্যাটেগরি) *
+                      Subcategory *
                     </Label>
                     <span className="text-[10px] text-muted-foreground">
-                      {selectedCat?.name} সাব-অপশন
+                      {selectedCat?.name} Sub-options
                     </span>
                   </div>
                   <select

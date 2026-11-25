@@ -91,12 +91,12 @@ export function AccountView() {
 
     const link = buildSellerShareUrl(user, prof);
     if (!link) {
-      showToast('বিক্রেতা প্রোফাইল কোড লোড করা যায়নি, অনুগ্রহ করে পুনরায় চেষ্টা করুন', 'error');
+      showToast('Could not load seller profile code, please try again.', 'error');
       return;
     }
 
     navigator.clipboard.writeText(link);
-    showToast('প্রোফাইল লিংক কপি করা হয়েছে! (Profile link copied)');
+    showToast('Profile link copied!', 'success');
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +162,7 @@ export function AccountView() {
                 {user.role === 'SELLER' && (
                   <>
                     <button onClick={() => setView('seller-dashboard')} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary text-sm text-muted-foreground hover:text-foreground transition-colors"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Seller Dashboard</span><ArrowRight className="w-3.5 h-3.5" /></button>
-                    <button onClick={shareSellerProfile} className="w-full flex items-center justify-between p-2.5 rounded-lg bg-foreground/5 hover:bg-secondary text-sm text-foreground transition-colors font-medium"><span className="flex items-center gap-2"><Share2 className="w-4 h-4 text-primary" /> শেয়ার প্রোফাইল (Share Profile)</span><ArrowRight className="w-3.5 h-3.5" /></button>
+                    <button onClick={shareSellerProfile} className="w-full flex items-center justify-between p-2.5 rounded-lg bg-foreground/5 hover:bg-secondary text-sm text-foreground transition-colors font-medium"><span className="flex items-center gap-2"><Share2 className="w-4 h-4 text-primary" /> Share Profile</span><ArrowRight className="w-3.5 h-3.5" /></button>
                   </>
                 )}
               </div>

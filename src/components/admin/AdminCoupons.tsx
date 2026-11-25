@@ -422,7 +422,7 @@ export function AdminCoupons() {
                           className={`h-7 w-7 ${coupon.banned ? 'text-destructive font-bold' : 'text-muted-foreground hover:text-destructive'}`}
                           onClick={() => handleToggleBan(coupon)}
                           disabled={banningId === coupon.id}
-                          title={coupon.banned ? 'Unban Coupon' : 'Ban Coupon (ব্যান করুন)'}
+                          title={coupon.banned ? 'Unban Coupon' : 'Ban Coupon'}
                         >
                           <ShieldAlert className="w-3.5 h-3.5" />
                         </Button>
@@ -504,14 +504,14 @@ export function AdminCoupons() {
           <div className="space-y-4 py-2 text-xs">
             {/* Coupon Purpose Type */}
             <div className="space-y-1.5">
-              <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Coupon Type (কুপনের ধরণ)</Label>
+              <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Coupon Type</Label>
               <select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
                 className="w-full h-9 rounded-md border border-border bg-secondary px-3 text-xs"
               >
-                <option value="PRODUCT">প্রোডাক্ট কুপন (Product Checkout Coupon)</option>
-                <option value="SELLER_VERIFICATION">বিক্রেতাদের অ্যাকাউন্ট এপ্রুভাল কুপন (Seller Verification Fee)</option>
+                <option value="PRODUCT">Product Checkout Coupon</option>
+                <option value="SELLER_VERIFICATION">Seller Verification Fee Coupon</option>
               </select>
             </div>
 
@@ -529,21 +529,21 @@ export function AdminCoupons() {
             {/* Scope if PRODUCT */}
             {form.type === 'PRODUCT' && (
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Target Scope (প্রযোজ্যতা)</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Target Scope</Label>
                 <select
                   value={form.appliesTo}
                   onChange={(e) => setForm({ ...form, appliesTo: e.target.value })}
                   className="w-full h-9 rounded-md border border-border bg-secondary px-3 text-xs"
                 >
-                  <option value="ALL">সকল প্রোডাক্টের ক্ষেত্রে (All Products)</option>
-                  <option value="SPECIFIC">নির্দিষ্ট প্রোডাক্টের ক্ষেত্রে (Specific Products)</option>
+                  <option value="ALL">All Products</option>
+                  <option value="SPECIFIC">Specific Products</option>
                 </select>
               </div>
             )}
 
             {form.type === 'PRODUCT' && form.appliesTo === 'SPECIFIC' && (
               <div className="space-y-1.5">
-                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product IDs (কমা দিয়ে আলাদা করুন)</Label>
+                <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">Product IDs (Comma separated)</Label>
                 <Input
                   value={form.productIds}
                   onChange={(e) => setForm({ ...form, productIds: e.target.value })}
