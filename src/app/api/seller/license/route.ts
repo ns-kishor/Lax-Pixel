@@ -127,6 +127,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const cleanTrx = String(transactionId).trim();
+    // SEC-03: Prevent Transaction ID replay & duplication
+    const duplicateTrx = await db.sellerLicense.findFirst({
+      where: {
+        transactionId: { equals: cleanTrx, mode: 'insensitive' },
+        status: { in: ['PENDING', 'APPROVED'] },
+      },
+      select: { id: true },
+    });
+    if (duplicateTrx) {
+      return NextResponse.json({
+        error: `Transaction ID "${cleanTrx}" has already been submitted for another license order. Please provide a unique payment transaction ID.`,
+      }, { status: 409 });
+    }
+
     // Check if already has an ongoing pending hard copy
     const existingPendingHard = await db.sellerLicense.findFirst({
       where: {

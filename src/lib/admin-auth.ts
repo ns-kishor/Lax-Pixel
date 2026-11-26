@@ -2,8 +2,19 @@ import crypto from 'crypto';
 import { db } from './db';
 import bcrypt from 'bcryptjs';
 
-// Secure cryptographic session secret
-const ADMIN_TOKEN_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'lax-pixel-admin-secret-2026-prod';
+// Secure cryptographic session secret (SEC-01: No static repo fallbacks)
+function getAdminSecret(): string {
+  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (secret && secret.trim().length >= 16) {
+    return crypto.createHash('sha256').update(`${secret}:admin_session_auth`).digest('hex');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL SECURITY ERROR: SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY must be configured in production.');
+  }
+  return crypto.createHash('sha256').update(`local_dev_admin_${process.env.COMPUTERNAME || 'dev'}`).digest('hex');
+}
+
+const ADMIN_TOKEN_SECRET = getAdminSecret();
 
 // In-memory session store
 const sessions = new Map<string, { adminId: string; email: string; createdAt: number }>();

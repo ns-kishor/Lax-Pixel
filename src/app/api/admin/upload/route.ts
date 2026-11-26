@@ -5,6 +5,27 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 // SEC-FIND-12: Exclude SVG to eliminate Stored Cross-Site Scripting (XSS)
 const ALLOWED_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
 
+// SEC-07: Verify file header magic bytes to reject disguised non-image files
+function isValidImageMagicBytes(buf: Buffer): boolean {
+  if (buf.length < 12) return false;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true;
+  // PNG: 89 50 4E 47
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return true;
+  // GIF: GIF8 (47 49 46 38)
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return true;
+  // WebP: RIFF....WEBP
+  if (
+    buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+    buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
+  ) return true;
+  // AVIF / HEIF
+  const ftyp = buf.slice(4, 12).toString('ascii');
+  if (ftyp.includes('ftyp')) return true;
+
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const admin = verifyAdmin(req.headers.get('x-admin-token'));
@@ -31,6 +52,9 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    if (!isValidImageMagicBytes(buffer)) {
+      return NextResponse.json({ error: 'Invalid file signature: Content is not a recognized raster image.' }, { status: 400 });
+    }
     const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
 
     const rawSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yywssvjzjhqvdvsvoipy.supabase.co';

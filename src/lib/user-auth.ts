@@ -1,7 +1,19 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
-const USER_TOKEN_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'lax-pixel-user-secret-2026-prod';
+// Secure cryptographic session secret (SEC-01: No static repo fallbacks)
+function getUserSecret(): string {
+  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (secret && secret.trim().length >= 16) {
+    return crypto.createHash('sha256').update(`${secret}:user_session_auth`).digest('hex');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL SECURITY ERROR: SESSION_SECRET or SUPABASE_SERVICE_ROLE_KEY must be configured in production.');
+  }
+  return crypto.createHash('sha256').update(`local_dev_user_${process.env.COMPUTERNAME || 'dev'}`).digest('hex');
+}
+
+const USER_TOKEN_SECRET = getUserSecret();
 const TOKEN_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export interface UserTokenPayload {

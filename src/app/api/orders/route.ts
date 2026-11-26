@@ -271,6 +271,22 @@ export async function POST(req: NextRequest) {
           error: `Transaction ID and Sender Phone Number are required for ${resolvedPaymentMethod}`,
         }, { status: 400 });
       }
+
+      const cleanTrx = String(transactionId).trim();
+      // SEC-03: Prevent Transaction ID replay & duplication
+      const duplicateProof = await db.paymentProof.findFirst({
+        where: {
+          notes: { contains: cleanTrx, mode: 'insensitive' },
+          status: { in: ['PENDING', 'VERIFIED'] },
+        },
+        select: { id: true },
+      });
+      if (duplicateProof) {
+        return NextResponse.json({
+          error: `Transaction ID "${cleanTrx}" has already been submitted for another order. Each payment requires a unique Transaction ID.`,
+        }, { status: 409 });
+      }
+
       paymentStatus = 'PENDING_VERIFICATION';
       needsProof = true;
     }
@@ -371,6 +387,6 @@ export async function POST(req: NextRequest) {
     if (e?.message?.includes('Insufficient stock')) {
       return NextResponse.json({ error: e.message }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Failed to create order: ' + String(e?.message || e) }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create order. Please review your details and try again.' }, { status: 500 });
   }
 }

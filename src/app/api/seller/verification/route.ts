@@ -90,6 +90,22 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    const cleanTrx = String(transactionId).trim();
+    // SEC-03: Prevent Transaction ID replay & duplication
+    const duplicateTrx = await db.sellerVerification.findFirst({
+      where: {
+        transactionId: { equals: cleanTrx, mode: 'insensitive' },
+        status: { in: ['PENDING', 'APPROVED'] },
+        userId: { not: userId },
+      },
+      select: { id: true },
+    });
+    if (duplicateTrx) {
+      return NextResponse.json({
+        error: `Transaction ID "${cleanTrx}" has already been used by another seller account. Please use a unique payment transaction.`,
+      }, { status: 409 });
+    }
+
     // Check if already submitted and not rejected
     const existing = await db.sellerVerification.findUnique({ where: { userId } });
     if (existing && existing.status === 'APPROVED') {

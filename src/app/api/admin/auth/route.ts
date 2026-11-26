@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ adminCount: admins.length, admins, activeSessions: sessions.size });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Admin status error:', error);
+    return NextResponse.json({ error: 'Failed to retrieve admin status.' }, { status: 500 });
   }
 }
 
@@ -119,7 +120,8 @@ export async function PUT(req: NextRequest) {
     await db.admin.update({ where: { id: admin.id }, data: { password: newHash } });
     return NextResponse.json({ success: true, message: 'Password reset successfully.', email: admin.email });
   } catch (error) {
-    return NextResponse.json({ error: 'Reset failed: ' + String(error) }, { status: 500 });
+    console.error('Admin password reset error:', error);
+    return NextResponse.json({ error: 'Reset failed. Please verify credentials and try again.' }, { status: 500 });
   }
 }
 

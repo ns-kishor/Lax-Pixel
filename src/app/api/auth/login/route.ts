@@ -65,6 +65,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   } catch (error) {
     console.error('[LOGIN] Exception:', error);
-    return NextResponse.json({ error: 'Login failed: ' + String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'An unexpected error occurred during login. Please try again.' }, { status: 500 });
   }
 }
