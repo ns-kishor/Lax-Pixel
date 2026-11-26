@@ -12,8 +12,12 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get('sort') || 'createdAt';
     const featured = searchParams.get('featured');
     const sellerId = searchParams.get('sellerId');
+    const includeDisabled = searchParams.get('includeDisabled') === 'true';
 
     const where: Record<string, unknown> = {};
+    if (!sellerId && !includeDisabled) {
+      where.active = { not: false };
+    }
     if (category) {
       const cat = await db.category.findFirst({
         where: {
@@ -215,6 +219,7 @@ export async function POST(req: NextRequest) {
         sellerId,
         stock: validStock,
         featured: Boolean(featured),
+        active: body.active !== undefined ? Boolean(body.active) : true,
         tags: finalTags,
         colors: String(colors || ''),
         sizes: String(sizes || ''),
@@ -233,6 +238,209 @@ export async function POST(req: NextRequest) {
     console.error('[CREATE-PRODUCT-ERROR]:', error);
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Failed to create product',
+    }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const adminToken = req.headers.get('x-admin-token');
+    const admin = verifyAdminToken(adminToken);
+
+    if (!authUser && !admin) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const id = String(body.id || '').trim();
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });
+    }
+
+    const existingProduct = await db.product.findUnique({
+      where: { id },
+      include: { specs: true },
+    });
+    if (!existingProduct) {
+      return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
+    }
+
+    // Verify ownership
+    if (!admin && authUser && authUser.userId !== existingProduct.sellerId) {
+      return NextResponse.json({ error: 'Unauthorized to edit this product.' }, { status: 403 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+
+    if (body.name !== undefined) {
+      const trimmed = String(body.name).trim();
+      if (trimmed) updateData.name = trimmed;
+    }
+    if (body.description !== undefined) {
+      updateData.description = String(body.description);
+    }
+    if (body.price !== undefined) {
+      const p = parseFloat(String(body.price));
+      if (!isNaN(p) && p >= 0) updateData.price = p;
+    }
+    if (body.comparePrice !== undefined) {
+      if (body.comparePrice === null || String(body.comparePrice).trim() === '') {
+        updateData.comparePrice = null;
+      } else {
+        const cp = parseFloat(String(body.comparePrice));
+        if (!isNaN(cp) && cp >= 0) updateData.comparePrice = cp;
+      }
+    }
+    if (body.stock !== undefined) {
+      const s = parseInt(String(body.stock), 10);
+      if (!isNaN(s) && s >= 0) updateData.stock = s;
+    }
+    if (body.active !== undefined) {
+      updateData.active = Boolean(body.active);
+    }
+    if (body.featured !== undefined && admin) {
+      updateData.featured = Boolean(body.featured);
+    }
+    if (body.categoryId !== undefined) {
+      updateData.categoryId = String(body.categoryId);
+    }
+    if (body.subcategory !== undefined) {
+      updateData.subcategory = body.subcategory ? String(body.subcategory).trim() : null;
+    }
+    if (body.tags !== undefined) {
+      updateData.tags = String(body.tags);
+    }
+    if (body.colors !== undefined) {
+      updateData.colors = String(body.colors);
+    }
+    if (body.sizes !== undefined) {
+      updateData.sizes = String(body.sizes);
+    }
+    if (body.image !== undefined) {
+      updateData.image = String(body.image).replace(/[\r\n\t]+/g, '').trim();
+    }
+    if (body.images !== undefined) {
+      const cleaned = String(body.images).replace(/[\r\n\t]+/g, '').trim();
+      updateData.images = cleaned;
+      if (!updateData.image && cleaned) {
+        updateData.image = cleaned.split(',')[0].trim();
+      }
+    }
+
+    // Specs replacement if provided
+    const hasSpecs = Array.isArray(body.specs);
+
+    const updated = await db.$transaction(async (tx) => {
+      if (hasSpecs) {
+        await tx.productSpec.deleteMany({ where: { productId: id } });
+        const specsData = body.specs
+          .filter((s: any) => s && s.label && String(s.label).trim())
+          .map((s: { label: string; value: string }, i: number) => ({
+            productId: id,
+            label: String(s.label).trim().slice(0, 255),
+            value: String(s.value || '').trim().slice(0, 1000),
+            sortOrder: i,
+          }));
+        if (specsData.length > 0) {
+          await tx.productSpec.createMany({ data: specsData });
+        }
+      }
+
+      return tx.product.update({
+        where: { id },
+        data: updateData,
+        include: {
+          category: true,
+          specs: { orderBy: { sortOrder: 'asc' } },
+        },
+      });
+    });
+
+    return NextResponse.json({ success: true, product: updated });
+  } catch (error) {
+    console.error('[UPDATE-PRODUCT-ERROR]:', error);
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Failed to update product',
+    }, { status: 500 });
+  }
+}
+
+export const PATCH = PUT;
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const authUser = getAuthenticatedUser(req);
+    const adminToken = req.headers.get('x-admin-token');
+    const admin = verifyAdminToken(adminToken);
+
+    if (!authUser && !admin) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    let id = searchParams.get('id');
+    if (!id) {
+      try {
+        const body = await req.json();
+        id = body?.id;
+      } catch {
+        // body could be empty if ID is in searchParams
+      }
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });
+    }
+
+    const product = await db.product.findUnique({ where: { id } });
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
+    }
+
+    // Verify ownership
+    if (!admin && authUser && authUser.userId !== product.sellerId) {
+      return NextResponse.json({ error: 'Unauthorized to delete this product.' }, { status: 403 });
+    }
+
+    // Check if order items exist
+    const orderCount = await db.orderItem.count({ where: { productId: id } });
+    if (orderCount > 0) {
+      // Archive product to protect historical customer orders
+      await db.product.update({
+        where: { id },
+        data: {
+          active: false,
+          stock: 0,
+          featured: false,
+          name: product.name.startsWith('[Archived]') ? product.name : `[Archived] ${product.name}`,
+        },
+      });
+      await db.$transaction([
+        db.cartItem.deleteMany({ where: { productId: id } }),
+        db.wishlist.deleteMany({ where: { productId: id } }),
+      ]);
+      return NextResponse.json({
+        success: true,
+        archived: true,
+        message: 'Product archived to preserve order history.',
+      });
+    }
+
+    // Cascade delete related records
+    await db.$transaction([
+      db.cartItem.deleteMany({ where: { productId: id } }),
+      db.wishlist.deleteMany({ where: { productId: id } }),
+      db.review.deleteMany({ where: { productId: id } }),
+      db.productSpec.deleteMany({ where: { productId: id } }),
+      db.product.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true, message: 'Product deleted successfully.' });
+  } catch (error) {
+    console.error('[DELETE-PRODUCT-ERROR]:', error);
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Failed to delete product',
     }, { status: 500 });
   }
 }

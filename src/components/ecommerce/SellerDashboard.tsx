@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Store, DollarSign, Package, Clock, Plus, CheckCircle2,
   XCircle, TrendingUp, Upload, User, MapPin, Phone, Mail, FileText,
-  AlertCircle, ShieldCheck, Eye, Loader2, Save, Settings, Check, CreditCard,
+  AlertCircle, ShieldCheck, Eye, EyeOff, Loader2, Save, Settings, Check, CreditCard,
   MessageCircle, ExternalLink, HelpCircle, FileCheck, CheckCheck, Filter,
   Share2, Ticket, Power, PowerOff, Trash2, Pencil, Copy, X,
   Award, KeyRound, ChevronLeft, Shield, Sparkles
@@ -103,6 +104,223 @@ export function SellerDashboard() {
     sizes: '',
     specs: [] as { label: string; value: string }[],
   });
+
+  // Edit & Delete & Toggle Product states
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [updatingProduct, setUpdatingProduct] = useState(false);
+  const [uploadingEditImage, setUploadingEditImage] = useState(false);
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<any | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState(false);
+  const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
+
+  const openEditProduct = (p: Product, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingProduct({
+      id: p.id,
+      name: p.name || '',
+      price: String(p.price || ''),
+      comparePrice: p.comparePrice ? String(p.comparePrice) : '',
+      categoryId: p.categoryId || (p.category?.id || ''),
+      subcategory: p.subcategory || '',
+      stock: String(p.stock ?? 0),
+      description: p.description || '',
+      tags: p.tags || '',
+      image: p.image || '',
+      images: p.images || p.image || '',
+      colors: p.colors || '',
+      sizes: p.sizes || '',
+      active: p.active !== false,
+      specs: Array.isArray(p.specs) ? p.specs.map((s: any) => ({ label: s.label || '', value: s.value || '' })) : [],
+    });
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!user || !files || files.length === 0) return;
+    setUploadingEditImage(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'x-user-id': user.id },
+          body: fd,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          newUrls.push(data.url);
+        }
+      }
+      if (newUrls.length > 0) {
+        setEditingProduct((prev: any) => {
+          if (!prev) return null;
+          const currentList = prev.images ? prev.images.split(',').filter(Boolean) : (prev.image ? [prev.image] : []);
+          const merged = [...currentList, ...newUrls];
+          return {
+            ...prev,
+            image: merged[0] || '',
+            images: merged.join(','),
+          };
+        });
+        showToast(`${newUrls.length} image(s) uploaded successfully`);
+      }
+    } catch {
+      showToast('Image upload failed', 'error');
+    } finally {
+      setUploadingEditImage(false);
+    }
+  };
+
+  const removeEditProductImage = (idx: number) => {
+    setEditingProduct((prev: any) => {
+      if (!prev) return null;
+      const list = prev.images ? prev.images.split(',').filter(Boolean) : (prev.image ? [prev.image] : []);
+      list.splice(idx, 1);
+      return {
+        ...prev,
+        image: list[0] || '',
+        images: list.join(','),
+      };
+    });
+  };
+
+  const addEditProductSpec = () => {
+    setEditingProduct((prev: any) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        specs: [...(prev.specs || []), { label: '', value: '' }],
+      };
+    });
+  };
+
+  const updateEditProductSpec = (idx: number, field: 'label' | 'value', val: string) => {
+    setEditingProduct((prev: any) => {
+      if (!prev) return null;
+      const updated = [...(prev.specs || [])];
+      if (updated[idx]) {
+        updated[idx] = { ...updated[idx], [field]: val };
+      }
+      return { ...prev, specs: updated };
+    });
+  };
+
+  const removeEditProductSpec = (idx: number) => {
+    setEditingProduct((prev: any) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        specs: (prev.specs || []).filter((_: any, i: number) => i !== idx),
+      };
+    });
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    if (!editingProduct.name.trim() || !editingProduct.price || !editingProduct.categoryId) {
+      showToast('Name, price and category are required', 'error');
+      return;
+    }
+    setUpdatingProduct(true);
+    try {
+      const filteredSpecs = (editingProduct.specs || []).filter((s: any) => s.label.trim() && s.value.trim());
+      const primaryImg = editingProduct.image || (editingProduct.images ? editingProduct.images.split(',')[0].trim() : '') || '/products/hero.png';
+      const allImages = editingProduct.images || primaryImg;
+
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders(useStore.getState),
+        },
+        body: JSON.stringify({
+          id: editingProduct.id,
+          name: editingProduct.name.trim(),
+          price: parseFloat(editingProduct.price) || 0,
+          comparePrice: editingProduct.comparePrice ? parseFloat(editingProduct.comparePrice) : null,
+          categoryId: editingProduct.categoryId,
+          subcategory: editingProduct.subcategory || null,
+          stock: parseInt(editingProduct.stock, 10) || 0,
+          description: editingProduct.description || '',
+          tags: editingProduct.tags || '',
+          colors: editingProduct.colors || '',
+          sizes: editingProduct.sizes || '',
+          image: primaryImg,
+          images: allImages,
+          active: editingProduct.active !== false,
+          specs: filteredSpecs,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Product updated successfully!');
+        setEditingProduct(null);
+        loadSellerData();
+      } else {
+        showToast(data.error || 'Failed to update product', 'error');
+      }
+    } catch {
+      showToast('Error updating product', 'error');
+    } finally {
+      setUpdatingProduct(false);
+    }
+  };
+
+  const handleToggleProductActive = async (p: Product, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const newActiveState = p.active === false ? true : false;
+    setTogglingProductId(p.id);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders(useStore.getState),
+        },
+        body: JSON.stringify({
+          id: p.id,
+          active: newActiveState,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(newActiveState ? 'Product enabled and visible in store' : 'Product disabled (hidden from store)');
+        loadSellerData();
+      } else {
+        showToast(data.error || 'Failed to update product status', 'error');
+      }
+    } catch {
+      showToast('Error updating product status', 'error');
+    } finally {
+      setTogglingProductId(null);
+    }
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteConfirmProduct) return;
+    setDeletingProduct(true);
+    try {
+      const res = await fetch(`/api/products?id=${deleteConfirmProduct.id}`, {
+        method: 'DELETE',
+        headers: authHeaders(useStore.getState),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Product deleted successfully');
+        setDeleteConfirmProduct(null);
+        loadSellerData();
+      } else {
+        showToast(data.error || 'Failed to delete product', 'error');
+      }
+    } catch {
+      showToast('Error deleting product', 'error');
+    } finally {
+      setDeletingProduct(false);
+    }
+  };
 
   const addProductSpec = () => {
     setNewProduct(prev => ({
@@ -2109,39 +2327,145 @@ export function SellerDashboard() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {sellerProducts.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="p-4 rounded-2xl bg-secondary/60 border border-border hover:border-foreground/30 transition-all cursor-pointer group"
-                    onClick={() => selectProduct(p)}
-                  >
-                    <div className="w-full aspect-[16/10] rounded-xl overflow-hidden bg-background relative mb-3">
-                      <Image src={safeImgSrc(p.image)} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
+                {sellerProducts.map((p, i) => {
+                  const isProductActive = p.active !== false;
+                  return (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className={`p-4 rounded-2xl bg-secondary/60 border transition-all flex flex-col justify-between group ${
+                        isProductActive ? 'border-border hover:border-foreground/30' : 'border-dashed border-amber-500/40 bg-amber-500/5'
+                      }`}
+                    >
+                      <div>
+                        {/* Image with badges */}
+                        <div
+                          className="w-full aspect-[16/10] rounded-xl overflow-hidden bg-background relative mb-3 cursor-pointer"
+                          onClick={() => selectProduct(p)}
+                          title="Click to preview in store"
+                        >
+                          <Image src={safeImgSrc(p.image)} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                            {isProductActive ? (
+                              <Badge className="bg-emerald-600/90 text-white text-[10px] gap-1 px-2 py-0.5 shadow-sm backdrop-blur-xs">
+                                <CheckCircle2 className="w-3 h-3" /> Active
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-background/90 text-amber-600 dark:text-amber-400 border-amber-500/40 text-[10px] gap-1 px-2 py-0.5 shadow-sm backdrop-blur-xs">
+                                <XCircle className="w-3 h-3" /> Disabled
+                              </Badge>
+                            )}
+                          </div>
+                          {p.subcategory && (
+                            <div className="absolute top-2 right-2">
+                              <Badge variant="secondary" className="text-[9px] bg-background/85 backdrop-blur-xs border border-border/60">
+                                {p.subcategory}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
 
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[10px] tracking-wider uppercase text-muted-foreground">{p.category?.name}</p>
-                        <h4 className="text-sm font-medium tracking-wide truncate mt-0.5">{p.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-semibold">৳ {p.price.toLocaleString()}</span>
-                          {p.comparePrice && <span className="text-xs text-muted-foreground line-through">৳ {p.comparePrice.toLocaleString()}</span>}
+                        {/* Product Info */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] tracking-wider uppercase text-muted-foreground">{p.category?.name}</p>
+                            <h4
+                              className="text-sm font-medium tracking-wide truncate mt-0.5 hover:underline cursor-pointer text-foreground"
+                              onClick={() => selectProduct(p)}
+                              title={p.name}
+                            >
+                              {p.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm font-semibold">৳ {p.price.toLocaleString()}</span>
+                              {p.comparePrice && <span className="text-xs text-muted-foreground line-through">৳ {p.comparePrice.toLocaleString()}</span>}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
+                            Stock: {p.stock}
+                          </Badge>
+                        </div>
+
+                        <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span>{p.salesCount || 0} sold</span>
+                          <span>Rating: {p.rating} ★</span>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0 font-mono">
-                        Stock: {p.stock}
-                      </Badge>
-                    </div>
 
-                    <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>{p.salesCount || 0} sold</span>
-                      <span>Rating: {p.rating} ★</span>
-                    </div>
-                  </motion.div>
-                ))}
+                      {/* Action Buttons: Edit, Toggle Active/Disabled, Delete, View */}
+                      <div className="mt-3.5 pt-3 border-t border-border flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          {/* Edit Button */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs gap-1 bg-background hover:bg-secondary border-border"
+                            onClick={(e) => openEditProduct(p, e)}
+                            title="Edit product"
+                          >
+                            <Pencil className="w-3 h-3 text-primary" />
+                            <span>Edit</span>
+                          </Button>
+
+                          {/* Enable / Disable Button */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`h-7 px-2.5 text-xs gap-1 ${
+                              isProductActive
+                                ? 'text-muted-foreground hover:text-amber-600 hover:border-amber-500/40 bg-background'
+                                : 'text-emerald-600 dark:text-emerald-400 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20'
+                            }`}
+                            onClick={(e) => handleToggleProductActive(p, e)}
+                            disabled={togglingProductId === p.id}
+                            title={isProductActive ? 'Click to disable product' : 'Click to enable product'}
+                          >
+                            {togglingProductId === p.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : isProductActive ? (
+                              <>
+                                <PowerOff className="w-3 h-3" />
+                                <span>Disable</span>
+                              </>
+                            ) : (
+                              <>
+                                <Power className="w-3 h-3" />
+                                <span>Enable</span>
+                              </>
+                            )}
+                          </Button>
+
+                          {/* Delete Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirmProduct(p);
+                            }}
+                            title="Delete product"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+
+                        {/* View in Store Preview */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                          onClick={() => selectProduct(p)}
+                          title="View product in store"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -3442,6 +3766,397 @@ export function SellerDashboard() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* ─── Edit Product Modal ─── */}
+        <Dialog open={!!editingProduct} onOpenChange={open => { if (!open) setEditingProduct(null); }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border p-6">
+            {editingProduct && (
+              <form onSubmit={handleUpdateProduct}>
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-base font-semibold flex items-center gap-2">
+                    <Pencil className="w-4 h-4 text-primary" /> Edit Product
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Update product details, pricing, stock, variants, specifications, and visibility.
+                  </p>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-3.5">
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Product Name *
+                      </Label>
+                      <Input
+                        required
+                        value={editingProduct.name}
+                        onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                        placeholder="Product title"
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Category *
+                      </Label>
+                      <select
+                        required
+                        value={editingProduct.categoryId}
+                        onChange={e => setEditingProduct({ ...editingProduct, categoryId: e.target.value, subcategory: '' })}
+                        className="mt-1.5 h-10 w-full px-3 bg-secondary/40 border border-border rounded-md text-xs font-medium"
+                      >
+                        <option value="">Select Category...</option>
+                        {(categories || []).map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Subcategory selector when Category has subcategories */}
+                    {(() => {
+                      const selectedCat = (categories || []).find(c => c.id === editingProduct.categoryId);
+                      const subcats = getSubcategoriesForCategory(selectedCat?.slug || selectedCat?.name);
+                      if (subcats.length === 0) return null;
+                      return (
+                        <div className="sm:col-span-2 p-3 rounded-xl bg-background border border-primary/30">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <Label className="text-[10px] tracking-wider uppercase text-primary font-semibold">
+                              Subcategory *
+                            </Label>
+                            <span className="text-[10px] text-muted-foreground">
+                              Applicable for {selectedCat?.name}
+                            </span>
+                          </div>
+                          <select
+                            value={editingProduct.subcategory || ''}
+                            onChange={e => setEditingProduct({ ...editingProduct, subcategory: e.target.value })}
+                            className="h-9 w-full px-3 bg-secondary/50 border border-border rounded-md text-xs"
+                          >
+                            <option value="">Select subcategory...</option>
+                            {subcats.map(sc => (
+                              <option key={sc.slug} value={sc.name}>
+                                {sc.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })()}
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Price (৳) *
+                      </Label>
+                      <Input
+                        required
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={editingProduct.price}
+                        onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Compare Price (৳)
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={editingProduct.comparePrice}
+                        onChange={e => setEditingProduct({ ...editingProduct, comparePrice: e.target.value })}
+                        placeholder="Optional regular price"
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Stock Available
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={editingProduct.stock}
+                        onChange={e => setEditingProduct({ ...editingProduct, stock: e.target.value })}
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Colors (Optional)
+                      </Label>
+                      <Input
+                        value={editingProduct.colors}
+                        onChange={e => setEditingProduct({ ...editingProduct, colors: e.target.value })}
+                        placeholder="e.g. Black, White, Navy Blue"
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Separate multiple colors with comma</p>
+                    </div>
+
+                    <div>
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Sizes (Optional)
+                      </Label>
+                      <Input
+                        value={editingProduct.sizes}
+                        onChange={e => setEditingProduct({ ...editingProduct, sizes: e.target.value })}
+                        placeholder="e.g. S, M, L, XL, XXL"
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Separate multiple sizes with comma</p>
+                    </div>
+
+                    {/* Active / Disabled Status Toggle */}
+                    <div className="sm:col-span-2 p-3.5 rounded-xl border border-border bg-secondary/30 flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-semibold text-foreground block">
+                          Product Visibility Status
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          {editingProduct.active !== false
+                            ? 'This product is active and visible to all customers in the store.'
+                            : 'This product is disabled and hidden from the store catalog and search.'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingProduct({ ...editingProduct, active: editingProduct.active === false ? true : false })}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                          editingProduct.active !== false
+                            ? 'bg-green-500/15 text-green-600 border border-green-500/30 hover:bg-green-500/25'
+                            : 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
+                        }`}
+                      >
+                        {editingProduct.active !== false ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" /> Active (Visible)
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5" /> Disabled (Hidden)
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Multiple Images Upload Component */}
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Product Images * (Multiple allowed)
+                      </Label>
+                      <div className="mt-1.5 space-y-3">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <label className="flex items-center gap-2 px-4 h-10 rounded-md border border-border bg-secondary/40 cursor-pointer hover:bg-secondary text-xs transition-colors shrink-0">
+                            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span>{uploadingEditImage ? 'Uploading...' : 'Upload More Images'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={handleEditImageUpload}
+                              disabled={uploadingEditImage}
+                            />
+                          </label>
+                          <span className="text-[11px] text-muted-foreground">
+                            Upload one or multiple photos (JPG, PNG, WebP)
+                          </span>
+                        </div>
+
+                        {/* Uploaded Images Thumbnails */}
+                        {(editingProduct.images || editingProduct.image) && (
+                          <div className="flex gap-2.5 flex-wrap pt-1">
+                            {(editingProduct.images ? editingProduct.images.split(',').filter(Boolean) : [editingProduct.image]).map((imgUrl: string, idx: number) => (
+                              <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-background group shrink-0">
+                                <Image src={safeImgSrc(imgUrl)} alt={`Product ${idx + 1}`} fill className="object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeEditProductImage(idx)}
+                                  className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                                  title="Remove photo"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                                {idx === 0 && (
+                                  <span className="absolute bottom-0 inset-x-0 bg-foreground/80 text-background text-[8px] text-center font-medium py-0.5">
+                                    Main
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Description
+                      </Label>
+                      <Textarea
+                        value={editingProduct.description}
+                        onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                        rows={3}
+                        className="mt-1.5 w-full p-3 bg-secondary/40 border border-border rounded-md text-xs resize-none"
+                        placeholder="Describe craftsmanship, materials, dimensions..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <Label className="text-[10px] tracking-wider uppercase text-muted-foreground">
+                        Tags
+                      </Label>
+                      <Input
+                        value={editingProduct.tags}
+                        onChange={e => setEditingProduct({ ...editingProduct, tags: e.target.value })}
+                        className="mt-1.5 h-10 bg-secondary/40 border-border text-xs"
+                        placeholder="luxury, handmade, authentic"
+                      />
+                    </div>
+
+                    {/* Product Specifications */}
+                    <div className="sm:col-span-2 pt-2 border-t border-border/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <Label className="text-[10px] tracking-wider uppercase text-muted-foreground font-semibold">
+                            Product Specifications (Optional)
+                          </Label>
+                          <p className="text-[11px] text-muted-foreground">Add custom details like Material, Color, Size, Warranty, etc.</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs gap-1 border-border"
+                          onClick={addEditProductSpec}
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Specification
+                        </Button>
+                      </div>
+
+                      {(editingProduct.specs || []).length > 0 && (
+                        <div className="space-y-2 mt-3">
+                          {editingProduct.specs.map((spec: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <Input
+                                placeholder="Label (e.g. Material)"
+                                value={spec.label}
+                                onChange={e => updateEditProductSpec(idx, 'label', e.target.value)}
+                                className="h-9 bg-secondary/40 border-border text-xs flex-1"
+                              />
+                              <Input
+                                placeholder="Value (e.g. 100% Cotton)"
+                                value={spec.value}
+                                onChange={e => updateEditProductSpec(idx, 'value', e.target.value)}
+                                className="h-9 bg-secondary/40 border-border text-xs flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
+                                onClick={() => removeEditProductSpec(idx)}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <DialogFooter className="pt-3 border-t border-border">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingProduct(null)}
+                      className="text-xs h-9 px-4"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updatingProduct}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-9 px-6 font-medium shadow-sm"
+                    >
+                      {updatingProduct ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                      Save Changes
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ─── Delete Product Confirmation Modal ─── */}
+        <Dialog open={!!deleteConfirmProduct} onOpenChange={open => { if (!open) setDeleteConfirmProduct(null); }}>
+          <DialogContent className="max-w-md bg-card border-border p-6">
+            <DialogHeader className="mb-2">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-2">
+                <Trash2 className="w-6 h-6 text-destructive" />
+              </div>
+              <DialogTitle className="text-base font-semibold">
+                Delete Product
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Are you sure you want to delete this product?
+              </p>
+            </DialogHeader>
+
+            {deleteConfirmProduct && (
+              <div className="space-y-3.5 my-3">
+                <div className="p-3 rounded-xl bg-secondary/50 border border-border flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-background border border-border overflow-hidden relative shrink-0">
+                    {deleteConfirmProduct.image ? (
+                      <Image src={safeImgSrc(deleteConfirmProduct.image)} alt={deleteConfirmProduct.name} fill className="object-cover" />
+                    ) : (
+                      <Package className="w-6 h-6 text-muted-foreground m-auto mt-3" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold truncate text-foreground">{deleteConfirmProduct.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Price: ৳{deleteConfirmProduct.price?.toLocaleString()} · Stock: {deleteConfirmProduct.stock ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                  <strong>Notice:</strong> If this product was previously purchased in any order, it will be securely archived to safeguard order invoices and receipts while removing it completely from public browsing and your active catalog.
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="pt-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteConfirmProduct(null)}
+                className="text-xs h-9 px-4"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={deletingProduct}
+                onClick={confirmDeleteProduct}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs h-9 px-5 font-medium shadow-sm"
+              >
+                {deletingProduct ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
+                Delete Product
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

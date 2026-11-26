@@ -56,6 +56,7 @@ export interface Product {
   sellerId: string;
   stock: number;
   featured: boolean;
+  active?: boolean;
   rating: number;
   reviewCount: number;
   salesCount: number;
