@@ -118,7 +118,24 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(products, {
+    // ISSUE-PERF-01: Sanitize seller avatar to prevent multi-megabyte base64 payload bloat in catalog listings
+    const sanitizedProducts = products.map((p) => {
+      let sellerAvatar = p.seller?.avatar;
+      if (sellerAvatar && sellerAvatar.startsWith('data:') && sellerAvatar.length > 2048) {
+        sellerAvatar = null;
+      }
+      return {
+        ...p,
+        seller: p.seller
+          ? {
+              ...p.seller,
+              avatar: sellerAvatar,
+            }
+          : null,
+      };
+    });
+
+    return NextResponse.json(sanitizedProducts, {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
       },

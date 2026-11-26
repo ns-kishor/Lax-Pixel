@@ -44,26 +44,31 @@ export function ProductView() {
     setSelectedSize('');
   }, [product?.id]);
 
+  const rawImage = product?.image;
+  const rawImages = product?.images;
+  const rawColors = product?.colors;
+  const rawSizes = product?.sizes;
+
   const imageList = useMemo(() => {
     const list: string[] = [];
-    if (product?.images) {
-      product.images.split(',').map(s => s.trim()).filter(Boolean).forEach(img => {
+    if (rawImages) {
+      rawImages.split(',').map(s => s.trim()).filter(Boolean).forEach(img => {
         if (!list.includes(img)) list.push(img);
       });
     }
-    if (product?.image && !list.includes(product.image)) {
-      list.unshift(product.image);
+    if (rawImage && !list.includes(rawImage)) {
+      list.unshift(rawImage);
     }
     return list.length > 0 ? list : ['/products/hero.png'];
-  }, [product?.image, product?.images]);
+  }, [rawImage, rawImages]);
 
   const availableColors = useMemo(() => {
-    return product?.colors ? product.colors.split(',').map(s => s.trim()).filter(Boolean) : [];
-  }, [product?.colors]);
+    return rawColors ? rawColors.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }, [rawColors]);
 
   const availableSizes = useMemo(() => {
-    return product?.sizes ? product.sizes.split(',').map(s => s.trim()).filter(Boolean) : [];
-  }, [product?.sizes]);
+    return rawSizes ? rawSizes.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }, [rawSizes]);
 
   if (!product) return <div className="pt-24 text-center">Product not found</div>;
 

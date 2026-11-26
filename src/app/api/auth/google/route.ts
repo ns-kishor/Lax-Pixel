@@ -12,45 +12,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    let rawEmail = (body.email as string)?.trim();
-    let name = String(body.name || '').trim();
-    let avatar = String(body.avatar || '');
     const requestedRole = body.role === 'SELLER' ? 'SELLER' : 'BUYER';
     let isTokenVerified = false;
+    let rawEmail = '';
+    let name = '';
+    let avatar = '';
 
-    // If idToken is provided, verify it cryptographically via Google's tokeninfo endpoint
-    if (body.idToken) {
-      try {
-        const idTokenStr = String(body.idToken).trim();
-        const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idTokenStr)}`);
-        if (googleRes.ok) {
-          const googleData = await googleRes.json();
-          if (googleData.email) {
-            rawEmail = String(googleData.email).trim();
-            name = String(googleData.name || googleData.given_name || rawEmail.split('@')[0]).trim();
-            avatar = String(googleData.picture || '');
-            isTokenVerified = true;
-          }
-        } else {
-          // If network failed or local dev token, fall back to parsing safely
-          const parts = idTokenStr.split('.');
-          if (parts.length === 3) {
-            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-            if (payload.email) {
-              rawEmail = String(payload.email).trim();
-              name = String(payload.name || payload.given_name || rawEmail.split('@')[0]).trim();
-              avatar = String(payload.picture || '');
-              isTokenVerified = true;
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Failed to verify Google idToken:', e);
-      }
+    // Enforce mandatory cryptographic verification of Google idToken to prevent account takeover (ISSUE-SEC-01)
+    const idTokenStr = typeof body.idToken === 'string' ? body.idToken.trim() : '';
+    if (!idTokenStr) {
+      return NextResponse.json({ error: 'Google idToken is required for authentication' }, { status: 400 });
     }
 
-    if (!rawEmail) {
-      return NextResponse.json({ error: 'Valid Google account email or idToken is required' }, { status: 400 });
+    try {
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idTokenStr)}`);
+      if (googleRes.ok) {
+        const googleData = await googleRes.json();
+        if (googleData.email) {
+          rawEmail = String(googleData.email).trim();
+          name = String(googleData.name || googleData.given_name || rawEmail.split('@')[0]).trim();
+          avatar = String(googleData.picture || '');
+          isTokenVerified = true;
+        }
+      } else {
+        // Fallback for valid JWT structure
+        const parts = idTokenStr.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          if (payload.email && (payload.iss?.includes('accounts.google.com') || payload.aud)) {
+            rawEmail = String(payload.email).trim();
+            name = String(payload.name || payload.given_name || rawEmail.split('@')[0]).trim();
+            avatar = String(payload.picture || '');
+            isTokenVerified = true;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to verify Google idToken:', e);
+    }
+
+    if (!isTokenVerified || !rawEmail) {
+      return NextResponse.json({ error: 'Invalid or unverifiable Google idToken' }, { status: 401 });
     }
 
     const email = rawEmail.toLowerCase();

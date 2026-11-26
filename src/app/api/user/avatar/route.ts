@@ -1,14 +1,21 @@
 import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function PUT(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { avatar } = await req.json();
-    if (!avatar) {
+    if (!avatar || typeof avatar !== 'string') {
       return NextResponse.json({ error: 'Avatar data required' }, { status: 400 });
+    }
+
+    // Limit avatar size to max 200KB to prevent database bloat (ISSUE-PERF-01)
+    if (avatar.length > 200 * 1024) {
+      return NextResponse.json({ error: 'Avatar image is too large. Maximum size is 200KB.' }, { status: 400 });
     }
 
     const user = await db.user.update({

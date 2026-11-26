@@ -294,6 +294,7 @@ export function ShopView() {
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    onError={(e: any) => { e.currentTarget.srcset = ''; e.currentTarget.src = '/products/hero.png'; }}
                   />
                   {product.comparePrice && (
                     <Badge className="absolute top-2.5 left-2.5 bg-foreground text-background text-[9px] tracking-wider font-semibold px-2 py-0.5 shadow-xs">
@@ -385,7 +386,7 @@ export function ShopView() {
                 className="flex gap-4 p-3 rounded-lg border border-border hover:border-border cursor-pointer group transition-colors"
                 onClick={() => selectProduct(product)}>
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-secondary shrink-0">
-                  <Image src={safeImgSrc(product.image)} alt={product.name} width={128} height={128} className="w-full h-full object-cover" />
+                  <Image src={safeImgSrc(product.image)} alt={product.name} width={128} height={128} className="w-full h-full object-cover" onError={(e: any) => { e.currentTarget.srcset = ''; e.currentTarget.src = '/products/hero.png'; }} />
                 </div>
                 <div className="flex-1 min-w-0 py-1">
                   <div className="flex items-center justify-between gap-2">

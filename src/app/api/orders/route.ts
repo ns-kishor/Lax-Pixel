@@ -241,9 +241,14 @@ export async function POST(req: NextRequest) {
         resolvedPaymentMethodId = method.id;
       }
     } else {
-      const defaultMethod = await db.paymentMethod.findFirst({
-        where: { name: resolvedPaymentMethod, active: true },
+      let defaultMethod = await db.paymentMethod.findFirst({
+        where: { name: { equals: resolvedPaymentMethod, mode: 'insensitive' }, active: true },
       });
+      if (!defaultMethod) {
+        defaultMethod = await db.paymentMethod.findFirst({
+          where: { active: true },
+        });
+      }
       if (defaultMethod) {
         resolvedPaymentMethodId = defaultMethod.id;
       }
@@ -316,7 +321,9 @@ export async function POST(req: NextRequest) {
           tracking: {
             create: {
               status: 'ORDERED',
-              description: 'Order placed successfully',
+              description: needsProof
+                ? `Order placed via ${resolvedPaymentMethod}. TrxID: ${String(transactionId).trim()} | Sender: ${String(senderNumber).trim()}`
+                : 'Order placed successfully',
               location: 'Online',
             },
           },
@@ -324,19 +331,27 @@ export async function POST(req: NextRequest) {
         include: { items: true, tracking: true },
       });
 
-      // Create payment proof if needed (TrxID + Sender Number)
-      if (needsProof && resolvedPaymentMethodId) {
-        await tx.paymentProof.create({
-          data: {
-            orderId: newOrder.id,
-            userId,
-            paymentMethodId: resolvedPaymentMethodId,
-            amount: totalAmount,
-            proofImage: paymentProofImage || null,
-            notes: `TrxID: ${String(transactionId).trim()} | Sender: ${String(senderNumber).trim()}`,
-            status: 'PENDING',
-          },
-        });
+      // Create payment proof if needed (TrxID + Sender Number) — ISSUE-DATA-01 fix
+      if (needsProof) {
+        let proofMethodId = resolvedPaymentMethodId;
+        if (!proofMethodId) {
+          const fallbackMethod = await tx.paymentMethod.findFirst({ where: { active: true } });
+          if (fallbackMethod) proofMethodId = fallbackMethod.id;
+        }
+
+        if (proofMethodId) {
+          await tx.paymentProof.create({
+            data: {
+              orderId: newOrder.id,
+              userId,
+              paymentMethodId: proofMethodId,
+              amount: totalAmount,
+              proofImage: paymentProofImage || null,
+              notes: `Method: ${resolvedPaymentMethod} | TrxID: ${String(transactionId).trim()} | Sender: ${String(senderNumber).trim()}`,
+              status: 'PENDING',
+            },
+          });
+        }
       }
 
       // Remove only the checked out products from user's cart (preserving any unselected items)

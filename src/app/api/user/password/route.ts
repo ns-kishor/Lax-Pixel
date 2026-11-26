@@ -1,10 +1,12 @@
 import { db } from '@/lib/db';
 import { compare, hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/user-auth';
 
 export async function PUT(req: NextRequest) {
   try {
-    const userId = req.headers.get('x-user-id');
+    const auth = getAuthenticatedUser(req);
+    const userId = auth?.userId;
     if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { currentPassword, newPassword } = await req.json();
